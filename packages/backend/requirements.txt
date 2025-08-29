@@ -12,6 +12,8 @@ sqlalchemy==2.0.43
 alembic==1.13.1
 psycopg2-binary==2.9.7
 asyncpg==0.29.0
+pymongo[srv]==4.14.1
+motor==3.3.2
 
 # AI & ML
 openai==1.99.7

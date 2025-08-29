@@ -26,10 +26,20 @@ class Settings(BaseSettings):
         env="ALLOWED_ORIGINS"
     )
     
-    # Database
+    # Database - Use SQLite for faster setup
     DATABASE_URL: str = Field(
-        default="postgresql://chonost:chonost@localhost:5432/chonost",
+        default="sqlite:///./chonost.db",
         env="DATABASE_URL"
+    )
+    
+    # MongoDB
+    MONGODB_URL: str = Field(
+        default="mongodb+srv://billlzzz10_db_user:ZxFcv9L9EUPV27kM@cluster0.ep8seuu.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
+        env="MONGODB_URL"
+    )
+    MONGODB_DATABASE: str = Field(
+        default="chonost",
+        env="MONGODB_DATABASE"
     )
     
     # Redis
@@ -53,6 +63,10 @@ class Settings(BaseSettings):
     ANTHROPIC_API_KEY: str = Field(default="", env="ANTHROPIC_API_KEY")
     AZURE_OPENAI_API_KEY: str = Field(default="", env="AZURE_OPENAI_API_KEY")
     AZURE_OPENAI_ENDPOINT: str = Field(default="", env="AZURE_OPENAI_ENDPOINT")
+    
+    # Local AI Models
+    LOCAL_AI_ENABLED: bool = Field(default=True, env="LOCAL_AI_ENABLED")
+    LOCAL_MODEL_PATH: str = Field(default="./models", env="LOCAL_MODEL_PATH")
     
     # File Storage
     UPLOAD_DIR: str = Field(default="./uploads", env="UPLOAD_DIR")

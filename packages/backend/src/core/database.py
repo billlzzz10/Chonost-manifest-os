@@ -12,13 +12,24 @@ from sqlalchemy.pool import StaticPool
 
 from core.config import settings
 
-# Create async engine for PostgreSQL
-engine = create_async_engine(
-    settings.DATABASE_URL,
-    echo=settings.DEBUG,
-    poolclass=StaticPool,
-    pool_pre_ping=True,
-)
+# Create async engine for SQLite
+if settings.DATABASE_URL.startswith("sqlite"):
+    # SQLite async setup
+    engine = create_async_engine(
+        settings.DATABASE_URL.replace("sqlite:///", "sqlite+aiosqlite:///"),
+        echo=settings.DEBUG,
+        poolclass=StaticPool,
+        pool_pre_ping=True,
+        connect_args={"check_same_thread": False}
+    )
+else:
+    # PostgreSQL async setup
+    engine = create_async_engine(
+        settings.DATABASE_URL,
+        echo=settings.DEBUG,
+        poolclass=StaticPool,
+        pool_pre_ping=True,
+    )
 
 # Create session factory
 AsyncSessionLocal = sessionmaker(

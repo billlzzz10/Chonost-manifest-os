@@ -204,7 +204,7 @@ async def get_batch_suggestions(request: EditorStateRequest):
         
         # Get suggestions for this state
         from src.core.agent_forecast import agent_forecast_system
-        from src.core.context_manager import context_manager
+        from src.core.context_manager import context_manager  # pyright: ignore[reportMissingImports]
         
         context = context_manager.get_context_for_prompt()
         story_context = {

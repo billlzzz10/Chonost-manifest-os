@@ -1,0 +1,64 @@
+# Chonost Advanced Features Requirements
+
+# Core Backend
+fastapi>=0.104.0
+uvicorn>=0.24.0
+pydantic>=2.5.0
+sqlalchemy>=2.0.0
+psycopg2-binary>=2.9.0
+
+# File System & Background Processing
+watchdog>=3.0.0
+dramatiq>=1.15.0
+redis>=5.0.0
+
+# AI/ML Libraries
+transformers>=4.35.0
+torch>=2.1.0
+sentence-transformers>=2.2.0
+accelerate>=0.24.0
+
+# LLM Integration
+litellm>=1.0.0
+openai>=1.3.0
+anthropic>=0.7.0
+
+# Vector Database
+qdrant-client>=1.7.0
+
+# Code Execution & Jupyter
+jupyter-client>=9.0.0
+jupyter-kernel-gateway>=2.5.0
+docker>=6.1.0
+
+# Data Analysis & Visualization
+pandas>=2.1.0
+numpy>=1.24.0
+matplotlib>=3.7.0
+scikit-learn>=1.3.0
+
+# Azure Integration
+azure-identity>=1.15.0
+azure-mgmt-machinelearningservices>=1.0.0
+azure-mgmt-resource>=23.0.0
+
+# Utilities
+python-multipart>=0.0.6
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+python-dotenv>=1.0.0
+httpx>=0.25.0
+aiofiles>=23.2.0
+
+# Development & Testing
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+black>=23.9.0
+isort>=5.12.0
+flake8>=6.1.0
+mypy>=1.6.0
+
+# Optional: GPU Support
+# torch>=2.1.0+cu118 -f https://download.pytorch.org/whl/torch_stable.html
+# torchvision>=0.16.0+cu118 -f https://download.pytorch.org/whl/torch_stable.html
+# torchaudio>=2.1.0+cu118 -f https://download.pytorch.org/whl/torch_stable.html

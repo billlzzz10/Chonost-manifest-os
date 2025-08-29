@@ -166,7 +166,7 @@ class AIRouter:
 ai_router = AIRouter()
 '''
     
-    with open(ai_dir / "ai_router.py", 'w') as f:
+    with open(ai_dir / "ai_router.py", 'w', encoding='utf-8') as f:
         f.write(ai_router_content)
     
     # AI API Routes
@@ -219,7 +219,7 @@ async def get_available_providers():
     return {"providers": providers}
 '''
     
-    with open(ai_dir / "ai_routes.py", 'w') as f:
+    with open(ai_dir / "ai_routes.py", 'w', encoding='utf-8') as f:
         f.write(ai_routes_content)
     
     return True
@@ -238,10 +238,7 @@ def setup_local_ai_models():
     
     local_ai_deps = [
         "transformers",
-        "torch",
-        "sentence-transformers",
-        "ctransformers",
-        "llama-cpp-python"
+        "sentence-transformers"
     ]
     
     for dep in local_ai_deps:
@@ -257,9 +254,7 @@ Local AI Models Service for Chonost
 import os
 from typing import Dict, Any, List
 from pathlib import Path
-from transformers import AutoTokenizer, AutoModelForCausalLM
 from sentence_transformers import SentenceTransformer
-import torch
 
 class LocalAIService:
     """Local AI models service"""
@@ -276,9 +271,9 @@ class LocalAIService:
         try:
             model_name = "all-MiniLM-L6-v2"
             self.embedding_model = SentenceTransformer(model_name)
-            print(f"✅ Loaded embedding model: {model_name}")
+            print(f"Loaded embedding model: {model_name}")
         except Exception as e:
-            print(f"⚠️ Warning: Failed to load embedding model: {e}")
+            print(f"Warning: Failed to load embedding model: {e}")
     
     async def generate_text(self, prompt: str, model_name: str = "local") -> Dict[str, Any]:
         """Generate text using local model"""
@@ -314,7 +309,7 @@ local_ai_service = LocalAIService()
 '''
     
     services_dir = Path("packages/backend/src/services")
-    with open(services_dir / "local_ai.py", 'w') as f:
+    with open(services_dir / "local_ai.py", 'w', encoding='utf-8') as f:
         f.write(local_ai_content)
     
     return True
@@ -397,7 +392,7 @@ file_service = FileService()
 '''
     
     services_dir = Path("packages/backend/src/services")
-    with open(services_dir / "file_service.py", 'w') as f:
+    with open(services_dir / "file_service.py", 'w', encoding='utf-8') as f:
         f.write(file_service_content)
     
     return True
@@ -484,7 +479,7 @@ auth_service = AuthService()
 '''
     
     services_dir = Path("packages/backend/src/services")
-    with open(services_dir / "auth_service.py", 'w') as f:
+    with open(services_dir / "auth_service.py", 'w', encoding='utf-8') as f:
         f.write(auth_service_content)
     
     return True
@@ -521,7 +516,7 @@ async def health_check():
 '''
     
     routes_file = Path("packages/backend/src/api/routes.py")
-    with open(routes_file, 'w') as f:
+    with open(routes_file, 'w', encoding='utf-8') as f:
         f.write(routes_content)
     
     return True

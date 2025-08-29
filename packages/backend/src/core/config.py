@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     
     # Database - Use SQLite for faster setup
     DATABASE_URL: str = Field(
-        default="sqlite:///./chonost.db",
+        default="sqlite+aiosqlite:///./chonost.db",
         env="DATABASE_URL"
     )
     

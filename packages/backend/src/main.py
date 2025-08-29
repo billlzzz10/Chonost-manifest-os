@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-Chonost FastAPI Backend - Main Application
+Main FastAPI application for Chonost Backend
 """
 
 import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
 
 from core.config import settings
 from core.database import engine, Base
@@ -27,10 +27,11 @@ async def lifespan(app: FastAPI):
     # Connect to MongoDB
     try:
         await mongodb_manager.connect()
+        print("✅ MongoDB connected")
     except Exception as e:
         print(f"⚠️ MongoDB connection failed: {e}")
     
-    print("✅ Chonost Backend started successfully!")
+    print("✅ Backend started")
     
     yield
     
@@ -38,7 +39,7 @@ async def lifespan(app: FastAPI):
     print("🛑 Shutting down Chonost Backend...")
     await mongodb_manager.disconnect()
     await engine.dispose()
-    print("✅ Chonost Backend shutdown complete!")
+    print("✅ Backend shutdown")
 
 # Create FastAPI app
 app = FastAPI(
@@ -57,29 +58,27 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include API routes
+# Include routers
 app.include_router(router, prefix="/api/v1")
-
-# Mount static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-@app.get("/")
-async def root():
-    """Root endpoint"""
-    return {
-        "message": "Welcome to Chonost API",
-        "version": settings.VERSION,
-        "status": "running"
-    }
 
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
-    return {
-        "status": "healthy",
-        "database": "connected",
-        "mongodb": "connected" if mongodb_manager.database else "disconnected"
-    }
+    try:
+        # Check MongoDB connection
+        mongodb_status = "connected" if mongodb_manager.client else "disconnected"
+        
+        return JSONResponse({
+            "status": "healthy",
+            "service": "chonost-api",
+            "version": settings.VERSION,
+            "mongodb": mongodb_status
+        })
+    except Exception as e:
+        return JSONResponse({
+            "status": "unhealthy",
+            "error": str(e)
+        }, status_code=500)
 
 if __name__ == "__main__":
     import uvicorn

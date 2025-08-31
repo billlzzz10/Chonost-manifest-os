@@ -1,0 +1,447 @@
+# Chonost Project - Git Attributes v2.1.0
+# ================================
+
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Documents
+*.md text diff=markdown
+*.txt text
+*.rst text
+*.adoc text
+
+# Scripts
+*.sh text eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Source code
+*.js text
+*.jsx text
+*.ts text
+*.tsx text
+*.py text
+*.java text
+*.c text
+*.cpp text
+*.h text
+*.hpp text
+*.cs text
+*.php text
+*.rb text
+*.go text
+*.rs text
+*.swift text
+*.kt text
+*.scala text
+*.clj text
+*.hs text
+*.ml text
+*.fs text
+*.sql text
+*.pl text
+*.pm text
+*.r text
+*.m text
+*.mm text
+*.scm text
+*.lisp text
+*.el text
+*.vim text
+*.tex text
+*.sty text
+*.cls text
+*.bib text
+*.bst text
+*.ltx text
+*.dtx text
+*.ins text
+
+# Web
+*.html text diff=html
+*.htm text diff=html
+*.css text
+*.scss text
+*.sass text
+*.less text
+*.xml text
+*.svg text
+*.json text
+*.yaml text
+*.yml text
+*.toml text
+*.ini text
+*.cfg text
+*.conf text
+*.config text
+
+# Data
+*.csv text
+*.tsv text
+*.tab text
+*.dat text
+*.data text
+
+# Configuration
+*.gitignore text
+*.gitattributes text
+*.gitmodules text
+*.gitkeep text
+*.git-blame* text
+
+# Documentation
+*.pdf binary
+*.doc binary
+*.docx binary
+*.xls binary
+*.xlsx binary
+*.ppt binary
+*.pptx binary
+
+# Images
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.bmp binary
+*.tiff binary
+*.ico binary
+*.svg text
+
+# Audio
+*.mp3 binary
+*.wav binary
+*.flac binary
+*.aac binary
+*.ogg binary
+*.wma binary
+*.m4a binary
+
+# Video
+*.mp4 binary
+*.avi binary
+*.mov binary
+*.wmv binary
+*.flv binary
+*.webm binary
+*.mkv binary
+*.m4v binary
+*.3gp binary
+
+# Archives
+*.zip binary
+*.tar binary
+*.gz binary
+*.bz2 binary
+*.xz binary
+*.7z binary
+*.rar binary
+
+# Executables
+*.exe binary
+*.dll binary
+*.so binary
+*.dylib binary
+*.app binary
+
+# Database
+*.db binary
+*.sqlite binary
+*.sqlite3 binary
+
+# Models & Data
+*.bin binary
+*.safetensors binary
+*.ckpt binary
+*.pth binary
+*.pt binary
+*.h5 binary
+*.hdf5 binary
+*.pkl binary
+*.pickle binary
+
+# Logs
+*.log text
+*.out text
+*.err text
+
+# Temporary files
+*.tmp text
+*.temp text
+*.bak text
+*.backup text
+*.old text
+*.orig text
+
+# IDE
+*.swp text
+*.swo text
+*~ text
+
+# OS
+.DS_Store binary
+Thumbs.db binary
+desktop.ini binary
+
+# Security
+*.pem text
+*.key text
+*.crt text
+*.csr text
+*.p12 binary
+*.pfx binary
+*.jks binary
+*.keystore binary
+
+# Chonost specific
+*.chonost text
+*.chonostignore text
+
+# Cursor IDE
+.cursor/ text
+.cursorrules/ text
+cursor_rules/ text
+
+# Environment
+.env text
+.env.* text
+!.env.example text
+
+# Docker
+Dockerfile* text
+docker-compose*.yml text
+.dockerignore text
+
+# CI/CD
+.github/ text
+.gitlab-ci.yml text
+.travis.yml text
+.circleci/ text
+azure-pipelines.yml text
+
+# Package managers
+package.json text
+package-lock.json text
+yarn.lock text
+pnpm-lock.yaml text
+requirements.txt text
+requirements*.txt text
+Pipfile text
+Pipfile.lock text
+poetry.lock text
+pyproject.toml text
+Cargo.toml text
+Cargo.lock text
+composer.json text
+composer.lock text
+Gemfile text
+Gemfile.lock text
+go.mod text
+go.sum text
+
+# Build artifacts
+build/ binary
+dist/ binary
+out/ binary
+.next/ binary
+.nuxt/ binary
+.cache/ binary
+.parcel-cache/ binary
+
+# Dependencies
+node_modules/ binary
+__pycache__/ binary
+*.pyc binary
+*.pyo binary
+*.pyd binary
+
+# Testing
+coverage/ binary
+.nyc_output/ binary
+.pytest_cache/ binary
+.tox/ binary
+.nox/ binary
+htmlcov/ binary
+
+# Documentation
+docs/_build/ binary
+site/ binary
+
+# User data
+uploads/ binary
+user_data/ binary
+data/uploads/ binary
+data/exports/ binary
+
+# AI Models
+models/ binary
+embeddings/ binary
+
+# Vector DB
+qdrant/ binary
+chroma/ binary
+pinecone/ binary
+weaviate/ binary
+
+# Monitoring
+prometheus/ binary
+grafana/ binary
+kibana/ binary
+
+# Backup
+backups/ binary
+
+# Local development
+.local/ binary
+local/ binary
+dev/ binary
+development/ binary
+
+# Performance
+*.perf binary
+*.profile binary
+*.trace binary
+
+# Large files
+*.mp4 binary
+*.avi binary
+*.mov binary
+*.wmv binary
+*.flv binary
+*.webm binary
+*.mkv binary
+*.m4v binary
+*.3gp binary
+*.mp3 binary
+*.wav binary
+*.flac binary
+*.aac binary
+*.ogg binary
+*.wma binary
+*.m4a binary
+*.pdf binary
+*.epub binary
+*.mobi binary
+*.azw3 binary
+
+# Archives
+*.zip binary
+*.tar.gz binary
+*.rar binary
+*.7z binary
+
+# Database
+*.db binary
+*.sqlite binary
+*.sqlite3 binary
+*.db-journal binary
+*.db-wal binary
+*.db-shm binary
+
+# Redis
+dump.rdb binary
+*.rdb binary
+
+# Elasticsearch
+elasticsearch/ binary
+
+# Logs
+logs/ binary
+*.log text
+log/ binary
+
+# Environment
+.env* text
+!.env.example text
+
+# Secrets
+secrets/ binary
+secret/ binary
+credentials/ binary
+*.key text
+*.pem text
+*.p12 binary
+*.pfx binary
+
+# AI & ML Models
+models/ binary
+embeddings/ binary
+*.bin binary
+*.safetensors binary
+*.ckpt binary
+*.pth binary
+*.pt binary
+
+# Vector DB
+qdrant/ binary
+chroma/ binary
+pinecone/ binary
+weaviate/ binary
+
+# Redis
+dump.rdb binary
+*.rdb binary
+
+# Elasticsearch
+elasticsearch/ binary
+
+# Monitoring
+prometheus/ binary
+grafana/ binary
+kibana/ binary
+
+# Backup
+*.bak binary
+*.backup binary
+*.old binary
+*.orig binary
+
+# Archives
+*.zip binary
+*.tar.gz binary
+*.rar binary
+*.7z binary
+
+# Large Media
+*.mp4 binary
+*.avi binary
+*.mov binary
+*.wmv binary
+*.flv binary
+*.webm binary
+*.mkv binary
+*.m4v binary
+*.3gp binary
+*.mp3 binary
+*.wav binary
+*.flac binary
+*.aac binary
+*.ogg binary
+*.wma binary
+*.m4a binary
+*.pdf binary
+*.epub binary
+*.mobi binary
+*.azw3 binary
+
+# IDE
+.vscode/ text
+.idea/ text
+*.swp text
+*.swo text
+*~ text
+
+# OS
+.DS_Store binary
+Thumbs.db binary
+desktop.ini binary
+
+# Temporary
+*.tmp text
+*.temp text
+*~ text
+.#* text
+\#*# text
+.#*# text
+*# text

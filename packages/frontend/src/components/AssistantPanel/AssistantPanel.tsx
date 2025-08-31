@@ -1,18 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { aiService, AIMessage } from '../../services/aiService';
 
 interface AssistantPanelProps {
   // Add props here
 }
 
-interface Message {
-  id: string;
-  type: 'user' | 'assistant';
-  content: string;
-  timestamp: Date;
-}
-
 export const AssistantPanel: React.FC<AssistantPanelProps> = () => {
-  const [messages, setMessages] = useState<Message[]>([
+  const [messages, setMessages] = useState<AIMessage[]>([
     {
       id: '1',
       type: 'assistant',
@@ -22,11 +16,32 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = () => {
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [quickActions, setQuickActions] = useState<string[]>([]);
+
+  // Load quick actions on component mount
+  useEffect(() => {
+    loadQuickActions();
+  }, []);
+
+  const loadQuickActions = async () => {
+    try {
+      const actions = await aiService.getQuickActions();
+      setQuickActions(actions);
+    } catch (error) {
+      console.error('Error loading quick actions:', error);
+      setQuickActions([
+        "help me improve this text",
+        "generate some creative ideas",
+        "analyze the character development",
+        "suggest plot improvements"
+      ]);
+    }
+  };
 
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
 
-    const userMessage: Message = {
+    const userMessage: AIMessage = {
       id: Date.now().toString(),
       type: 'user',
       content: inputValue,
@@ -34,20 +49,39 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const currentInput = inputValue;
     setInputValue('');
     setIsTyping(true);
 
-    // Simulate AI response
-    setTimeout(() => {
-      const assistantMessage: Message = {
+    try {
+      // Get AI response
+      const aiResponse = await aiService.sendMessage(currentInput);
+      
+      const assistantMessage: AIMessage = {
         id: (Date.now() + 1).toString(),
         type: 'assistant',
-        content: `I understand you're asking about "${inputValue}". Let me help you with that. This is a simulated response - in the real implementation, this would connect to the AI backend.`,
+        content: aiResponse.message,
+        timestamp: new Date(),
+        metadata: {
+          searchResults: aiResponse.searchResults,
+          suggestions: aiResponse.suggestions,
+          confidence: aiResponse.confidence
+        }
+      };
+      
+      setMessages(prev => [...prev, assistantMessage]);
+    } catch (error) {
+      console.error('Error getting AI response:', error);
+      const errorMessage: AIMessage = {
+        id: (Date.now() + 1).toString(),
+        type: 'assistant',
+        content: "I'm sorry, I'm having trouble connecting to the AI service right now. Please try again later.",
         timestamp: new Date(),
       };
-      setMessages(prev => [...prev, assistantMessage]);
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsTyping(false);
-    }, 1000);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -56,13 +90,6 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = () => {
       handleSendMessage();
     }
   };
-
-  const quickActions = [
-    { label: 'Improve writing', action: 'help me improve this text' },
-    { label: 'Generate ideas', action: 'generate some creative ideas' },
-    { label: 'Analyze character', action: 'analyze the character development' },
-    { label: 'Plot suggestions', action: 'suggest plot improvements' },
-  ];
 
   const handleQuickAction = (action: string) => {
     setInputValue(action);
@@ -87,13 +114,13 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = () => {
       <div className="quick-actions bg-gray-50 border-b border-gray-200 px-4 py-2">
         <h3 className="text-sm font-medium text-gray-700 mb-2">Quick Actions</h3>
         <div className="grid grid-cols-2 gap-2">
-          {quickActions.map((action, index) => (
+          {quickActions.slice(0, 4).map((action, index) => (
             <button
               key={index}
-              onClick={() => handleQuickAction(action.action)}
+              onClick={() => handleQuickAction(action)}
               className="quick-action-btn px-3 py-2 bg-white border border-gray-200 rounded-md text-xs text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-colors"
             >
-              {action.label}
+              {action}
             </button>
           ))}
         </div>

@@ -1,0 +1,236 @@
+/* Icon Animations for Chonost */
+
+@keyframes pulse {
+    0%, 100% { 
+        opacity: 1; 
+        transform: scale(1);
+    }
+    50% { 
+        opacity: 0.7; 
+        transform: scale(1.05);
+    }
+}
+
+@keyframes bounce {
+    0%, 20%, 53%, 80%, 100% { 
+        transform: translate3d(0,0,0); 
+    }
+    40%, 43% { 
+        transform: translate3d(0,-8px,0); 
+    }
+    70% { 
+        transform: translate3d(0,-4px,0); 
+    }
+    90% { 
+        transform: translate3d(0,-2px,0); 
+    }
+}
+
+@keyframes spin {
+    from { 
+        transform: rotate(0deg); 
+    }
+    to { 
+        transform: rotate(360deg); 
+    }
+}
+
+@keyframes wiggle {
+    0%, 7% { 
+        transform: rotateZ(0); 
+    }
+    15% { 
+        transform: rotateZ(-8deg); 
+    }
+    20% { 
+        transform: rotateZ(5deg); 
+    }
+    25% { 
+        transform: rotateZ(-5deg); 
+    }
+    30% { 
+        transform: rotateZ(3deg); 
+    }
+    35% { 
+        transform: rotateZ(-2deg); 
+    }
+    40%, 100% { 
+        transform: rotateZ(0); 
+    }
+}
+
+@keyframes float {
+    0%, 100% { 
+        transform: translateY(0px); 
+    }
+    50% { 
+        transform: translateY(-6px); 
+    }
+}
+
+@keyframes glow {
+    0%, 100% { 
+        filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.3));
+    }
+    50% { 
+        filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.6));
+    }
+}
+
+/* Base Icon Styles */
+.chonost-icon {
+    display: inline-block;
+    vertical-align: middle;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chonost-icon:hover {
+    transform: scale(1.1);
+    filter: brightness(1.1);
+}
+
+/* Animated Icon Variants */
+.animated-icon {
+    display: inline-block;
+}
+
+.animated-icon.pulse {
+    animation: pulse 2s infinite;
+}
+
+.animated-icon.bounce {
+    animation: bounce 1s infinite;
+}
+
+.animated-icon.spin {
+    animation: spin 1s linear infinite;
+}
+
+.animated-icon.wiggle {
+    animation: wiggle 1s ease-in-out infinite;
+}
+
+.animated-icon.float {
+    animation: float 3s ease-in-out infinite;
+}
+
+.animated-icon.glow {
+    animation: glow 2s ease-in-out infinite;
+}
+
+/* Gradient Icon Styles */
+.gradient-icon {
+    display: inline-block;
+    padding: 4px;
+    border-radius: 8px;
+    background: linear-gradient(45deg, #FFB3BA, #BAE1FF);
+    background-size: 200% 200%;
+    animation: gradientShift 3s ease infinite;
+}
+
+.gradient-icon:hover {
+    transform: scale(1.05);
+    animation: gradientShift 1s ease infinite;
+}
+
+@keyframes gradientShift {
+    0% { 
+        background-position: 0% 50%; 
+    }
+    50% { 
+        background-position: 100% 50%; 
+    }
+    100% { 
+        background-position: 0% 50%; 
+    }
+}
+
+/* Floating Icon Styles */
+.floating-icon {
+    display: inline-block;
+    padding: 8px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.floating-icon:hover {
+    transform: translateY(-2px);
+    filter: drop-shadow(0 6px 12px rgba(0,0,0,0.15));
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Interactive Icon States */
+.icon-interactive {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.icon-interactive:hover {
+    transform: scale(1.15);
+    filter: brightness(1.2);
+}
+
+.icon-interactive:active {
+    transform: scale(0.95);
+}
+
+/* Icon Size Variants */
+.icon-xs { font-size: 0.75rem; }
+.icon-sm { font-size: 1rem; }
+.icon-md { font-size: 1.5rem; }
+.icon-lg { font-size: 2rem; }
+.icon-xl { font-size: 3rem; }
+
+/* Icon Color Themes */
+.icon-theme-primary { color: #5D5CDE; }
+.icon-theme-secondary { color: #8B5FBF; }
+.icon-theme-accent { color: #FF6B9D; }
+.icon-theme-success { color: #4ADE80; }
+.icon-theme-warning { color: #FBBF24; }
+.icon-theme-error { color: #EF4444; }
+
+/* Dark Mode Adjustments */
+.dark .floating-icon {
+    background: rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark .floating-icon:hover {
+    background: rgba(0, 0, 0, 0.3);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Responsive Icon Sizes */
+@media (max-width: 768px) {
+    .icon-lg { font-size: 1.5rem; }
+    .icon-xl { font-size: 2rem; }
+}
+
+/* Loading State */
+.icon-loading {
+    animation: spin 1s linear infinite;
+    opacity: 0.7;
+}
+
+/* Success State */
+.icon-success {
+    color: #4ADE80;
+    animation: pulse 1s ease-in-out;
+}
+
+/* Error State */
+.icon-error {
+    color: #EF4444;
+    animation: wiggle 0.5s ease-in-out;
+}
+
+/* Warning State */
+.icon-warning {
+    color: #FBBF24;
+    animation: bounce 1s ease-in-out;
+}

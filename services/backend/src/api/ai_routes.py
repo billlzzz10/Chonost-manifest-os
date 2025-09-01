@@ -5,27 +5,29 @@ This module provides endpoints for managing AI providers, completions, and integ
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import HTTPBearer
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any
 from datetime import datetime
 import uuid
-import json
+import os
+
+from jose import JWTError, jwt
 
 # Import services
 try:
     from src.services.ai_orchestrator import AIOrchestrator
-    from src.database import get_db_connection
 except ImportError:
     # Fallback imports
     class AIOrchestrator:
         pass
-    
-    def get_db_connection():
-        return None
 
 # Security
 security = HTTPBearer()
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+if not JWT_SECRET_KEY:
+    raise RuntimeError("JWT_SECRET_KEY environment variable must be set")
+JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 
 # Pydantic models
 class ProviderConfig(BaseModel):
@@ -67,10 +69,20 @@ class MCPToolRequest(BaseModel):
 # Create router
 router = APIRouter(prefix="/ai", tags=["ai"])
 
-# Dependency for authentication (placeholder)
-async def get_current_user(token: str = Depends(security)):
-    # TODO: Implement proper JWT token validation
-    return {"id": "user-123", "email": "user@example.com"}
+# Dependency for authentication
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    token = credentials.credentials
+    try:
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication token",
+        )
+    user_id: Optional[str] = payload.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload")
+    return {"id": user_id}
 
 # Initialize AI Orchestrator
 ai_orchestrator = AIOrchestrator()

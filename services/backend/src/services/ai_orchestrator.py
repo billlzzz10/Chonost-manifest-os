@@ -24,10 +24,16 @@ except ImportError:
 
 class AIOrchestrator:
     """AI Orchestrator for managing multiple AI providers and integrations"""
-    
+
     def __init__(self):
-        self.encryption_key = os.getenv("ENCRYPTION_KEY", Fernet.generate_key())
-        self.cipher_suite = Fernet(self.encryption_key)
+        key = os.getenv("ENCRYPTION_KEY")
+        if not key:
+            raise RuntimeError("ENCRYPTION_KEY environment variable must be set for secure operation")
+        try:
+            self.encryption_key = key.encode() if isinstance(key, str) else key
+            self.cipher_suite = Fernet(self.encryption_key)
+        except Exception as e:  # pragma: no cover - defensive
+            raise ValueError("Invalid ENCRYPTION_KEY: must be a 32 urlsafe base64-encoded key") from e
         self.providers = {}
         self.integrations = {}
         self.mcp_tools = {}

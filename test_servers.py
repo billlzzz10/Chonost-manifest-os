@@ -4,7 +4,7 @@ Test Script for Servers
 
 import time
 import webbrowser
-import requests
+import requests  # pyright: ignore[reportMissingModuleSource]
 
 def test_frontend():
     """Test Frontend Development Server"""

@@ -3,7 +3,7 @@ Comprehensive Testing Script for Chonost Desktop App
 ทดสอบระบบแบบครบถ้วนตามแผนการทดสอบ
 """
 
-import requests
+import requests  # pyright: ignore[reportMissingModuleSource]
 import time
 import webbrowser
 import json

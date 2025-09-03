@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import { Sidebar } from './components/Sidebar'
-import { ChatInterface } from './components/ChatInterface'
-import { Connections } from './components/Connections'
-import { Automations } from './components/Automations'
-import { Settings } from './components/Settings'
+import { Sidebar } from './src/widgets/sidebar/Sidebar'
+import { ChatInterface } from './src/features/chat/ChatInterface'
+import { Connections } from './src/features/connections/Connections'
+import { Automations } from './src/features/automations/Automations'
+import { Settings } from './src/features/settings/Settings'
 import './App.css'
 
 function App() {

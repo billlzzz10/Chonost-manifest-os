@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+:root{
+  --bg:#0f172a; --panel:#111827; --card:#0b1220; --text:#e5e7eb; --muted:#94a3b8;
+  --accent:#22c55e; --stroke:#1f2937; --warn:#f59e0b; --danger:#ef4444;
+}
+*{box-sizing:border-box}
+html,body,#root{height:100%;margin:0;background:var(--bg);color:var(--text);
+  font:14px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,Arial}
+button{cursor:pointer}
+.app{display:grid;grid-template-rows:48px 1fr}
+.topbar{display:flex;gap:8px;align-items:center;padding:0 12px;background:var(--panel);border-bottom:1px solid #0b1220}
+.topbar .title{font-weight:600}
+.btn{padding:6px 10px;border:1px solid #233044;background:#0c1426;color:var(--text);border-radius:8px}
+.btn.primary{border-color:#12422b;background:#0d2418}
+.layout{display:grid;grid-template-columns:300px 1fr 320px;gap:8px;padding:8px}
+.panel{background:var(--panel);border:1px solid #0b1220;border-radius:12px;overflow:hidden}
+.panel h3{margin:10px 12px 6px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.card{background:var(--card);border:1px solid #0b1220;border-radius:12px;padding:12px}
+.toolbar{display:flex;gap:8px;padding:6px;border-bottom:1px solid #0b1220;background:#0c1424}
+.toolbar .sep{width:1px;background:#0b1220;margin:0 4px}
+.badge{padding:2px 8px;border:1px solid #244; border-radius:999px; color:#a7f3d0}
+.reading{padding:12px;max-width:72ch}
+.canvasWrap{position:relative;height:100%}
+.canvasWrap canvas{display:block;width:100%;height:100%;background:#0a0f1b;border-top:1px solid #0b1220}
+.sticky{position:absolute;min-width:160px;max-width:280px;background:#fff;color:#111;border-radius:10px;padding:8px;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.sticky textarea{width:100%;height:100px;border:none;outline:none;background:transparent;color:#111;resize:vertical}
+.sticky .x{position:absolute;right:6px;top:6px;border:none;background:#0000;color:#111;font-weight:700}
+.tabs{display:flex;gap:6;padding:6px}
+.tabs .btn{flex:1}
+.rotary{position:fixed;bottom:24px;left:24px;display:flex;gap:12px;pointer-events:none}
+.p{pointer-events:auto}
+.wheel{width:180px;height:180px;border-radius:50%;border:1px dashed #1f2a44;display:grid;place-items:center;background:rgba(12,18,38,.7);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);position:relative}
+.slot{position:absolute;width:84px;height:36px;border:1px solid #24314f;background:#10182b;border-radius:10px;display:grid;place-items:center;font-size:12px}

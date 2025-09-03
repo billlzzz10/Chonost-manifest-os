@@ -1,0 +1,9 @@
+{
+  "package": { "productName": "Craft IDE", "version": "0.1.0" },
+  "tauri": {
+    "windows": [{ "title": "Craft IDE", "width": 1280, "height": 800 }],
+    "bundle": { "active": false },
+    "allowlist": { "shell": { "all": true } }
+  },
+  "build": { "beforeDevCommand": "vite", "devPath": "http://localhost:5173", "distDir": "dist" }
+}

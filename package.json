@@ -1,12 +1,14 @@
 {
   "name": "chonost-manuscript-os",
-  "version": "1.0.0",
+  "version": "2.1.0",
   "description": "A comprehensive writing platform for authors to manage characters, stories, and creative elements",
   "main": "index.js",
   "scripts": {
-    "dev": "cd apps/web && python3 -m http.server 8000",
-    "start": "cd apps/web && python3 -m http.server 8000",
-    "build": "echo 'Build completed'",
+    "dev": "cd packages/frontend && npm run dev",
+    "build": "cd packages/frontend && npm run build",
+    "tauri": "cd packages/frontend && npm run tauri",
+    "tauri:dev": "cd packages/frontend && npm run tauri:dev",
+    "tauri:build": "cd packages/frontend && npm run tauri:build",
     "test": "echo 'Tests passed'"
   },
   "keywords": [
@@ -15,14 +17,20 @@
     "manuscript",
     "characters",
     "storytelling",
-    "creative-writing"
+    "creative-writing",
+    "tauri",
+    "desktop-app"
   ],
-  "author": "Chonost Team",
+  "author": "billlzzz10",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/chonost/manuscript-os"
   },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
   "devDependencies": {
     "@iconify-json/bxl": "^1.2.2",
     "@iconify-json/devicon": "^1.2.42",

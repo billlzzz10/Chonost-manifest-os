@@ -1,0 +1,57 @@
+name: "Chonost Ecosystem - Unified Development Environment"
+version: "2.1.0"
+
+models:
+  - name: GPT-4
+    provider: openai
+    model: gpt-4
+    apiKey: ${OPENAI_API_KEY}
+
+  - name: Claude
+    provider: anthropic
+    model: claude-3-5-sonnet-20241022
+    apiKey: ${ANTHROPIC_API_KEY}
+
+context:
+  - provider: file
+    name: Current File
+
+  - provider: codebase
+    name: Chonost Codebase
+
+mcpServers:
+  # Chonost-specific MCP servers
+  - name: chonost-backend
+    command: python
+    args: ["chonost-unified/backend/run_server.py"]
+    env:
+      PYTHONPATH: "."
+
+  - name: filesystem
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-filesystem", "."]
+
+  - name: git
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-git", "--repository", "."]
+
+rules:
+  - name: "Chonost Core Concepts"
+    rule: "Always reference The Trinity Layout, The All-Seeing Eye, The Forge, The Living Dictionary, and MCP concepts"
+    globs: ["**/*"]
+
+  - name: "Tech Stack Compliance"
+    rule: "Use only approved technologies: React+Vite, FastAPI, Tauri, TypeScript, Python"
+    globs: ["**/*.{ts,tsx,py,js,jsx}"]
+
+  - name: "Kilo Code Integration"
+    rule: "Use Kilo Code tools for file operations, terminal commands, and project analysis"
+    globs: ["**/*"]
+
+  - name: "Cursor Standards"
+    rule: "Follow Cursor coding standards from .cursorrules for consistent development"
+    globs: ["**/*"]
+
+  - name: "Architecture Guidelines"
+    rule: "Maintain modular design, type safety, async operations, and proper error handling"
+    globs: ["**/*"]

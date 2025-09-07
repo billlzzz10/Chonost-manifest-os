@@ -8,4 +8,8 @@ customModes:
     groups:
       - read
       - browser
+      - command
+      - mcp
+      - edit
     source: project
+    description: ใช้เมื่อโปรเจ้คต้องการให้รีวิว

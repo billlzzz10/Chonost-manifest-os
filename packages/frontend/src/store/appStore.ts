@@ -10,14 +10,29 @@ interface Document {
   updated_at?: string;
 }
 
+interface Todo {
+  id: string;
+  title: string;
+  description?: string;
+  status: 'pending' | 'in_progress' | 'completed';
+  priority: 'low' | 'medium' | 'high';
+  created_at: string;
+  updated_at?: string;
+  due_date?: string;
+}
+
 interface AppState {
   // Current view state
   currentView: 'editor' | 'whiteboard';
-  
+
   // Document state
   currentDocument: Document | null;
   documents: Document[];
-  
+
+  // Todo state
+  todos: Todo[];
+  isTodoPanelOpen: boolean;
+
   // UI state
   isSidebarOpen: boolean;
   isAssistantOpen: boolean;
@@ -28,12 +43,19 @@ interface AppState {
   setDocuments: (documents: Document[]) => void;
   toggleSidebar: () => void;
   toggleAssistant: () => void;
-  
+  toggleTodoPanel: () => void;
+
   // Document actions
   createDocument: (title: string, content?: string) => Promise<Document>;
   updateDocument: (id: string, updates: Partial<Document>) => Promise<void>;
   deleteDocument: (id: string) => Promise<void>;
   saveDocument: () => Promise<void>;
+
+  // Todo actions
+  createTodo: (title: string, description?: string, priority?: 'low' | 'medium' | 'high') => Promise<Todo>;
+  updateTodo: (id: string, updates: Partial<Todo>) => Promise<void>;
+  deleteTodo: (id: string) => Promise<void>;
+  toggleTodoStatus: (id: string) => Promise<void>;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -41,8 +63,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   currentView: 'editor',
   currentDocument: null,
   documents: [],
+  todos: [],
   isSidebarOpen: true,
   isAssistantOpen: false,
+  isTodoPanelOpen: false,
 
   // Actions
   setCurrentView: (view) => set({ currentView: view }),
@@ -52,8 +76,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   setDocuments: (documents) => set({ documents }),
   
   toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
-  
+
   toggleAssistant: () => set((state) => ({ isAssistantOpen: !state.isAssistantOpen })),
+
+  toggleTodoPanel: () => set((state) => ({ isTodoPanelOpen: !state.isTodoPanelOpen })),
 
   // Document actions
   createDocument: async (title, content = '') => {
@@ -97,5 +123,51 @@ export const useAppStore = create<AppState>((set, get) => ({
         content: currentDocument.content,
       });
     }
+  },
+
+  // Todo actions
+  createTodo: async (title, description = '', priority = 'medium' as const) => {
+    const newTodo: Todo = {
+      id: Date.now().toString(),
+      title,
+      description,
+      status: 'pending',
+      priority,
+      created_at: new Date().toISOString(),
+    };
+
+    set((state) => ({
+      todos: [...state.todos, newTodo],
+    }));
+
+    return newTodo;
+  },
+
+  updateTodo: async (id, updates) => {
+    set((state) => ({
+      todos: state.todos.map((todo) =>
+        todo.id === id ? { ...todo, ...updates, updated_at: new Date().toISOString() } : todo
+      ),
+    }));
+  },
+
+  deleteTodo: async (id) => {
+    set((state) => ({
+      todos: state.todos.filter((todo) => todo.id !== id),
+    }));
+  },
+
+  toggleTodoStatus: async (id) => {
+    set((state) => ({
+      todos: state.todos.map((todo) =>
+        todo.id === id
+          ? {
+              ...todo,
+              status: todo.status === 'completed' ? 'pending' : 'completed',
+              updated_at: new Date().toISOString()
+            }
+          : todo
+      ),
+    }));
   },
 }));

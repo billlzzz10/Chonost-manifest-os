@@ -202,20 +202,26 @@ class ComprehensiveTesting:
         """คำนวณคะแนนรวม"""
         total_tests = 0
         passed_tests = 0
-        
-        # Count tests in each category
+
+        def count_tests_recursive(obj):
+            nonlocal total_tests, passed_tests
+            if isinstance(obj, dict):
+                if "status" in obj:
+                    total_tests += 1
+                    if obj.get("status") == "PASS":
+                        passed_tests += 1
+                else:
+                    for value in obj.values():
+                        count_tests_recursive(value)
+            elif isinstance(obj, list):
+                for item in obj:
+                    count_tests_recursive(item)
+
+        # Count tests recursively in all categories
         for category in self.test_results.values():
-            if isinstance(category, dict) and "status" in category:
-                total_tests += 1
-                if category.get("status") == "PASS":
-                    passed_tests += 1
-            elif isinstance(category, list):
-                for test in category:
-                    if isinstance(test, dict) and "status" in test:
-                        total_tests += 1
-                        if test.get("status") == "PASS":
-                            passed_tests += 1
-        
+            if isinstance(category, dict):
+                count_tests_recursive(category)
+
         if total_tests > 0:
             self.test_results["overall_score"] = (passed_tests / total_tests) * 100
         else:

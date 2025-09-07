@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { RotaryTools } from '../RotaryTools/RotaryTools';
 import { useAppStore } from '../../store/appStore';
+import { CheckSquare } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
-  const { currentView, setCurrentView } = useAppStore();
+  const { currentView, setCurrentView, isTodoPanelOpen, toggleTodoPanel } = useAppStore();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const viewOptions = [
@@ -44,7 +45,20 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
           
           <div className="separator w-px h-6 bg-gray-300 mx-2"></div>
-          
+
+          {/* Todo Panel Toggle */}
+          <button
+            onClick={toggleTodoPanel}
+            className={`p-2 rounded-md transition-colors ${
+              isTodoPanelOpen
+                ? 'bg-blue-100 text-blue-600'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+            }`}
+            title="Toggle Todo Panel"
+          >
+            <CheckSquare size={20} />
+          </button>
+
           <RotaryTools />
         </div>
       </header>

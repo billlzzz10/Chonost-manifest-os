@@ -1,0 +1,42 @@
+# ใช้กับสคริปต์สร้าง labels อัตโนมัติ หรือกด import ใน repo
+labels:
+  # --- Type ---
+  - { name: "type:feature",   color: "1f77b4", description: "ฟีเจอร์ใหม่" }
+  - { name: "type:bug",       color: "d62728", description: "บั๊ก/ข้อผิดพลาด" }
+  - { name: "type:chore",     color: "7f7f7f", description: "งานบำรุงรักษา" }
+  - { name: "type:docs",      color: "bcbd22", description: "เอกสาร/คู่มือ" }
+
+  # --- Priority ---
+  - { name: "prio:P0", color: "000000", description: "ฉุกเฉิน หยุดเลือด" }
+  - { name: "prio:P1", color: "ff7f0e", description: "สูง ส่งผลผู้ใช้" }
+  - { name: "prio:P2", color: "2ca02c", description: "กลาง" }
+  - { name: "prio:P3", color: "c7c7c7", description: "ต่ำ" }
+
+  # --- Status ---
+  - { name: "status:todo",        color: "17becf", description: "ยังไม่เริ่ม" }
+  - { name: "status:in-progress", color: "1f77b4", description: "กำลังทำ" }
+  - { name: "status:review",      color: "9467bd", description: "รอรีวิว" }
+  - { name: "status:blocked",     color: "8c564b", description: "ติดขัด/รอตัวแปร" }
+  - { name: "status:done",        color: "2ca02c", description: "เสร็จสิ้น" }
+
+  # --- Area ---
+  - { name: "area:plugin",    color: "e377c2", description: "Obsidian Plugin" }
+  - { name: "area:rag",       color: "7f7f7f", description: "Embedding/RAG" }
+  - { name: "area:dashboard", color: "bcbd22", description: "Visualization" }
+  - { name: "area:infra",     color: "17becf", description: "Infra/Build/CI" }
+  - { name: "area:ux",        color: "9edae5", description: "UI/UX/Theme" }
+  - { name: "area:docs",      color: "dbdb8d", description: "Documentation" }
+
+  # --- Layer ---
+  - { name: "layer:log",       color: "aec7e8", description: "Pyramid: log" }
+  - { name: "layer:record",    color: "ffbb78", description: "Pyramid: record" }
+  - { name: "layer:summary",   color: "98df8a", description: "Pyramid: summary" }
+  - { name: "layer:remind",    color: "c5b0d5", description: "Pyramid: remind" }
+  - { name: "layer:dashboard", color: "c49c94", description: "Pyramid: dashboard" }
+
+  # --- Size ---
+  - { name: "size:XS", color: "f7f7f7", description: "≤ 30 นาที" }
+  - { name: "size:S",  color: "c7c7c7", description: "≤ 1 ชม." }
+  - { name: "size:M",  color: "9e9e9e", description: "≤ 4 ชม." }
+  - { name: "size:L",  color: "616161", description: "≤ 1 วัน" }
+  - { name: "size:XL", color: "212121", description: "> 1 วัน" }

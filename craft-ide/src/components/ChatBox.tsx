@@ -1,11 +1,10 @@
 // src/components/ChatBox.tsx
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { useStore } from "../state/store";
+import { useAppStore as useStore } from "../state/store";
 import { mockStreamChat } from "../lib/mockApi";
 import { CraftFileManager } from "../lib/tauri";
 import { LargeFileHandler } from "../lib/largeFileHandler";
 import { Send, Paperclip, FileText, Trash2 } from "lucide-react";
-
 
 // Constants for file handling
 const MAX_FILE_SIZE_CHARS = LargeFileHandler.getThreshold();
@@ -36,7 +35,7 @@ export default function ChatBox() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [attachedContexts, setAttachedContexts] = useState<AttachedContext[]>(
-    []
+    [],
   );
   const [autoAttachEditor, setAutoAttachEditor] = useState(true);
 
@@ -178,7 +177,7 @@ export default function ChatBox() {
 
       return contextualPrompt;
     },
-    [attachedContexts]
+    [attachedContexts],
   );
 
   const handleSend = async () => {

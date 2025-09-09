@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { useStore } from "../state/store";
+import { useAppStore } from "../state/store";
 import { runPaletteItem } from "../lib/platform";
 
 function Wheel({ side, labels }: { side: "left" | "right"; labels: string[] }) {
-  const items = useStore((s) => (side === "left" ? s.leftPalette : s.rightPalette));
+  const items = useAppStore((s) => (side === "left" ? s.leftPalette : s.rightPalette));
   const [open, setOpen] = useState(false);
   useEffect(() => {
     const h = (e: KeyboardEvent) => {

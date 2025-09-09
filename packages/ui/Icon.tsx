@@ -22,7 +22,10 @@ export const Icon: React.FC<IconProps> = ({
   // "logo:github", "logo:figma", ...
   if (name.startsWith("lucide:")) {
     const key = name.split(":")[1];
-    const Cmp = (Lucide as any)[pascal(key)] || Lucide.HelpCircle;
+    const Cmp = (Lucide as any)[pascal(key)];
+    if (typeof Cmp === "undefined") {
+      return <Lucide.HelpCircle size={size} strokeWidth={strokeWidth} color={color} className={className} />;
+    }
     return <Cmp size={size} strokeWidth={strokeWidth} color={color} className={className} />;
   }
   

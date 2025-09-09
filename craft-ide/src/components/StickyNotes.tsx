@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { useStore } from "../state/store";
+import { useAppStore } from "../state/store";
 
 export default function StickyNotes() {
-  const { notes, updateNote, removeNote, addNote } = useStore();
+  const { notes, updateNote, removeNote, addNote } = useAppStore();
   return (
     <>
       {notes.map((n) => (

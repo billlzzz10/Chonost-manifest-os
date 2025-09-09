@@ -1,7 +1,7 @@
-import { useStore } from "../state/store";
+import { useAppStore } from "../state/store";
 
 export default function TopBar() {
-  const { setMode, tasks, enqueue, updateTask } = useStore();
+  const { setMode, tasks, enqueue, updateTask } = useAppStore();
   const startIngest = () => {
     const id = "ing-" + Date.now();
     enqueue({ id, title: "Index RAG", progress: 0, status: "running" });
@@ -18,17 +18,17 @@ export default function TopBar() {
     <div className="topbar">
       <div className="title">Craft IDE</div>
       <button className="btn" onClick={() => setMode("editor")}>
-        Editor
+        แก้ไข
       </button>
       <button className="btn" onClick={() => setMode("whiteboard")}>
-        Whiteboard
+        ไวท์บอร์ด
       </button>
       <button className="btn" onClick={() => setMode("reading")}>
-        Reading
+        อ่าน
       </button>
       <div style={{ marginLeft: "auto" }} />
       <button className="btn primary" onClick={startIngest}>
-        Index RAG
+        สร้างดัชนี RAG
       </button>
       {tasks.slice(-1).map((t) => (
         <span key={t.id} className="badge" style={{ marginLeft: 8 }}>

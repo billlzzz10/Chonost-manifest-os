@@ -10,20 +10,28 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.61.0",
+    "@google/generative-ai": "^0.21.0",
     "@monaco-editor/react": "^4.7.0",
+    "@tailwindcss/postcss": "^4.1.13",
     "chart.js": "^4.4.0",
     "lucide-react": "^0.263.1",
-    "mermaid": "^10.6.1",
+    "mermaid": "^10.9.4",
     "monaco-editor": "^0.44.0",
+    "openai": "^5.19.1",
     "react": "^18.2.0",
     "react-chartjs-2": "^5.2.0",
     "react-dom": "^18.2.0",
     "react-markdown": "^9.0.1",
     "rehype-highlight": "^7.0.2",
+    "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.1",
+    "remark-mermaid-plugin": "^1.0.2",
     "zustand": "^4.4.1"
   },
   "devDependencies": {
+    "@tauri-apps/api": "^1.5.0",
+    "@tauri-apps/cli": "^1.5.0",
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
@@ -34,6 +42,7 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.3",
     "postcss": "^8.5.6",
+    "prettier": "^3.6.2",
     "tailwindcss": "^4.1.12",
     "typescript": "^5.0.2",
     "vite": "^4.4.5"

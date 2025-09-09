@@ -75,7 +75,7 @@ const RAGDashboard = () => {
 
   const [currentPage, setCurrentPage] = useState("dashboard");
 
-  const StatCard = ({ label, value, icon: Icon, color, change }) => (
+  const StatCard = ({ label, value, icon: Icon, color, change }: { label: string; value: string; icon: any; color: string; change?: string }) => (
     <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
       <div className="flex items-center justify-between">
         <div>
@@ -95,7 +95,7 @@ const RAGDashboard = () => {
     </div>
   );
 
-  const ActivityItem = ({ activity }) => (
+  const ActivityItem = ({ activity }: { activity: any }) => (
     <div className="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg transition-colors">
       <div
         className={`p-2 rounded-lg ${

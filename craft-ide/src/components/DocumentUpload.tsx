@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 
 const DocumentUpload = () => {
-  const [files, setFiles] = useState([]);
+  const [files, setFiles] = useState<any[]>([]);
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const inputRef = useRef(null);
@@ -83,7 +83,7 @@ const DocumentUpload = () => {
     },
   ]);
 
-  const formatFileSize = (bytes) => {
+  const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return "0 Bytes";
     const k = 1024;
     const sizes = ["Bytes", "KB", "MB", "GB"];
@@ -91,8 +91,13 @@ const DocumentUpload = () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
-  const getFileIcon = (type) => {
-    const fileType = supportedTypes[type];
+  // Sanitize file name to prevent XSS
+  const sanitizeFileName = (name: string): string => {
+    return name.replace(/[<>"/\\|?*]/g, '').substring(0, 255);
+  };
+
+  const getFileIcon = (type: string) => {
+    const fileType = supportedTypes[type as keyof typeof supportedTypes];
     if (fileType) {
       const Icon = fileType.icon;
       return <Icon className={`w-8 h-8 ${fileType.color}`} />;
@@ -100,7 +105,7 @@ const DocumentUpload = () => {
     return <File className="w-8 h-8 text-gray-400" />;
   };
 
-  const handleDrag = useCallback((e) => {
+  const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (e.type === "dragenter" || e.type === "dragover") {
@@ -110,7 +115,7 @@ const DocumentUpload = () => {
     }
   }, []);
 
-  const handleDrop = useCallback((e) => {
+  const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
@@ -120,11 +125,12 @@ const DocumentUpload = () => {
     }
   }, []);
 
-  const handleFiles = (fileList) => {
+  const handleFiles = (fileList: FileList) => {
+    const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB limit
     const newFiles = Array.from(fileList).map((file, index) => ({
       id: Date.now() + index,
       file: file,
-      name: file.name,
+      name: sanitizeFileName(file.name),
       size: file.size,
       type: file.type,
       status: "pending", // pending, uploading, processing, completed, error
@@ -133,29 +139,42 @@ const DocumentUpload = () => {
       preview: null,
     }));
 
-    // ตรวจสอบไฟล์ที่รองรับ
+    // ตรวจสอบไฟล์ที่รองรับและขนาดไฟล์
     const validFiles = newFiles.filter(
       (file) =>
-        Object.keys(supportedTypes).includes(file.type) ||
-        file.name.endsWith(".md")
+        file.size <= MAX_FILE_SIZE &&
+        (Object.keys(supportedTypes).includes(file.type) ||
+        file.name.endsWith(".md")),
     );
 
     if (validFiles.length !== newFiles.length) {
-      alert(
-        "บางไฟล์ไม่ได้รับการรองรับ กรุณาเลือกไฟล์ PDF, Word, Excel, CSV, JSON, Text หรือ Markdown"
+      const oversizedFiles = newFiles.filter(file => file.size > MAX_FILE_SIZE);
+      const unsupportedFiles = newFiles.filter(file =>
+        file.size <= MAX_FILE_SIZE &&
+        !Object.keys(supportedTypes).includes(file.type) &&
+        !file.name.endsWith(".md")
       );
+
+      let errorMessage = "";
+      if (oversizedFiles.length > 0) {
+        errorMessage += `ไฟล์บางไฟล์มีขนาดใหญ่เกิน 50MB: ${oversizedFiles.map(f => f.name).join(", ")}\n`;
+      }
+      if (unsupportedFiles.length > 0) {
+        errorMessage += `ไฟล์บางไฟล์ไม่ได้รับการรองรับ: ${unsupportedFiles.map(f => f.name).join(", ")}`;
+      }
+      alert(errorMessage || "บางไฟล์ไม่ได้รับการรองรับ");
     }
 
     setFiles((prev) => [...prev, ...validFiles]);
   };
 
-  const handleFileInput = (e) => {
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       handleFiles(e.target.files);
     }
   };
 
-  const removeFile = (id) => {
+  const removeFile = (id: number) => {
     setFiles((prev) => prev.filter((file) => file.id !== id));
   };
 
@@ -167,23 +186,25 @@ const DocumentUpload = () => {
         // อัปเดตสถานะเป็น uploading
         setFiles((prev) =>
           prev.map((f) =>
-            f.id === file.id ? { ...f, status: "uploading" } : f
-          )
+            f.id === file.id ? { ...f, status: "uploading" } : f,
+          ),
         );
 
         // จำลองการอัปโหลด
         for (let i = 0; i <= 100; i += 10) {
           await new Promise((resolve) => setTimeout(resolve, 100));
           setFiles((prev) =>
-            prev.map((f) => (f.id === file.id ? { ...f, progress: i } : f))
+            prev.map((f) => (f.id === file.id ? { ...f, progress: i } : f)),
           );
         }
 
         // เปลี่ยนเป็น processing
         setFiles((prev) =>
           prev.map((f) =>
-            f.id === file.id ? { ...f, status: "processing", progress: 100 } : f
-          )
+            f.id === file.id
+              ? { ...f, status: "processing", progress: 100 }
+              : f,
+          ),
         );
 
         // จำลองการประมวลผล
@@ -193,8 +214,10 @@ const DocumentUpload = () => {
           Math.floor(file.size / 1000) + Math.floor(Math.random() * 20);
         setFiles((prev) =>
           prev.map((f) =>
-            f.id === file.id ? { ...f, status: "completed", chunks: chunks } : f
-          )
+            f.id === file.id
+              ? { ...f, status: "completed", chunks: chunks }
+              : f,
+          ),
         );
       }
     }
@@ -202,7 +225,7 @@ const DocumentUpload = () => {
     setUploading(false);
   };
 
-  const getStatusIcon = (status) => {
+  const getStatusIcon = (status: string) => {
     switch (status) {
       case "completed":
         return <Check className="w-5 h-5 text-green-500" />;
@@ -218,7 +241,7 @@ const DocumentUpload = () => {
     }
   };
 
-  const getStatusText = (status) => {
+  const getStatusText = (status: string) => {
     switch (status) {
       case "completed":
         return "ประมวลผลสำเร็จ";
@@ -233,7 +256,7 @@ const DocumentUpload = () => {
     }
   };
 
-  const deleteExistingFile = (id) => {
+  const deleteExistingFile = (id: number) => {
     setExistingFiles((prev) => prev.filter((file) => file.id !== id));
   };
 
@@ -285,7 +308,11 @@ const DocumentUpload = () => {
                   <p className="text-gray-600 mb-4">
                     หรือ{" "}
                     <button
-                      onClick={() => inputRef.current?.click()}
+                      onClick={() =>
+                        (
+                          inputRef.current as unknown as HTMLInputElement
+                        )?.click()
+                      }
                       className="text-blue-600 hover:text-blue-700 font-medium"
                     >
                       เลือกไฟล์จากเครื่อง
@@ -392,7 +419,7 @@ const DocumentUpload = () => {
                   <span className="text-gray-600">ขนาดรวม</span>
                   <span className="font-semibold">
                     {formatFileSize(
-                      files.reduce((total, file) => total + file.size, 0)
+                      files.reduce((total, file) => total + file.size, 0),
                     )}
                   </span>
                 </div>
@@ -486,7 +513,9 @@ const DocumentUpload = () => {
                                 {file.name}
                               </div>
                               <div className="text-sm text-gray-500">
-                                {supportedTypes[file.type]?.name || "Unknown"}
+                                {supportedTypes[
+                                  file.type as keyof typeof supportedTypes
+                                ]?.name || "Unknown"}
                               </div>
                             </div>
                           </div>

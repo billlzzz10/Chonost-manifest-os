@@ -4,12 +4,14 @@
   "description": "A comprehensive writing platform for authors to manage characters, stories, and creative elements",
   "main": "index.js",
   "scripts": {
-    "dev": "cd packages/frontend && npm run dev",
-    "build": "cd packages/frontend && npm run build",
-    "tauri": "cd packages/frontend && npm run tauri",
-    "tauri:dev": "cd packages/frontend && npm run tauri:dev",
-    "tauri:build": "cd packages/frontend && npm run tauri:build",
-    "test": "echo 'Tests passed'"
+    "dev": "cd apps/frontend/chat-interface && npm run dev",
+    "build": "cd apps/frontend/chat-interface && npm run build",
+    "tauri": "cd apps/frontend/chat-interface && npm run tauri",
+    "tauri:dev": "cd apps/frontend/chat-interface && npm run tauri:dev",
+    "tauri:build": "cd apps/frontend/chat-interface && npm run tauri:build",
+    "test": "cd scripts && python -m pytest",
+    "dev:web": "cd apps/frontend/web && npm run dev",
+    "dev:chat": "cd apps/frontend/chat-interface && npm run dev"
   },
   "keywords": [
     "writing",
@@ -36,10 +38,38 @@
     "@iconify-json/devicon": "^1.2.42",
     "@iconify-json/noto": "^1.2.6",
     "@iconify-json/skill-icons": "^1.2.3",
-    "@iconify-json/token-branded": "^1.2.26"
+    "@iconify-json/token-branded": "^1.2.26",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0"
   },
   "dependencies": {
     "@iconify/react": "^6.0.0",
-    "mermaid": "^11.10.1"
+    "mermaid": "^11.10.1",
+    "openai": "^4.26.0",
+    "dotenv": "^16.3.1"
+  },
+  "scripts": {
+    "dev": "cd apps/frontend/chat-interface && npm run dev",
+    "build": "cd apps/frontend/chat-interface && npm run build",
+    "tauri": "cd apps/frontend/chat-interface && npm run tauri",
+    "tauri:dev": "cd apps/frontend/chat-interface && npm run tauri:dev",
+    "tauri:build": "cd apps/frontend/chat-interface && npm run tauri:build",
+    "test": "cd scripts && python -m pytest",
+    "dev:web": "cd apps/frontend/web && npm run dev",
+    "dev:chat": "cd apps/frontend/chat-interface && npm run dev",
+    "prepare": "husky install",
+    "ai:commit": "node scripts/ai-commit.js commit",
+    "ai:version": "node scripts/ai-commit.js version",
+    "ai:release": "node scripts/ai-commit.js release",
+    "commit": "git-cz"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
   }
 }

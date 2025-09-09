@@ -1,3 +1,170 @@
 {
-  "mcpServers": {}
+  "mcpServers": {
+    "codacy": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@codacy/codacy-mcp@latest"
+      ],
+      "env": {
+        "CODACY_ACCOUNT_TOKEN": "Nzl6Dgv4O3A63GDNMZBX"
+      }
+    },
+    "github": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "gallery": true
+    },
+    "notion": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@notionhq/notion-mcp-server@latest"
+      ],
+      "env": {
+        "OPENAPI_MCP_HEADERS": "{\"Authorization\": \"Bearer ${input:NOTION_TOKEN}\", \"Notion-Version\": \"2022-06-28\" }"
+      },
+      "gallery": true
+    },
+    "prisma-postgres": {
+      "type": "http",
+      "url": "https://mcp.prisma.io/mcp",
+      "gallery": true,
+      "vscodeMapping": {
+        "serverSampling": {
+          "allowedModels": [
+            "copilot/gpt-4.1",
+            "copilot/claude-3.5-sonnet",
+            "copilot/gemini-2.0-flash-001",
+            "copilot/gpt-3.5-turbo",
+            "copilot/gpt-4",
+            "copilot/gpt-4-0125-preview",
+            "copilot/gpt-4o",
+            "copilot/gpt-4o-mini",
+            "copilot/gpt-5-mini",
+            "copilot/o3-mini"
+          ]
+        },
+        "autostart": "newAndOutdated"
+      }
+    },
+    "huggingface": {
+      "type": "http",
+      "url": "https://hf.co/mcp",
+      "gallery": true
+    },
+    "mongodb": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "mongodb-mcp-server@latest"
+      ],
+      "gallery": true
+    },
+    "markitdown": {
+      "command": "uvx",
+      "args": [
+        "markitdown-mcp"
+      ],
+      "type": "stdio"
+    },
+    "azure": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@azure/mcp@latest",
+        "server",
+        "start"
+      ],
+      "type": "stdio"
+    },
+    "azure-devops": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@azure-devops/mcp",
+        "${input:ado_org}"
+      ],
+      "type": "stdio"
+    },
+    "memory": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ],
+      "env": {
+        "MEMORY_FILE_PATH": "${input:memory_file_path}"
+      },
+      "type": "stdio"
+    },
+    "sequentialthinking": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ]
+    }
+  },
+  "inputs": [
+    {
+      "id": "NOTION_TOKEN",
+      "type": "promptString",
+      "description": "Notion API Token (https://www.notion.so/profile/integrations)",
+      "password": true
+    },
+    {
+      "id": "ado_org",
+      "type": "promptString",
+      "description": "Azure DevOps organization name (e.g. 'contoso')",
+      "password": false
+    },
+    {
+      "id": "memory_file_path",
+      "type": "promptString",
+      "description": "Path to the memory storage file (optional)",
+      "password": false
+    }
+  ],
+  "extensionIntegrations": {
+    "githubCopilot": {
+      "chat": {
+        "followUps": "always",
+        "scopeSelection": true,
+        "terminalChatLocation": "terminal",
+        "codesearch": {
+          "enabled": true
+        },
+        "agent": {
+          "thinkingTool": true
+        }
+      },
+      "nextEditSuggestions": {
+        "enabled": true,
+        "fixes": true
+      }
+    },
+    "kiloCode": {
+      "allowedCommands": [
+        "git log",
+        "git diff",
+        "git show",
+        "curl http://localhost:8002/api/knowledge/graph",
+        "curl"
+      ],
+      "deniedCommands": []
+    },
+    "continueDev": {
+      "defaultFormatter": true
+    }
+  },
+  "projectMapping": {
+    "autostart": "newAndOutdated",
+    "globalInstructions": [
+      "- Use Azure tools for Azure-related requests",
+      "- Follow Azure best practices for code generation and deployment"
+    ]
+  }
 }

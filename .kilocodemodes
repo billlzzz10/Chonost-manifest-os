@@ -12,4 +12,4 @@ customModes:
       - mcp
       - edit
     source: project
-    description: ใช้เมื่อโปรเจ้คต้องการให้รีวิว
+    description: ใช้เมื่อผู้ใช้ต้องการให้รีวิวโปรเจ็คฃ

@@ -1,15 +1,20 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import remarkMermaid from "remark-mermaid-plugin";
 import rehypeHighlight from "rehype-highlight";
-import { useStore } from "../state/store";
+import rehypeRaw from "rehype-raw";
 
-export default function ReadingView() {
-  const { content } = useStore();
+interface ReadingViewProps {
+  content: string;
+}
+
+export default function ReadingView({ content }: ReadingViewProps) {
+
   return (
     <div className="reading">
       <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeHighlight]}
+        remarkPlugins={[remarkGfm, remarkMermaid as any]}
+        rehypePlugins={[rehypeHighlight, rehypeRaw]}
       >
         {content}
       </ReactMarkdown>

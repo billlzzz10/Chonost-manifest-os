@@ -1,0 +1,7 @@
+{
+  "dataset_name": "planning_workflow_dataset",
+  "description": "Dataset for AI planning and workflow management",
+  "version": "1.0.0",
+  "created_date": "2025-08-31T13:33:09.496280",
+  "planning_entries": []
+}

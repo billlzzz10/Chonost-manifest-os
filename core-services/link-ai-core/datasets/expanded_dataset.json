@@ -1,0 +1,510 @@
+{
+  "metadata": {
+    "generated_at": "2025-08-21T02:28:01.130482",
+    "total_samples": 42,
+    "base_samples": 30,
+    "variations_added": 12,
+    "description": "Expanded dataset with variations"
+  },
+  "dataset": [
+    {
+      "instruction": "สรุปข้อมูลโฟลเดอร์นี้ให้ที",
+      "correct_action": {
+        "action": "query_function",
+        "function": "get_directory_summary",
+        "session_id": "scan_xxx",
+        "args": []
+      },
+      "category": "basic",
+      "description": "ขอสรุปข้อมูลพื้นฐานของโฟลเดอร์"
+    },
+    {
+      "instruction": "มีไฟล์ทั้งหมดกี่ไฟล์ในโฟลเดอร์นี้",
+      "correct_action": {
+        "action": "query_sql",
+        "sql": "SELECT COUNT(*) as total_files FROM files WHERE session_id = ?",
+        "params": [
+          "scan_xxx"
+        ]
+      },
+      "category": "basic",
+      "description": "นับจำนวนไฟล์ทั้งหมด"
+    },
+    {
+      "instruction": "ขนาดรวมของโฟลเดอร์เท่าไหร่",
+      "correct_action": {
+        "action": "query_sql",
+        "sql": "SELECT SUM(file_size) as total_size FROM files WHERE session_id = ?",
+        "params": [
+          "scan_xxx"
+        ]
+      },
+      "category": "basic",
+      "description": "คำนวณขนาดรวมของโฟลเดอร์"
+    },
+    {
+      "instruction": "แสดงไฟล์ที่ใหญ่ที่สุด 10 ไฟล์",
+      "correct_action": {
+        "action": "query_function",
+        "function": "get_largest_files",
+        "session_id": "scan_xxx",
+        "args": [
+          10
+        ]
+      },
+      "category": "basic",
+      "description": "แสดงไฟล์ขนาดใหญ่ที่สุด"
+    },
+    {
+      "instruction": "มีไฟล์ซ้ำกันไหม",
+      "correct_action": {
+        "action": "query_function",
+        "function": "get_duplicate_files",
+        "session_id": "scan_xxx",
+        "args": []
+      },
+      "category": "basic",
+      "description": "ตรวจสอบไฟล์ซ้ำ"
+    },
+    {
+      "instruction": "หาไฟล์เอกสาร Word ที่ใหญ่ที่สุด 5 ไฟล์ให้หน่อย",
+      "correct_action": {
+        "action": "query_sql",
+        "sql": "SELECT file_name, file_path, file_size FROM files WHERE session_id = ? AND file_extension = '.docx' ORDER BY file_size DESC LIMIT 5",
+        "params": [
+          "scan_xxx"
+        ]
+      },
+      "category": "file_search",
+      "description": "ค้นหาไฟล์ Word ขนาดใหญ่"
+    },
+    {
+      "instruction": "แสดงไฟล์รูปภาพทั้งหมด",
+      "correct_action": {
+        "action": "query_sql",
+        "sql": "SELECT file_name, file_path, file_size FROM files WHERE session_id = ? AND mime_type LIKE 'image/%'",
+        "params": [
+          "scan_xxx"
+        ]
+      },
+      "category": "file_search",
+      "description": "ค้นหาไฟล์รูปภาพ"
+    },
+    {
+      "instruction": "มีไฟล์ PDF กี่ไฟล์ในระบบ",
+      "correct_action": {
+        "action": "query_sql",
+        "sql": "SELECT COUNT(*) as pdf_count FROM files WHERE session_id = ? AND file_extension = '.pdf'",
+        "params": [
+          "scan_xxx"
+        ]
+      },
+      "category": "file_search",
+      "description": "นับไฟล์ PDF"
+    },
+    {
+      "instruction": "แสดงไฟล์ทั้งหมดที่ชื่อมีคำว่า 'report' และเป็นไฟล์ PDF",
+      "correct_action": {
+        "action": "query_sql",
+        "sql": "SELECT file_path FROM files WHERE session_id = ? AND file_name LIKE '%report%' AND file_extension = '.pdf'",
+        "params": [
+          "scan_xxx"
+        ]
+      },
+      "category": "file_search",
+      "description": "ค้นหาไฟล์ PDF ที่มีคำว่า report"
+    },
+    {
+      "instruction": "หาไฟล์โค้ด Python ที่ใหญ่ที่สุด",
+      "correct_action": {
+        "action": "query_sql",
+        "sql": "SELECT file_name, file_path, file_size FROM files WHERE session_id = ? AND file_extension = '.py' ORDER BY file_size DESC LIMIT 1",
+        "params": [
+          "scan_xxx"
+        ]
+      },
+      "category": "file_search",
+      "description": "ค้นหาไฟล์ Python ขนาดใหญ่ที่สุด"
+    },
+    {
+      "instruction": "แสดงไฟล์ JavaScript ทั้งหมด",
+      "correct_action": {
+        "action": "query_function",
+        "function": "find_files_by_extension",
+        "session_id": "scan_xxx",
+        "args": [
+          ".js"
+        ]
+      },
+      "category": "file_search",
+      "description": "ค้นหาไฟล์ JavaScript"
+    },
+    {
+      "instruction": "ไฟล์ไหนที่ซ้ำกันแล้วเปลืองเนื้อที่มากที่สุด",
+      "correct_action": {
+        "action": "query_function",
+        "function": "get_duplicate_files",
+        "session_id": "scan_xxx",
+        "args": []
+      },
+      "category": "file_search",
+      "description": "ตรวจสอบไฟล์ซ้ำที่เปลืองพื้นที่"
+    },
+    {
+      "instruction": "วิเคราะห์ประเภทไฟล์ที่พบในโฟลเดอร์",
+      "correct_action": {
+        "action": "query_sql",
+        "sql": "SELECT file_extension, COUNT(*) as count, SUM(file_size) as total_size FROM files WHERE session_id = ? GROUP BY file_extension ORDER BY count DESC",
+        "params": [
+          "scan_xxx"
+        ]
+      },
+      "category": "analysis",
+      "description": "วิเคราะห์ประเภทไฟล์"
+    },
+    {
+      "instruction": "ไฟล์ประเภทไหนที่ใช้พื้นที่มากที่สุด",
+      "correct_action": {
+        "action": "query_sql",
+        "sql": "SELECT file_extension, SUM(file_size) as total_size FROM files WHERE session_id = ? GROUP BY file_extension ORDER BY total_size DESC LIMIT 5",
+        "params": [
+          "scan_xxx"
+        ]
+      },
+      "category": "analysis",
+      "description": "วิเคราะห์ไฟล์ที่ใช้พื้นที่มาก"
+    },
+    {
+      "instruction": "มีไฟล์ที่ซ่อนอยู่กี่ไฟล์",
+      "correct_action": {
+        "action": "query_sql",
+        "sql": "SELECT COUNT(*) as hidden_count FROM files WHERE session_id = ? AND is_hidden = 1",
+        "params": [
+          "scan_xxx"
+        ]
+      },
+      "category": "analysis",
+      "description": "นับไฟล์ซ่อน"
+    },
+    {
+      "instruction": "ไฟล์ไหนที่เก่าที่สุด",
+      "correct_action": {
+        "action": "query_sql",
+        "sql": "SELECT file_name, file_path, created_date FROM files WHERE session_id = ? ORDER BY created_date ASC LIMIT 10",
+        "params": [
+          "scan_xxx"
+        ]
+      },
+      "category": "analysis",
+      "description": "หาไฟล์เก่าที่สุด"
+    },
+    {
+      "instruction": "ไฟล์ไหนที่แก้ไขล่าสุด",
+      "correct_action": {
+        "action": "query_sql",
+        "sql": "SELECT file_name, file_path, modified_date FROM files WHERE session_id = ? ORDER BY modified_date DESC LIMIT 10",
+        "params": [
+          "scan_xxx"
+        ]
+      },
+      "category": "analysis",
+      "description": "หาไฟล์ที่แก้ไขล่าสุด"
+    },
+    {
+      "instruction": "แสดงไฟล์ที่มีขนาดมากกว่า 100MB",
+      "correct_action": {
+        "action": "query_sql",
+        "sql": "SELECT file_name, file_path, file_size FROM files WHERE session_id = ? AND file_size > 104857600 ORDER BY file_size DESC",
+        "params": [
+          "scan_xxx"
+        ]
+      },
+      "category": "sql",
+      "description": "ค้นหาไฟล์ขนาดใหญ่"
+    },
+    {
+      "instruction": "ไฟล์รูปภาพที่มีขนาดมากกว่า 10MB มีอะไรบ้าง",
+      "correct_action": {
+        "action": "query_sql",
+        "sql": "SELECT file_name, file_path, file_size FROM files WHERE session_id = ? AND mime_type LIKE 'image/%' AND file_size > 10485760",
+        "params": [
+          "scan_xxx"
+        ]
+      },
+      "category": "sql",
+      "description": "ค้นหารูปภาพขนาดใหญ่"
+    },
+    {
+      "instruction": "แสดงไฟล์ที่สร้างในเดือนนี้",
+      "correct_action": {
+        "action": "query_sql",
+        "sql": "SELECT file_name, file_path, created_date FROM files WHERE session_id = ? AND created_date >= date('now', 'start of month')",
+        "params": [
+          "scan_xxx"
+        ]
+      },
+      "category": "sql",
+      "description": "หาไฟล์ที่สร้างในเดือนปัจจุบัน"
+    },
+    {
+      "instruction": "ไฟล์ที่แก้ไขในสัปดาห์นี้มีอะไรบ้าง",
+      "correct_action": {
+        "action": "query_sql",
+        "sql": "SELECT file_name, file_path, modified_date FROM files WHERE session_id = ? AND modified_date >= date('now', '-7 days')",
+        "params": [
+          "scan_xxx"
+        ]
+      },
+      "category": "sql",
+      "description": "หาไฟล์ที่แก้ไขในสัปดาห์นี้"
+    },
+    {
+      "instruction": "แสดงไฟล์ที่ไม่มีนามสกุล",
+      "correct_action": {
+        "action": "query_sql",
+        "sql": "SELECT file_name, file_path FROM files WHERE session_id = ? AND (file_extension = '' OR file_extension IS NULL)",
+        "params": [
+          "scan_xxx"
+        ]
+      },
+      "category": "sql",
+      "description": "หาไฟล์ที่ไม่มีนามสกุล"
+    },
+    {
+      "instruction": "ไฟล์ไหนที่ควรลบเพื่อประหยัดพื้นที่",
+      "correct_action": {
+        "action": "query_sql",
+        "sql": "SELECT file_name, file_path, file_size FROM files WHERE session_id = ? AND file_size > 52428800 ORDER BY file_size DESC LIMIT 20",
+        "params": [
+          "scan_xxx"
+        ]
+      },
+      "category": "management",
+      "description": "หาไฟล์ที่ควรลบ"
+    },
+    {
+      "instruction": "มีไฟล์ชั่วคราวอะไรบ้าง",
+      "correct_action": {
+        "action": "query_sql",
+        "sql": "SELECT file_name, file_path FROM files WHERE session_id = ? AND (file_name LIKE '%.tmp' OR file_name LIKE 'temp%' OR file_name LIKE '%cache%')",
+        "params": [
+          "scan_xxx"
+        ]
+      },
+      "category": "management",
+      "description": "หาไฟล์ชั่วคราว"
+    },
+    {
+      "instruction": "ไฟล์ไหนที่เข้าถึงล่าสุด",
+      "correct_action": {
+        "action": "query_sql",
+        "sql": "SELECT file_name, file_path, accessed_date FROM files WHERE session_id = ? ORDER BY accessed_date DESC LIMIT 10",
+        "params": [
+          "scan_xxx"
+        ]
+      },
+      "category": "management",
+      "description": "หาไฟล์ที่เข้าถึงล่าสุด"
+    },
+    {
+      "instruction": "แสดงไฟล์ที่อาจเป็นไวรัส",
+      "correct_action": {
+        "action": "query_sql",
+        "sql": "SELECT file_name, file_path FROM files WHERE session_id = ? AND file_extension IN ('.exe', '.bat', '.cmd', '.scr', '.pif')",
+        "params": [
+          "scan_xxx"
+        ]
+      },
+      "category": "management",
+      "description": "หาไฟล์ที่อาจเป็นไวรัส"
+    },
+    {
+      "instruction": "สร้างรายงานสรุปโฟลเดอร์",
+      "correct_action": {
+        "action": "query_function",
+        "function": "get_directory_summary",
+        "session_id": "scan_xxx",
+        "args": []
+      },
+      "category": "reporting",
+      "description": "สร้างรายงานสรุป"
+    },
+    {
+      "instruction": "รายงานไฟล์ที่ใหญ่ที่สุด 20 ไฟล์",
+      "correct_action": {
+        "action": "query_function",
+        "function": "get_largest_files",
+        "session_id": "scan_xxx",
+        "args": [
+          20
+        ]
+      },
+      "category": "reporting",
+      "description": "รายงานไฟล์ขนาดใหญ่"
+    },
+    {
+      "instruction": "รายงานไฟล์ซ้ำทั้งหมด",
+      "correct_action": {
+        "action": "query_function",
+        "function": "get_duplicate_files",
+        "session_id": "scan_xxx",
+        "args": []
+      },
+      "category": "reporting",
+      "description": "รายงานไฟล์ซ้ำ"
+    },
+    {
+      "instruction": "สถิติประเภทไฟล์",
+      "correct_action": {
+        "action": "query_sql",
+        "sql": "SELECT file_extension, COUNT(*) as count, AVG(file_size) as avg_size FROM files WHERE session_id = ? GROUP BY file_extension ORDER BY count DESC",
+        "params": [
+          "scan_xxx"
+        ]
+      },
+      "category": "reporting",
+      "description": "สถิติประเภทไฟล์"
+    },
+    {
+      "instruction": "สรุปโฟลเดอร์โฟลเดอร์นี้ให้ที",
+      "correct_action": {
+        "action": "query_function",
+        "function": "get_directory_summary",
+        "session_id": "scan_xxx",
+        "args": []
+      },
+      "category": "variation",
+      "description": "ขอสรุปข้อมูลพื้นฐานของโฟลเดอร์"
+    },
+    {
+      "instruction": "ข้อมูลสรุปโฟลเดอร์นี้ให้ที",
+      "correct_action": {
+        "action": "query_function",
+        "function": "get_directory_summary",
+        "session_id": "scan_xxx",
+        "args": []
+      },
+      "category": "variation",
+      "description": "ขอสรุปข้อมูลพื้นฐานของโฟลเดอร์"
+    },
+    {
+      "instruction": "รายงานสรุปโฟลเดอร์นี้ให้ที",
+      "correct_action": {
+        "action": "query_function",
+        "function": "get_directory_summary",
+        "session_id": "scan_xxx",
+        "args": []
+      },
+      "category": "variation",
+      "description": "ขอสรุปข้อมูลพื้นฐานของโฟลเดอร์"
+    },
+    {
+      "instruction": "แสดงรูปภาพทั้งหมดทั้งหมด",
+      "correct_action": {
+        "action": "query_sql",
+        "sql": "SELECT file_name, file_path, file_size FROM files WHERE session_id = ? AND mime_type LIKE 'image/%'",
+        "params": [
+          "scan_xxx"
+        ]
+      },
+      "category": "variation",
+      "description": "ค้นหาไฟล์รูปภาพ"
+    },
+    {
+      "instruction": "รูปภาพทั้งหมดที่มีขนาดมากกว่า 10MB มีอะไรบ้าง",
+      "correct_action": {
+        "action": "query_sql",
+        "sql": "SELECT file_name, file_path, file_size FROM files WHERE session_id = ? AND mime_type LIKE 'image/%' AND file_size > 10485760",
+        "params": [
+          "scan_xxx"
+        ]
+      },
+      "category": "variation",
+      "description": "ค้นหารูปภาพขนาดใหญ่"
+    },
+    {
+      "instruction": "แสดงไฟล์รูปทั้งหมด",
+      "correct_action": {
+        "action": "query_sql",
+        "sql": "SELECT file_name, file_path, file_size FROM files WHERE session_id = ? AND mime_type LIKE 'image/%'",
+        "params": [
+          "scan_xxx"
+        ]
+      },
+      "category": "variation",
+      "description": "ค้นหาไฟล์รูปภาพ"
+    },
+    {
+      "instruction": "ไฟล์รูปที่มีขนาดมากกว่า 10MB มีอะไรบ้าง",
+      "correct_action": {
+        "action": "query_sql",
+        "sql": "SELECT file_name, file_path, file_size FROM files WHERE session_id = ? AND mime_type LIKE 'image/%' AND file_size > 10485760",
+        "params": [
+          "scan_xxx"
+        ]
+      },
+      "category": "variation",
+      "description": "ค้นหารูปภาพขนาดใหญ่"
+    },
+    {
+      "instruction": "แสดงรูปมีอะไรบ้างทั้งหมด",
+      "correct_action": {
+        "action": "query_sql",
+        "sql": "SELECT file_name, file_path, file_size FROM files WHERE session_id = ? AND mime_type LIKE 'image/%'",
+        "params": [
+          "scan_xxx"
+        ]
+      },
+      "category": "variation",
+      "description": "ค้นหาไฟล์รูปภาพ"
+    },
+    {
+      "instruction": "รูปมีอะไรบ้างที่มีขนาดมากกว่า 10MB มีอะไรบ้าง",
+      "correct_action": {
+        "action": "query_sql",
+        "sql": "SELECT file_name, file_path, file_size FROM files WHERE session_id = ? AND mime_type LIKE 'image/%' AND file_size > 10485760",
+        "params": [
+          "scan_xxx"
+        ]
+      },
+      "category": "variation",
+      "description": "ค้นหารูปภาพขนาดใหญ่"
+    },
+    {
+      "instruction": "หาไฟล์ Word Word ที่ใหญ่ที่สุด 5 ไฟล์ให้หน่อย",
+      "correct_action": {
+        "action": "query_sql",
+        "sql": "SELECT file_name, file_path, file_size FROM files WHERE session_id = ? AND file_extension = '.docx' ORDER BY file_size DESC LIMIT 5",
+        "params": [
+          "scan_xxx"
+        ]
+      },
+      "category": "variation",
+      "description": "ค้นหาไฟล์ Word ขนาดใหญ่"
+    },
+    {
+      "instruction": "หาเอกสารทั้งหมด Word ที่ใหญ่ที่สุด 5 ไฟล์ให้หน่อย",
+      "correct_action": {
+        "action": "query_sql",
+        "sql": "SELECT file_name, file_path, file_size FROM files WHERE session_id = ? AND file_extension = '.docx' ORDER BY file_size DESC LIMIT 5",
+        "params": [
+          "scan_xxx"
+        ]
+      },
+      "category": "variation",
+      "description": "ค้นหาไฟล์ Word ขนาดใหญ่"
+    },
+    {
+      "instruction": "หาไฟล์ .docx Word ที่ใหญ่ที่สุด 5 ไฟล์ให้หน่อย",
+      "correct_action": {
+        "action": "query_sql",
+        "sql": "SELECT file_name, file_path, file_size FROM files WHERE session_id = ? AND file_extension = '.docx' ORDER BY file_size DESC LIMIT 5",
+        "params": [
+          "scan_xxx"
+        ]
+      },
+      "category": "variation",
+      "description": "ค้นหาไฟล์ Word ขนาดใหญ่"
+    }
+  ]
+}

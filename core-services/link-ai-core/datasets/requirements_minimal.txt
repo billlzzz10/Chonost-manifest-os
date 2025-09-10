@@ -1,0 +1,19 @@
+# 🚀 Minimal Requirements for Universal File System MCP Server
+# Dependencies ที่จำเป็นสำหรับการทำงานพื้นฐาน
+
+# Core Dependencies
+rich>=14.0.0
+python-magic>=0.4.14
+Pillow>=11.0.0
+
+# File Processing
+pathlib>=1.0.1
+
+# Basic HTTP
+requests>=2.31.0
+
+# JSON Processing
+pydantic>=2.5.0
+
+# Logging
+structlog>=23.2.0

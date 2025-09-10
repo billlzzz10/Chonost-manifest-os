@@ -1,0 +1,44 @@
+[
+  {
+    "type": "function",
+    "function": {
+      "name": "list_directory",
+      "description": "แสดงรายการไฟล์และโฟลเดอร์",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "เส้นทาง"
+          }
+        },
+        "required": [
+          "path"
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "run_code",
+      "description": "รันโค้ด Python",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "โค้ด"
+          },
+          "language": {
+            "type": "string",
+            "description": "ภาษา (default: python)"
+          }
+        },
+        "required": [
+          "code"
+        ]
+      }
+    }
+  }
+]

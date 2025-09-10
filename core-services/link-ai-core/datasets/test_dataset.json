@@ -1,0 +1,81 @@
+{
+  "metadata": {
+    "generated_at": "2025-08-21T02:28:01.133496",
+    "total_samples": 6,
+    "source": "file_system_training_dataset.json",
+    "description": "Test dataset for File System MCP Tool"
+  },
+  "dataset": [
+    {
+      "instruction": "ไฟล์ประเภทไหนที่ใช้พื้นที่มากที่สุด",
+      "correct_action": {
+        "action": "query_sql",
+        "sql": "SELECT file_extension, SUM(file_size) as total_size FROM files WHERE session_id = ? GROUP BY file_extension ORDER BY total_size DESC LIMIT 5",
+        "params": [
+          "scan_xxx"
+        ]
+      },
+      "category": "analysis",
+      "description": "วิเคราะห์ไฟล์ที่ใช้พื้นที่มาก"
+    },
+    {
+      "instruction": "แสดงไฟล์ที่อาจเป็นไวรัส",
+      "correct_action": {
+        "action": "query_sql",
+        "sql": "SELECT file_name, file_path FROM files WHERE session_id = ? AND file_extension IN ('.exe', '.bat', '.cmd', '.scr', '.pif')",
+        "params": [
+          "scan_xxx"
+        ]
+      },
+      "category": "management",
+      "description": "หาไฟล์ที่อาจเป็นไวรัส"
+    },
+    {
+      "instruction": "หาไฟล์เอกสาร Word ที่ใหญ่ที่สุด 5 ไฟล์ให้หน่อย",
+      "correct_action": {
+        "action": "query_sql",
+        "sql": "SELECT file_name, file_path, file_size FROM files WHERE session_id = ? AND file_extension = '.docx' ORDER BY file_size DESC LIMIT 5",
+        "params": [
+          "scan_xxx"
+        ]
+      },
+      "category": "file_search",
+      "description": "ค้นหาไฟล์ Word ขนาดใหญ่"
+    },
+    {
+      "instruction": "แสดงไฟล์ที่ไม่มีนามสกุล",
+      "correct_action": {
+        "action": "query_sql",
+        "sql": "SELECT file_name, file_path FROM files WHERE session_id = ? AND (file_extension = '' OR file_extension IS NULL)",
+        "params": [
+          "scan_xxx"
+        ]
+      },
+      "category": "sql",
+      "description": "หาไฟล์ที่ไม่มีนามสกุล"
+    },
+    {
+      "instruction": "ไฟล์รูปภาพที่มีขนาดมากกว่า 10MB มีอะไรบ้าง",
+      "correct_action": {
+        "action": "query_sql",
+        "sql": "SELECT file_name, file_path, file_size FROM files WHERE session_id = ? AND mime_type LIKE 'image/%' AND file_size > 10485760",
+        "params": [
+          "scan_xxx"
+        ]
+      },
+      "category": "sql",
+      "description": "ค้นหารูปภาพขนาดใหญ่"
+    },
+    {
+      "instruction": "สรุปข้อมูลโฟลเดอร์นี้ให้ที",
+      "correct_action": {
+        "action": "query_function",
+        "function": "get_directory_summary",
+        "session_id": "scan_xxx",
+        "args": []
+      },
+      "category": "basic",
+      "description": "ขอสรุปข้อมูลพื้นฐานของโฟลเดอร์"
+    }
+  ]
+}

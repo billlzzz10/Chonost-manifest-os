@@ -1,5 +1,5 @@
 {
-  "package": { "productName": "Craft IDE", "version": "0.1.0" },
+  "package": { "productName": "Craft IDE", "version": "0.1.0", "identifier": "com.craft-ide.app" },
   "tauri": {
     "windows": [{ "title": "Craft IDE", "width": 1280, "height": 800 }],
     "bundle": { "active": false },

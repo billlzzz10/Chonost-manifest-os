@@ -1,5 +1,6 @@
 // src/components/MonacoEditor.tsx
 import { useEffect, useRef } from "react";
+import { invoke } from "@tauri-apps/api/tauri";
 import Editor from "@monaco-editor/react";
 
 interface MonacoEditorProps {
@@ -80,9 +81,18 @@ export default function MonacoEditor({
     });
 
     // Add custom keybindings
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
-      // TODO: Implement save functionality
-      console.log("Save triggered");
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, async () => {
+      // Get current content from editor
+      const content = editor.getValue();
+
+      try {
+        const result = await invoke('save_file', { content });
+        console.log('File saved:', result);
+        // You could show a success message to the user here
+      } catch (error) {
+        console.error('Save failed:', error);
+        // You could show an error message to the user here
+      }
     });
 
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyF, () => {
@@ -120,7 +130,7 @@ export default function MonacoEditor({
           suggestOnTriggerCharacters: true,
           acceptSuggestionOnEnter: "on",
           tabCompletion: "on",
-          wordBasedSuggestions: "allDocuments",
+          wordBasedSuggestions: true,
           parameterHints: { enabled: true },
           autoClosingBrackets: "always",
           autoClosingQuotes: "always",

@@ -8,7 +8,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import { useStore } from "../state/store";
+import { useAppStore } from "../state/store";
 C.register(
   BarElement,
   CategoryScale,
@@ -19,7 +19,7 @@ C.register(
 );
 
 export default function VisualDashboard() {
-  const { data } = useStore();
+  const { data } = useAppStore();
   const labels = data.topKeywords.map((k) => k.keyword);
   const values = data.topKeywords.map((k) => k.weight);
   return (

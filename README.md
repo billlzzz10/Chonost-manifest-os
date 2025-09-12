@@ -29,11 +29,15 @@ docker-compose up -d
 
 ```
 chonost-manuscript-os/
-├── packages/          # แพ็คเกจหลัก (Backend, Frontend, AI)
-├── services/          # Microservices
+├── apps/             # แอปพลิเคชันหลัก (Multi-platform Frontend)
+│   └── frontend/     # Frontend หลัก (Desktop, Mobile, Web, Chat)
+├── packages/         # แพ็คเกจเสริม (Backend, AI, Shared)
+├── services/         # Microservices
+├── FileSystemMCP/    # MCP Server Implementation
 ├── docs/             # เอกสารทั้งหมด ⭐
-├── tests/            # การทดสอบ
-└── scripts/          # Utility Scripts
+├── scripts/          # Build & Test Scripts
+├── data/             # ข้อมูลและ Datasets
+└── database/         # Database Configurations
 ```
 
 ### 🔧 **การพัฒนา**

@@ -14,8 +14,19 @@ import time
 from datetime import datetime
 from pathlib import Path
 import os
-from ..mcp.file_system_analyzer import FileSystemMCPTool
-from ..utils.unified_ai_client import get_client
+import sys
+
+# Ensure the project root is in the Python path
+def add_project_root_to_path():
+    """Adds the project root directory to the system path."""
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
+
+add_project_root_to_path()
+
+from mcp.file_system_analyzer import FileSystemMCPTool
+from utils.unified_ai_client import get_client
 
 class AIEnhancedChatApp:
     """

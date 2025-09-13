@@ -3,8 +3,8 @@
 
 import os
 from crewai import Agent, Task, Crew
-from langchain_community.llms import Ollama
-from agent_model_config import AgentModelConfig
+from ..utils.langchain_adapter import UnifiedAIClientLangChainAdapter
+from .agent_model_config import AgentModelConfig
 
 class CrewAIWithOllama:
     """
@@ -22,18 +22,17 @@ class CrewAIWithOllama:
         self._setup_llms()
     
     def _setup_llms(self):
-        """Sets up the LLMs for each model."""
+        """Sets up the LLMs for each model using the UnifiedAIClient adapter."""
         for model_name in self.config.AVAILABLE_MODELS.keys():
             try:
-                self.llms[model_name] = Ollama(
-                    model=model_name,
-                    temperature=0.7,
-                    top_p=0.9,
-                    num_predict=2048
+                # Use the adapter to wrap the UnifiedAIClient
+                self.llms[model_name] = UnifiedAIClientLangChainAdapter(
+                    provider='ollama',
+                    model=model_name
                 )
-                print(f"✅ Loaded model: {model_name}")
+                print(f"✅ Configured adapter for model: {model_name}")
             except Exception as e:
-                print(f"❌ Failed to load model {model_name}: {e}")
+                print(f"❌ Failed to configure adapter for model {model_name}: {e}")
     
     def create_project_planner_agent(self):
         """

@@ -10,12 +10,22 @@ import json
 import threading
 import time
 import subprocess
-import requests
 import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from core.file_system_analyzer import FileSystemMCPTool
+
+# Ensure the project root is in the Python path
+def add_project_root_to_path():
+    """Adds the project root directory to the system path."""
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
+
+add_project_root_to_path()
+
+from mcp.file_system_analyzer import FileSystemMCPTool
+from utils.unified_ai_client import get_client
 
 class UnifiedChatApp:
     """
@@ -24,10 +34,10 @@ class UnifiedChatApp:
     Attributes:
         root: The root Tkinter window.
         tool (FileSystemMCPTool): The file system analysis tool.
+        ai_client (UnifiedAIClient): The unified client for AI interaction.
         current_session_id (str): The current scan session ID.
         scanning (bool): A flag indicating if a scan is in progress.
-        ollama_connected (bool): A flag indicating if Ollama is connected.
-        ollama_client: The Ollama client.
+        ai_provider (str): The name of the AI provider to use.
     """
     def __init__(self, root):
         """
@@ -48,10 +58,10 @@ class UnifiedChatApp:
         
         # Initialize components
         self.tool = FileSystemMCPTool()
+        self.ai_client = get_client()
+        self.ai_provider = 'ollama'  # This app primarily uses Ollama
         self.current_session_id = None
         self.scanning = False
-        self.ollama_connected = False
-        self.ollama_client = None
         
         # Setup UI
         self.setup_ui()
@@ -459,25 +469,17 @@ class UnifiedChatApp:
         threading.Thread(target=start_fs, daemon=True).start()
         
     def start_ollama_service(self):
-        """Starts the Ollama service."""
-        def start_ollama():
-            try:
-                # Test Ollama connection
-                response = requests.get("http://localhost:11434/api/tags", timeout=5)
-                if response.status_code == 200:
-                    models = response.json().get('models', [])
-                    self.ollama_connected = True
-                    self.root.after(0, lambda: self.update_ollama_status("✅ Connected", "#00ff00"))
-                    self.root.after(0, lambda: self.add_system_message(f"✅ Ollama service is ready ({len(models)} models found)."))
-                else:
-                    raise Exception("Ollama server not responding")
-                    
-            except Exception as e:
-                self.root.after(0, lambda: self.update_ollama_status("❌ Not Connected", "#ff4444"))
-                self.root.after(0, lambda: self.add_system_message("⚠️ Ollama is not available - using File System only."))
-                
-        threading.Thread(target=start_ollama, daemon=True).start()
-        
+        """Checks for the configured AI provider's availability."""
+        def check_ai_provider():
+            if self.ai_client and self.ai_client.get_provider(self.ai_provider):
+                self.root.after(0, lambda: self.update_ai_status("✅ Connected", "#00ff00"))
+                self.root.after(0, lambda: self.add_system_message(f"✅ AI provider '{self.ai_provider}' is ready."))
+            else:
+                self.root.after(0, lambda: self.update_ai_status("❌ Not Connected", "#ff4444"))
+                self.root.after(0, lambda: self.add_system_message(f"⚠️ AI provider '{self.ai_provider}' is not available. Using File System only."))
+
+        threading.Thread(target=check_ai_provider, daemon=True).start()
+
     def update_fs_status(self, text, color):
         """
         Updates the File System status.
@@ -487,16 +489,16 @@ class UnifiedChatApp:
             color (str): The color of the status text.
         """
         self.fs_status.config(text=f"📁 File System: {text}", fg=color)
-        
-    def update_ollama_status(self, text, color):
+
+    def update_ai_status(self, text, color):
         """
-        Updates the Ollama status.
+        Updates the AI provider status.
 
         Args:
             text (str): The status text.
             color (str): The color of the status text.
         """
-        self.ollama_status.config(text=f"🤖 Ollama: {text}", fg=color)
+        self.ollama_status.config(text=f"🤖 AI ({self.ai_provider}): {text}", fg=color)
         
     def add_message(self, sender: str, message: str, message_type: str = "normal"):
         """
@@ -641,18 +643,19 @@ class UnifiedChatApp:
                 return
                 
             # Try AI first if available
-            if self.ollama_connected and self._should_use_ai(message):
+            if self._should_use_ai(message):
                 self._process_with_ai(message)
             else:
                 # Use File System query
                 self._process_with_filesystem(message)
-                
+
         except Exception as e:
             self.root.after(0, lambda: self.add_message("error", f"An error occurred: {str(e)}", "error"))
-            
+
     def _should_use_ai(self, message: str):
         """
-        Checks if AI should be used.
+        Checks if AI should be used. It's true if the client is available
+        and the message contains AI-related keywords.
 
         Args:
             message (str): The message to check.
@@ -660,33 +663,32 @@ class UnifiedChatApp:
         Returns:
             bool: True if AI should be used, False otherwise.
         """
+        if not self.ai_client or not self.ai_client.get_provider(self.ai_provider):
+            return False
         ai_keywords = ['analyze', 'explain', 'suggest', 'recommend', 'why', 'how', 'what', 'วิเคราะห์', 'อธิบาย', 'แนะนำ', 'ทำไม', 'อย่างไร', 'อะไร']
         return any(keyword in message.lower() for keyword in ai_keywords)
-        
+
     def _process_with_ai(self, message: str):
         """
-        Processes a message with AI.
+        Processes a message with the UnifiedAIClient.
 
         Args:
             message (str): The message to process.
         """
         try:
-            # Get file system data first
             fs_data = self._get_filesystem_data()
-            
-            # Send to Ollama
-            ai_response = self._ask_ollama(message, fs_data)
-            
-            self.root.after(0, lambda: self.add_message("ai", ai_response, "ai"))
-            
+            self.root.after(0, lambda: self.add_system_message(f"🤖 Sending request to AI ({self.ai_provider})..."))
+            # Run in a thread to keep the UI responsive
+            thread = threading.Thread(target=self._ask_ai, args=(message, fs_data))
+            thread.daemon = True
+            thread.start()
         except Exception as e:
-            # Fallback to File System
-            self.root.after(0, lambda: self.add_system_message("⚠️ AI not available. Using File System instead."))
+            self.root.after(0, lambda: self.add_system_message("⚠️ AI processing failed. Using File System instead."))
             self._process_with_filesystem(message)
-            
+
     def _process_with_filesystem(self, message: str):
         """
-        Processes a message with the File System.
+        Processes a message with the File System tool.
 
         Args:
             message (str): The message to process.
@@ -697,10 +699,7 @@ class UnifiedChatApp:
                 "request": message,
                 "session_id": self.current_session_id
             }
-            
             result = self.tool._run(json.dumps(query_params))
-            
-            # Parse and format result
             try:
                 result_data = json.loads(result)
                 if result_data.get('success'):
@@ -710,16 +709,15 @@ class UnifiedChatApp:
                     self.root.after(0, lambda: self.add_message("error", result_data.get('error', 'Could not process'), "error"))
             except json.JSONDecodeError:
                 self.root.after(0, lambda: self.add_message("result", result, "result"))
-                
         except Exception as e:
             self.root.after(0, lambda: self.add_message("error", f"An error occurred: {str(e)}", "error"))
-            
+
     def _get_filesystem_data(self):
         """
-        Gets file system data for AI.
+        Gets a summary of file system data for the AI context.
 
         Returns:
-            str: The file system data.
+            dict: A dictionary containing the file system data summary.
         """
         try:
             summary_params = {
@@ -728,354 +726,50 @@ class UnifiedChatApp:
                 "session_id": self.current_session_id,
                 "args": []
             }
-            
             result = self.tool._run(json.dumps(summary_params))
-            return result
-            
+            # The result from the tool is a JSON string, so we parse it
+            return json.loads(result)
         except Exception:
-            return "No file system data available"
-            
-    def _ask_ollama(self, message, fs_data):
+            return {"error": "No file system data available"}
+
+    def _ask_ai(self, message, fs_data):
         """
-        Asks Ollama a question.
+        Asks the AI a question using the UnifiedAIClient.
 
         Args:
             message (str): The question to ask.
-            fs_data: The file system data.
-
-        Returns:
-            str: The response from Ollama.
+            fs_data (dict): The file system data summary.
         """
         try:
-            # Create a clear prompt with context
-            prompt = f"""You are a helpful File System Analysis Assistant. Your job is to analyze file system data and provide clear, useful answers.
+            system_prompt = """You are a helpful File System Analysis Assistant. Your job is to analyze file system data and provide clear, useful answers in Thai.
+IMPORTANT: Use the actual file system data provided. Do not say you cannot help with file management - this IS your job."""
 
-FILE SYSTEM DATA:
-{fs_data}
+            # Create a clear prompt with context
+            user_prompt = f"""FILE SYSTEM DATA:
+{json.dumps(fs_data, indent=2, ensure_ascii=False)}
 
 USER QUESTION: {message}
 
-TASK: Analyze the file system data above and answer the user's question. Be specific, helpful, and respond in Thai language.
+TASK: Analyze the file system data above and answer the user's question. Be specific and helpful."""
 
-IMPORTANT: Use the actual file system data provided above. Do not say you cannot help with file management - this IS your job.
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ]
 
-Please provide a clear, detailed answer:"""
-            
-            response = requests.post("http://localhost:11434/api/generate", 
-                                   json={
-                                       "model": "deepseek-coder:6.7b-instruct",
-                                       "prompt": prompt,
-                                       "stream": False,
-                                       "options": {
-                                           "temperature": 0.3,
-                                           "top_p": 0.8,
-                                           "num_predict": 800
-                                       }
-                                   }, 
-                                   timeout=30)
-            
-            if response.status_code == 200:
-                ai_response = response.json().get('response', 'Could not process')
-                
-                # Check if the AI gave a generic response
-                generic_phrases = [
-                    "i'm sorry", "i cannot", "outside of my", "programming assistant",
-                    "computer science", "cannot assist", "not related", "file management",
-                    "ซีมิส์", "ตัวมีนตัง", "ประยาว", "พิสูจน์"
-                ]
-                
-                if any(phrase in ai_response.lower() for phrase in generic_phrases):
-                    return self._generate_fallback_response(message, fs_data)
-                
-                return ai_response
+            response = self.ai_client.generate_response(self.ai_provider, messages)
+
+            if response and response.get('success'):
+                ai_response = response.get('content', 'Could not process')
+                self.root.after(0, lambda: self.add_message("ai", ai_response, "ai"))
             else:
-                raise Exception("Ollama request failed")
-                
+                error_msg = response.get('error', 'Ollama request failed')
+                self.root.after(0, lambda: self.add_message("error", f"AI Error: {error_msg}", "error"))
+
         except Exception as e:
-            return self._generate_fallback_response(message, fs_data)
-            
-    def _generate_fallback_response(self, message, fs_data):
-        """
-        Generates a fallback response when the AI doesn't understand.
-
-        Args:
-            message (str): The user's message.
-            fs_data: The file system data.
-
-        Returns:
-            str: The fallback response.
-        """
-        try:
-            # Parse file system data
-            if isinstance(fs_data, str):
-                # Try to parse JSON from string
-                import re
-                json_match = re.search(r'\{.*\}', fs_data, re.DOTALL)
-                if json_match:
-                    fs_data = json.loads(json_match.group())
-                else:
-                    return f"Could not analyze data: {fs_data}"
-            
-            # Generate response based on question type
-            message_lower = message.lower()
-            
-            if "summary" in message_lower or "สรุป" in message_lower:
-                return self._generate_summary_response(fs_data)
-            elif "large" in message_lower or "ใหญ่" in message_lower:
-                return self._generate_large_files_response(fs_data)
-            elif "duplicate" in message_lower or "ซ้ำ" in message_lower:
-                return self._generate_duplicate_response(fs_data)
-            elif "analyze" in message_lower or "วิเคราะห์" in message_lower:
-                return self._generate_analysis_response(fs_data)
-            else:
-                return self._generate_general_response(fs_data, message)
-                
-        except Exception as e:
-            return f"An error occurred while analyzing: {str(e)}"
-            
-    def _generate_summary_response(self, fs_data):
-        """
-        Generates a response for a summary request.
-
-        Args:
-            fs_data: The file system data.
-
-        Returns:
-            str: The summary response.
-        """
-        try:
-            # Query for comprehensive summary
-            summary_params = {
-                "action": "query_function",
-                "function": "get_directory_summary",
-                "session_id": self.current_session_id,
-                "args": []
-            }
-            
-            result = self.tool._run(json.dumps(summary_params))
-            summary_data = json.loads(result)
-            
-            if summary_data.get('success') and summary_data.get('summary'):
-                summary = summary_data['summary']
-                
-                # Get file types breakdown
-                file_types = summary.get('file_types', {})
-                total_files = summary.get('total_files', 0)
-                total_size_mb = summary.get('total_size_mb', 0)
-                average_size = summary.get('average_size', 0)
-                
-                response = f"""📊 File System Summary:
-
-📁 General Information:
-• Total files: {total_files:,}
-• Total size: {total_size_mb:.2f} MB ({summary.get('total_size', 0):,} bytes)
-• Average size: {average_size:,.0f} bytes
-
-📋 File Type Distribution:"""
-                
-                # Show top file types
-                if file_types:
-                    sorted_types = sorted(file_types.items(), key=lambda x: x[1], reverse=True)
-                    for ext, count in sorted_types[:8]:
-                        percentage = (count / total_files * 100) if total_files > 0 else 0
-                        response += f"\n• {ext}: {count:,} files ({percentage:.1f}%)"
-                
-                # Show largest files
-                largest_files = summary.get('largest_files', [])
-                if largest_files:
-                    response += f"\n\n🔝 Largest Files:"
-                    for i, file_info in enumerate(largest_files[:3], 1):
-                        size_mb = file_info.get('file_size', 0) / (1024 * 1024)
-                        response += f"\n{i}. {file_info.get('file_name', 'Unknown')} ({size_mb:.2f} MB)"
-                
-                # Analysis and recommendations
-                response += f"\n\n💡 Analysis:"
-                if total_files < 50:
-                    response += f"\n• The system has a small number of files ({total_files}) - suitable for small projects."
-                elif total_files < 500:
-                    response += f"\n• The system has a moderate number of files ({total_files}) - should be organized periodically."
-                else:
-                    response += f"\n• The system has a large number of files ({total_files}) - should be organized urgently."
-                
-                if total_size_mb < 100:
-                    response += f"\n• Low disk space usage ({total_size_mb:.2f} MB) - storage efficient."
-                elif total_size_mb < 1000:
-                    response += f"\n• Moderate disk space usage ({total_size_mb:.2f} MB) - should check large files."
-                else:
-                    response += f"\n• High disk space usage ({total_size_mb:.2f} MB) - should find ways to reduce size."
-                
-                if len(file_types) < 10:
-                    response += f"\n• Few file types ({len(file_types)}) - simple structure."
-                else:
-                    response += f"\n• Diverse file types ({len(file_types)}) - should be grouped."
-                
-                return response
-            else:
-                return "Could not retrieve summary data."
-        except Exception as e:
-            return f"An error occurred while generating the summary: {str(e)}"
-            
-    def _generate_large_files_response(self, fs_data):
-        """
-        Generates a response for a large files request.
-
-        Args:
-            fs_data: The file system data.
-
-        Returns:
-            str: The large files response.
-        """
-        try:
-            # Query for largest files specifically
-            large_files_params = {
-                "action": "query_sql",
-                "sql": "SELECT file_name, file_path, file_size FROM files WHERE session_id = ? ORDER BY file_size DESC LIMIT 5",
-                "params": [self.current_session_id]
-            }
-            
-            result = self.tool._run(json.dumps(large_files_params))
-            large_files_data = json.loads(result)
-            
-            if large_files_data.get('success') and large_files_data.get('data'):
-                files = large_files_data['data']
-                if files:
-                    response = "🔍 Largest files in the system:\n\n"
-                    for i, file_info in enumerate(files, 1):
-                        size_mb = file_info.get('file_size', 0) / (1024 * 1024)
-                        response += f"{i}. 📄 {file_info.get('file_name', 'Unknown')}\n"
-                        response += f"   📁 Path: {file_info.get('file_path', 'Unknown')}\n"
-                        response += f"   💾 Size: {size_mb:.2f} MB ({file_info.get('file_size', 0):,} bytes)\n\n"
-                    
-                    response += "💡 Observations:\n"
-                    response += f"• Largest file: {files[0].get('file_name', 'Unknown')} ({files[0].get('file_size', 0) / (1024*1024):.2f} MB)\n"
-                    response += f"• Smallest file in the list: {files[-1].get('file_name', 'Unknown')} ({files[-1].get('file_size', 0) / (1024*1024):.2f} MB)\n"
-                    
-                    return response
-                else:
-                    return "No files found in the system."
-            else:
-                return "Could not retrieve large file data."
-        except Exception as e:
-            return f"An error occurred while analyzing large files: {str(e)}"
-            
-    def _generate_duplicate_response(self, fs_data):
-        """
-        Generates a response for a duplicates request.
-
-        Args:
-            fs_data: The file system data.
-
-        Returns:
-            str: The duplicates response.
-        """
-        try:
-            # Query for duplicates
-            duplicate_params = {
-                "action": "query_function",
-                "function": "get_duplicate_files",
-                "session_id": self.current_session_id,
-                "args": []
-            }
-            
-            result = self.tool._run(json.dumps(duplicate_params))
-            duplicate_data = json.loads(result)
-            
-            if duplicate_data.get('success') and duplicate_data.get('duplicates'):
-                duplicates = duplicate_data['duplicates']
-                response = "🔄 Duplicate files found:\n\n"
-                
-                for i, dup in enumerate(duplicates[:3], 1):
-                    response += f"{i}. 🔗 Hash: {dup.get('hash_md5', 'Unknown')[:8]}...\n"
-                    response += f"   📊 File count: {dup.get('count', 0)}\n"
-                    response += f"   💾 Total size: {dup.get('total_size', 0) / (1024*1024):.2f} MB\n"
-                    response += f"   ⚠️ Wasted space: {dup.get('wasted_space', 0) / (1024*1024):.2f} MB\n\n"
-                    
-                    for file_info in dup.get('files', [])[:2]:
-                        response += f"      📄 {file_info.get('file_name', 'Unknown')}\n"
-                    response += "\n"
-                    
-                return response
-            else:
-                return "✅ No duplicate files found in the system."
-        except Exception as e:
-            return f"An error occurred while searching for duplicate files: {str(e)}"
-            
-    def _generate_analysis_response(self, fs_data):
-        """
-        Generates a response for an analysis request.
-
-        Args:
-            fs_data: The file system data.
-
-        Returns:
-            str: The analysis response.
-        """
-        try:
-            if isinstance(fs_data, dict) and 'summary' in fs_data:
-                summary = fs_data['summary']
-                total_files = summary.get('total_files', 0)
-                total_size_mb = summary.get('total_size_mb', 0)
-                file_types = summary.get('file_types', {})
-                
-                response = "🧠 File Structure Analysis:\n\n"
-                
-                # File type analysis
-                response += "📋 File Type Distribution:\n"
-                for ext, count in sorted(file_types.items(), key=lambda x: x[1], reverse=True)[:5]:
-                    percentage = (count / total_files * 100) if total_files > 0 else 0
-                    response += f"   • {ext}: {count} files ({percentage:.1f}%)\n"
-                
-                response += f"\n📊 General Statistics:\n"
-                response += f"   • Total files: {total_files:,}\n"
-                response += f"   • Total size: {total_size_mb:.2f} MB\n"
-                response += f"   • Average size: {summary.get('average_size', 0):,.0f} bytes\n"
-                
-                # Recommendations
-                response += f"\n💡 Recommendations:\n"
-                if total_files > 100:
-                    response += "   • The system has a large number of files and should be organized.\n"
-                if total_size_mb > 1000:
-                    response += "   • High disk space usage. Unnecessary files should be checked.\n"
-                if len(file_types) > 20:
-                    response += "   • Diverse file types. Should be grouped.\n"
-                    
-                return response
-            else:
-                return "Could not analyze the structure."
-        except Exception as e:
-            return f"An error occurred during analysis: {str(e)}"
-            
-    def _generate_general_response(self, fs_data, message):
-        """
-        Generates a general response.
-
-        Args:
-            fs_data: The file system data.
-            message (str): The user's message.
-
-        Returns:
-            str: The general response.
-        """
-        try:
-            if isinstance(fs_data, dict) and 'summary' in fs_data:
-                summary = fs_data['summary']
-                return f"""🤖 Response for: "{message}"
-
-📊 Current Data:
-• Total files: {summary.get('total_files', 'N/A')}
-• Total size: {summary.get('total_size_mb', 'N/A')} MB
-• File types: {len(summary.get('file_types', {}))}
-
-💡 Use the following commands for more information:
-• "give me summary"
-• "show me large files"
-• "find duplicate files"
-• "analyze structure"
-"""
-            else:
-                return f"Could not process the question '{message}'. Please try another command."
-        except Exception as e:
-            return f"An error occurred: {str(e)}"
+            self.root.after(0, lambda: self.add_message("error", f"An unexpected error occurred while asking the AI: {str(e)}", "error"))
+            # Fallback to filesystem if AI fails catastrophically
+            self._process_with_filesystem(message)
             
     def _format_file_types(self, file_types):
         """

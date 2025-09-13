@@ -41,6 +41,20 @@ class AIProviderStrategy(ABC):
         """
         pass
 
+    @abstractmethod
+    def embed(self, text: str, model: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Generates an embedding for a given text.
+
+        Args:
+            text (str): The input text to embed.
+            model (Optional[str]): The specific model to use.
+
+        Returns:
+            Dict[str, Any]: A dictionary containing the embedding and other metadata.
+        """
+        pass
+
 # --- Concrete Strategies ---
 
 class OpenAIStrategy(AIProviderStrategy):
@@ -77,6 +91,30 @@ class OpenAIStrategy(AIProviderStrategy):
             }
         except Exception as e:
             logger.error(f"❌ OpenAI API error: {str(e)}")
+            return {'success': False, 'error': str(e)}
+
+    def embed(self, text: str, model: Optional[str] = None) -> Dict[str, Any]:
+        """Generates an embedding using the OpenAI API."""
+        try:
+            model_to_use = model or "text-embedding-3-small"
+            response = self.client.embeddings.create(
+                model=model_to_use,
+                input=text
+            )
+            return {
+                'success': True,
+                'provider': 'openai',
+                'embedding': response.data[0].embedding,
+                'metadata': {
+                    'model': response.model,
+                    'usage': {
+                        'prompt_tokens': response.usage.prompt_tokens,
+                        'total_tokens': response.usage.total_tokens
+                    }
+                }
+            }
+        except Exception as e:
+            logger.error(f"❌ OpenAI embedding error: {str(e)}")
             return {'success': False, 'error': str(e)}
 
 
@@ -131,27 +169,61 @@ class OllamaStrategy(AIProviderStrategy):
             logger.error(f"❌ An error occurred while communicating with Ollama: {str(e)}")
             return {'success': False, 'error': str(e)}
 
+    def embed(self, text: str, model: Optional[str] = None) -> Dict[str, Any]:
+        """Generates an embedding using the Ollama API."""
+        try:
+            model_to_use = model or self.model
+            logger.info(f"🤖 Generating embedding with Ollama model {model_to_use}...")
+            response = self.session.post(
+                f"{self.base_url}/api/embeddings",
+                json={
+                    "model": model_to_use,
+                    "prompt": text
+                }
+            )
+            response.raise_for_status()
+            result = response.json()
+            return {
+                'success': True,
+                'provider': 'ollama',
+                'embedding': result.get('embedding'),
+                'metadata': {'model': model_to_use}
+            }
+        except requests.exceptions.RequestException as e:
+            logger.error(f"❌ Ollama embedding error: {str(e)}")
+            return {'success': False, 'error': str(e)}
+
 
 # Placeholder for other strategies
 class OpenRouterStrategy(AIProviderStrategy):
     def generate_response(self, messages: List[Dict[str, str]], **kwargs) -> Dict[str, Any]:
         return {"provider": "openrouter", "content": "Not implemented yet"}
+    def embed(self, text: str, model: Optional[str] = None) -> Dict[str, Any]:
+        return {'success': False, 'error': 'Not implemented'}
 
 class GoogleStrategy(AIProviderStrategy):
     def generate_response(self, messages: List[Dict[str, str]], **kwargs) -> Dict[str, Any]:
         return {"provider": "google", "content": "Not implemented yet"}
+    def embed(self, text: str, model: Optional[str] = None) -> Dict[str, Any]:
+        return {'success': False, 'error': 'Not implemented'}
 
 class AnthropicStrategy(AIProviderStrategy):
     def generate_response(self, messages: List[Dict[str, str]], **kwargs) -> Dict[str, Any]:
         return {"provider": "anthropic", "content": "Not implemented yet"}
+    def embed(self, text: str, model: Optional[str] = None) -> Dict[str, Any]:
+        return {'success': False, 'error': 'Not implemented'}
 
 class DeepSeekStrategy(AIProviderStrategy):
     def generate_response(self, messages: List[Dict[str, str]], **kwargs) -> Dict[str, Any]:
         return {"provider": "deepseek", "content": "Not implemented yet"}
+    def embed(self, text: str, model: Optional[str] = None) -> Dict[str, Any]:
+        return {'success': False, 'error': 'Not implemented'}
 
 class MistralStrategy(AIProviderStrategy):
     def generate_response(self, messages: List[Dict[str, str]], **kwargs) -> Dict[str, Any]:
         return {"provider": "mistral", "content": "Not implemented yet"}
+    def embed(self, text: str, model: Optional[str] = None) -> Dict[str, Any]:
+        return {'success': False, 'error': 'Not implemented'}
 
 
 class UnifiedAIClient:
@@ -218,6 +290,27 @@ class UnifiedAIClient:
             raise ValueError(f"Provider '{provider}' is not supported or configured.")
 
         return strategy.generate_response(messages, **kwargs)
+
+    def embed(self, provider: str, text: str, model: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Generates an embedding using a specified provider.
+
+        Args:
+            provider (str): The name of the provider to use.
+            text (str): The text to embed.
+            model (Optional[str]): The specific model to use.
+
+        Returns:
+            Dict[str, Any]: The embedding response from the provider.
+
+        Raises:
+            ValueError: If the specified provider is not supported or configured.
+        """
+        strategy = self.get_provider(provider)
+        if not strategy:
+            raise ValueError(f"Provider '{provider}' is not supported or configured.")
+
+        return strategy.embed(text, model)
 
 # --- Singleton Client Instance ---
 _client_instance = None

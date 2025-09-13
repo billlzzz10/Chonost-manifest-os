@@ -75,9 +75,10 @@ function Show-Help {
         @("chat", "เปิดแอปแชตพื้นฐาน", "desktop_chat_app.py")
         @("advanced", "เปิดแอปแชตขั้นสูง", "advanced_chat_app.py")
         @("ai", "เปิดแอปแชตที่รวม AI", "ai_enhanced_chat_app.py")
+        @("unified", "เปิดแอป Unified Chat ที่รวมทุกอย่าง", "unified_chat_app.py")
         @("dataset", "สร้างชุดข้อมูลฝึก AI", "dataset_generator.py")
-        @("test", "ทดสอบ Ollama connection", "ollama_client.py")
-        @("ollama", "ทดสอบ Ollama (alias)", "ollama_client.py")
+        @("test", "ทดสอบ AI connection ผ่าน Unified App", "unified_chat_app.py")
+        @("ollama", "ทดสอบ AI connection (alias)", "unified_chat_app.py")
     )
     
     foreach ($cmd in $commands) {
@@ -132,8 +133,7 @@ function Test-Requirements {
         "file_system_analyzer.py",
         "desktop_chat_app.py",
         "advanced_chat_app.py",
-        "dataset_generator.py",
-        "ollama_client.py"
+        "dataset_generator.py"
     )
     
     $missingFiles = @()
@@ -248,14 +248,12 @@ function Main {
                 python dataset_generator.py
             }
         }
+        "unified" {
+            Start-Application "unified" "apps/unified_chat_app.py" "แอป Unified Chat"
+        }
         { $_ -eq "test" -or $_ -eq "ollama" } {
-            Write-ColorText "🧪 ทดสอบการเชื่อมต่อ Ollama..." "Info"
-            if (Test-Path "venv\Scripts\Activate.ps1") {
-                & venv\Scripts\Activate.ps1
-                python ollama_client.py
-            } else {
-                python ollama_client.py
-            }
+            Write-ColorText "🧪 ทดสอบการเชื่อมต่อ AI ผ่าน Unified App..." "Info"
+            Start-Application "unified" "apps/unified_chat_app.py" "แอป Unified Chat"
         }
         default {
             Write-ColorText "❌ แอป '$App' ไม่รู้จัก" "Error"

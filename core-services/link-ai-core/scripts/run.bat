@@ -104,16 +104,16 @@ pause
 goto end
 
 :start_test
-echo 🧪 ทดสอบการเชื่อมต่อ Ollama...
-if not exist "ollama_client.py" (
-    echo ❌ ไม่พบไฟล์ ollama_client.py
+echo 🧪 ทดสอบการเชื่อมต่อ AI ผ่าน Unified App...
+if not exist "apps\unified_chat_app.py" (
+    echo ❌ ไม่พบไฟล์ apps\unified_chat_app.py
     pause
     exit /b 1
 )
 if %USE_VENV%==1 (
     call venv\Scripts\activate.bat
 )
-python ollama_client.py
+python apps/unified_chat_app.py
 pause
 goto end
 
@@ -127,9 +127,10 @@ echo.
 echo   chat       - เปิดแอปแชตพื้นฐาน
 echo   advanced   - เปิดแอปแชตขั้นสูง
 echo   ai         - เปิดแอปแชตที่รวม AI
+echo   unified    - เปิดแอป Unified Chat
 echo   dataset    - สร้างชุดข้อมูลฝึก AI
-echo   test       - ทดสอบการเชื่อมต่อ Ollama
-echo   ollama     - ทดสอบการเชื่อมต่อ Ollama (alias)
+echo   test       - ทดสอบการเชื่อมต่อ AI
+echo   ollama     - ทดสอบการเชื่อมต่อ AI (alias)
 echo.
 echo 💡 ตัวอย่างการใช้งาน:
 echo   run.bat chat           # เปิดแอปแชตพื้นฐาน

@@ -52,143 +52,8 @@ except ImportError:
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-class OllamaEmbeddingClient:
-    """
-    Client for managing the Ollama Embedding API.
-
-    Attributes:
-        base_url (str): The base URL of the Ollama server.
-        session (requests.Session): The requests session for making API calls.
-    """
-    
-    def __init__(self, base_url: str = "http://localhost:11434"):
-        """
-        Initializes the OllamaEmbeddingClient.
-
-        Args:
-            base_url (str, optional): The base URL of the Ollama server. Defaults to "http://localhost:11434".
-        """
-        self.base_url = base_url
-        self.session = requests.Session()
-        self.session.timeout = 30
-    
-    async def test_connection(self) -> bool:
-        """
-        Tests the connection to the Ollama server.
-
-        Returns:
-            bool: True if the connection is successful, False otherwise.
-        """
-        try:
-            response = self.session.get(f"{self.base_url}/api/tags")
-            return response.status_code == 200
-        except Exception as e:
-            logger.error(f"❌ Could not connect to Ollama server: {e}")
-            return False
-    
-    async def get_available_models(self) -> List[str]:
-        """
-        Gets the list of available embedding models.
-
-        Returns:
-            List[str]: A list of available embedding models.
-        """
-        try:
-            response = self.session.get(f"{self.base_url}/api/tags")
-            if response.status_code == 200:
-                models = response.json().get('models', [])
-                # Filter for embedding models
-                embedding_models = [
-                    model['name'] for model in models 
-                    if 'embed' in model['name'].lower() or 
-                       model['name'] in ['nomic-embed-text', 'all-minilm']
-                ]
-                return embedding_models
-            else:
-                return []
-        except Exception as e:
-            logger.error(f"❌ Could not get model list: {e}")
-            return []
-    
-    async def get_embedding(self, text: str, model_name: str) -> Optional[List[float]]:
-        """
-        Creates an embedding for a text.
-
-        Args:
-            text (str): The text to create an embedding for.
-            model_name (str): The name of the model to use.
-
-        Returns:
-            Optional[List[float]]: The created embedding, or None if an error occurred.
-        """
-        try:
-            response = self.session.post(
-                f"{self.base_url}/api/embeddings",
-                json={
-                    "model": model_name,
-                    "prompt": text
-                },
-                timeout=30
-            )
-            
-            if response.status_code == 200:
-                result = response.json()
-                return result.get('embedding', [])
-            else:
-                logger.error(f"❌ Ollama API error: {response.status_code} - {response.text}")
-                return None
-                
-        except Exception as e:
-            logger.error(f"❌ Error creating embedding: {e}")
-            return None
-    
-    async def get_embeddings_batch(self, texts: List[str], model_name: str) -> List[Optional[List[float]]]:
-        """
-        Creates embeddings for multiple texts at once.
-
-        Args:
-            texts (List[str]): A list of texts to create embeddings for.
-            model_name (str): The name of the model to use.
-
-        Returns:
-            List[Optional[List[float]]]: A list of created embeddings.
-        """
-        try:
-            # Create embeddings in a batch
-            embeddings = []
-            for text in texts:
-                embedding = await self.get_embedding(text, model_name)
-                embeddings.append(embedding)
-            return embeddings
-            
-        except Exception as e:
-            logger.error(f"❌ Error creating batch embeddings: {e}")
-            return [None] * len(texts)
-    
-    async def get_model_info(self, model_name: str) -> Optional[Dict[str, Any]]:
-        """
-        Gets information about a model.
-
-        Args:
-            model_name (str): The name of the model.
-
-        Returns:
-            Optional[Dict[str, Any]]: Information about the model, or None if an error occurred.
-        """
-        try:
-            response = self.session.post(
-                f"{self.base_url}/api/show",
-                json={"name": model_name}
-            )
-            
-            if response.status_code == 200:
-                return response.json()
-            else:
-                return None
-                
-        except Exception as e:
-            logger.error(f"❌ Could not get model info: {e}")
-            return None
+# Import the unified client
+from ..utils.unified_ai_client import get_client
 
 @dataclass
 class Document:
@@ -223,8 +88,8 @@ class RAGResponse:
     processing_time: float
 
 class EmbeddingProvider:
-    """A provider for Embedding Models."""
-    
+    """A provider for Embedding Models that uses the UnifiedAIClient."""
+
     def __init__(self, provider_type: str = "ollama", model_name: str = "nomic-embed-text"):
         """
         Initializes the EmbeddingProvider.
@@ -235,73 +100,34 @@ class EmbeddingProvider:
         """
         self.provider_type = provider_type
         self.model_name = model_name
-        self.model = None
-        self.ollama_client = None
-        self.setup_model()
-    
-    def setup_model(self):
-        """Sets up the embedding model."""
-        try:
-            if self.provider_type == "ollama":
-                # Use Ollama local embedding
-                self.model = "ollama"
-                self.ollama_client = OllamaEmbeddingClient()
-                logger.info(f"✅ Using Ollama embedding model: {self.model_name}")
-                
-            elif self.provider_type == "sentence_transformers":
-                if SENTENCE_TRANSFORMERS_AVAILABLE:
-                    self.model = SentenceTransformer(self.model_name)
-                    logger.info(f"✅ Using Sentence Transformers: {self.model_name}")
-                else:
-                    logger.warning("⚠️ Sentence Transformers not available")
-                    
-            elif self.provider_type == "openai":
-                # Use OpenAI embedding
-                self.model = "openai"
-                logger.info(f"✅ Using OpenAI embedding model: {self.model_name}")
-                
-            else:
-                logger.warning(f"⚠️ Provider not supported: {self.provider_type}")
-                
-        except Exception as e:
-            logger.error(f"❌ Error setting up embedding model: {e}")
-            self.model = None
-    
-    async def get_available_models(self) -> List[str]:
-        """
-        Gets the list of available embedding models.
+        self.ai_client = get_client()
+        if not self.ai_client.get_provider(self.provider_type):
+             logger.warning(f"⚠️ Provider '{self.provider_type}' not available in UnifiedAIClient.")
+             self.is_ready = False
+        else:
+            self.is_ready = True
+            logger.info(f"✅ EmbeddingProvider initialized for provider '{self.provider_type}' with model '{self.model_name}'.")
 
-        Returns:
-            List[str]: A list of available embedding models.
-        """
-        try:
-            if self.provider_type == "ollama":
-                return await self.ollama_client.get_available_models()
-            else:
-                return [self.model_name]
-        except Exception as e:
-            logger.error(f"❌ Could not get model list: {e}")
-            return []
-    
     async def test_connection(self) -> bool:
         """
-        Tests the connection to the embedding service.
+        Tests the connection to the embedding service via the UnifiedAIClient.
 
         Returns:
             bool: True if the connection is successful, False otherwise.
         """
-        try:
-            if self.provider_type == "ollama":
-                return await self.ollama_client.test_connection()
-            else:
-                return True
-        except Exception as e:
-            logger.error(f"❌ Connection test failed: {e}")
+        if not self.is_ready:
             return False
-    
+        try:
+            # A simple embedding call to test the connection.
+            result = self.ai_client.embed(self.provider_type, "test", model=self.model_name)
+            return result.get('success', False)
+        except Exception as e:
+            logger.error(f"❌ Connection test failed for {self.provider_type}: {e}")
+            return False
+
     async def get_embedding(self, text: str) -> Optional[List[float]]:
         """
-        Creates an embedding for a text.
+        Creates an embedding for a text using the UnifiedAIClient.
 
         Args:
             text (str): The text to create an embedding for.
@@ -309,102 +135,19 @@ class EmbeddingProvider:
         Returns:
             Optional[List[float]]: The created embedding, or None if an error occurred.
         """
-        if not self.model:
+        if not self.is_ready:
+            logger.error(f"❌ Embedding provider '{self.provider_type}' is not ready.")
             return None
-            
+
         try:
-            if self.provider_type == "ollama":
-                return await self._get_ollama_embedding(text)
-            elif self.provider_type == "sentence_transformers":
-                return await self._get_sentence_transformers_embedding(text)
-            elif self.provider_type == "openai":
-                return await self._get_openai_embedding(text)
+            result = self.ai_client.embed(self.provider_type, text, model=self.model_name)
+            if result and result.get('success'):
+                return result.get('embedding')
             else:
+                logger.error(f"❌ Error creating embedding with {self.provider_type}: {result.get('error')}")
                 return None
-                
         except Exception as e:
-            logger.error(f"❌ Error creating embedding: {e}")
-            return None
-    
-    async def _get_ollama_embedding(self, text: str) -> Optional[List[float]]:
-        """
-        Creates an embedding using Ollama.
-
-        Args:
-            text (str): The text to create an embedding for.
-
-        Returns:
-            Optional[List[float]]: The created embedding, or None if an error occurred.
-        """
-        try:
-            if self.ollama_client:
-                return await self.ollama_client.get_embedding(text, self.model_name)
-            else:
-                # Fallback to direct API call
-                response = requests.post(
-                    "http://localhost:11434/api/embeddings",
-                    json={"model": self.model_name, "prompt": text},
-                    timeout=10
-                )
-                
-                if response.status_code == 200:
-                    return response.json().get('embedding', [])
-                else:
-                    return None
-                    
-        except Exception as e:
-            logger.error(f"❌ Ollama embedding error: {e}")
-            return None
-    
-    async def _get_sentence_transformers_embedding(self, text: str) -> Optional[List[float]]:
-        """
-        Creates an embedding using Sentence Transformers.
-
-        Args:
-            text (str): The text to create an embedding for.
-
-        Returns:
-            Optional[List[float]]: The created embedding, or None if an error occurred.
-        """
-        try:
-            # Use ThreadPoolExecutor to avoid blocking the event loop
-            loop = asyncio.get_event_loop()
-            with ThreadPoolExecutor() as executor:
-                embedding = await loop.run_in_executor(
-                    executor, 
-                    lambda: self.model.encode(text).tolist()
-                )
-            return embedding
-            
-        except Exception as e:
-            logger.error(f"❌ Sentence Transformers embedding error: {e}")
-            return None
-    
-    async def _get_openai_embedding(self, text: str) -> Optional[List[float]]:
-        """
-        Creates an embedding using OpenAI.
-
-        Args:
-            text (str): The text to create an embedding for.
-
-        Returns:
-            Optional[List[float]]: The created embedding, or None if an error occurred.
-        """
-        try:
-            # Requires OPENAI_API_KEY in the environment
-            import os
-            from openai import OpenAI
-            
-            client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-            response = client.embeddings.create(
-                model=self.model_name,
-                input=text
-            )
-            
-            return response.data[0].embedding
-            
-        except Exception as e:
-            logger.error(f"❌ OpenAI embedding error: {e}")
+            logger.error(f"❌ Exception during embedding: {e}")
             return None
 
 class VectorDatabase:
@@ -1062,6 +805,7 @@ class RAGSystem:
             db=self.config.get("redis_db", 0),
             decode_responses=True
         )
+        self.ai_client = get_client() # Add the unified client
         
         logger.info("🚀 RAG System is ready")
     
@@ -1076,7 +820,6 @@ class RAGSystem:
             "embedding_provider": False,
             "vector_database": False,
             "cache_system": False,
-            "available_models": [],
             "system_ready": False
         }
         
@@ -1084,11 +827,6 @@ class RAGSystem:
             # Test embedding provider
             logger.info("🔍 Testing Embedding Provider connection...")
             status["embedding_provider"] = await self.embedding_provider.test_connection()
-            
-            if status["embedding_provider"]:
-                # Get available models
-                status["available_models"] = await self.embedding_provider.get_available_models()
-                logger.info(f"✅ Found embedding models: {status['available_models']}")
             
             # Test vector database
             logger.info("🔍 Testing Vector Database connection...")
@@ -1116,64 +854,6 @@ class RAGSystem:
         except Exception as e:
             logger.error(f"❌ Error initializing system: {e}")
             return status
-    
-    async def get_embedding_models(self) -> List[Dict[str, Any]]:
-        """
-        Gets the list of embedding models with their information.
-
-        Returns:
-            List[Dict[str, Any]]: A list of embedding models.
-        """
-        try:
-            models = await self.embedding_provider.get_available_models()
-            model_info = []
-            
-            for model_name in models:
-                if hasattr(self.embedding_provider, 'ollama_client') and self.embedding_provider.ollama_client:
-                    info = await self.embedding_provider.ollama_client.get_model_info(model_name)
-                    model_info.append({
-                        "name": model_name,
-                        "type": "ollama",
-                        "info": info
-                    })
-                else:
-                    model_info.append({
-                        "name": model_name,
-                        "type": self.embedding_provider.provider_type,
-                        "info": None
-                    })
-            
-            return model_info
-            
-        except Exception as e:
-            logger.error(f"❌ Could not get model list: {e}")
-            return []
-    
-    async def switch_embedding_model(self, model_name: str) -> bool:
-        """
-        Switches the embedding model.
-
-        Args:
-            model_name (str): The name of the model to switch to.
-
-        Returns:
-            bool: True if the model was switched successfully, False otherwise.
-        """
-        try:
-            # Check if the model exists
-            available_models = await self.embedding_provider.get_available_models()
-            if model_name not in available_models:
-                logger.error(f"❌ Model not found: {model_name}")
-                return False
-            
-            # Switch model
-            self.embedding_provider.model_name = model_name
-            logger.info(f"✅ Switched to embedding model: {model_name}")
-            return True
-            
-        except Exception as e:
-            logger.error(f"❌ Could not switch model: {e}")
-            return False
     
     async def get_system_status(self) -> Dict[str, Any]:
         """
@@ -1399,7 +1079,7 @@ Answer:
     
     async def _call_llm(self, prompt: str, provider: str) -> str:
         """
-        Calls the LLM.
+        Calls the LLM using the UnifiedAIClient.
 
         Args:
             prompt (str): The prompt for the LLM.
@@ -1409,78 +1089,25 @@ Answer:
             str: The response from the LLM.
         """
         try:
-            if provider == "ollama":
-                return await self._call_ollama(prompt)
-            elif provider == "openai":
-                return await self._call_openai(prompt)
+            if not self.ai_client.get_provider(provider):
+                return f"LLM provider '{provider}' is not supported or configured."
+
+            messages = [{"role": "user", "content": prompt}]
+            # Use a default model from config if available, otherwise let the strategy decide
+            model = self.config.get(f"{provider}_model")
+            
+            result = self.ai_client.generate_response(provider, messages, model=model)
+
+            if result and result.get('success'):
+                return result.get('content', 'No content received.')
             else:
-                return "This LLM provider is not supported."
-                
+                error_msg = result.get('error', 'An unknown error occurred')
+                logger.error(f"❌ LLM call error with {provider}: {error_msg}")
+                return f"An error occurred while calling the {provider} LLM."
+
         except Exception as e:
-            logger.error(f"❌ LLM call error: {e}")
-            return "An error occurred while calling the LLM."
-    
-    async def _call_ollama(self, prompt: str) -> str:
-        """
-        Calls Ollama.
-
-        Args:
-            prompt (str): The prompt for Ollama.
-
-        Returns:
-            str: The response from Ollama.
-        """
-        try:
-            model = self.config.get("ollama_model", "llama3.1:8b")
-            
-            response = requests.post(
-                "http://localhost:11434/api/generate",
-                json={
-                    "model": model,
-                    "prompt": prompt,
-                    "stream": False
-                },
-                timeout=30
-            )
-            
-            if response.status_code == 200:
-                return response.json().get('response', '')
-            else:
-                return "Could not connect to Ollama."
-                
-        except Exception as e:
-            logger.error(f"❌ Ollama call error: {e}")
-            return "An error occurred while calling Ollama."
-    
-    async def _call_openai(self, prompt: str) -> str:
-        """
-        Calls OpenAI.
-
-        Args:
-            prompt (str): The prompt for OpenAI.
-
-        Returns:
-            str: The response from OpenAI.
-        """
-        try:
-            import os
-            from openai import OpenAI
-            
-            client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-            model = self.config.get("openai_model", "gpt-3.5-turbo")
-            
-            response = client.chat.completions.create(
-                model=model,
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=1000,
-                temperature=0.7
-            )
-            
-            return response.choices[0].message.content
-            
-        except Exception as e:
-            logger.error(f"❌ OpenAI call error: {e}")
-            return "An error occurred while calling OpenAI."
+            logger.error(f"❌ Exception during LLM call: {e}")
+            return "An unexpected error occurred while calling the LLM."
     
     def _calculate_confidence(self, documents: List[Document]) -> float:
         """

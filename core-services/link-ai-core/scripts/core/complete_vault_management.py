@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """
-Complete Vault Management - จัดการ Vault อย่างสมบูรณ์และชาญฉลาด
+Complete Vault Management.
+This script provides a complete and intelligent solution for managing an
+Obsidian vault. It analyzes the old structure, moves files to their correct
+locations, and cleans up old folders.
 """
 
 import os
@@ -10,7 +13,13 @@ from typing import Dict, List, Any
 from datetime import datetime
 
 def analyze_old_structure() -> Dict[str, List[str]]:
-    """วิเคราะห์โครงสร้างเก่าเพื่อหาไฟล์ที่ต้องย้าย"""
+    """
+    Analyzes the old vault structure to find files that need to be moved.
+
+    Returns:
+        Dict[str, List[str]]: A dictionary containing the old folders and the
+                              files within them.
+    """
     vault_path = r"F:\01_WRI\Obsidian\Vault"
     
     old_folders = {
@@ -28,27 +37,33 @@ def analyze_old_structure() -> Dict[str, List[str]]:
     return old_folders
 
 def create_complete_structure():
-    """สร้างโครงสร้าง Vault อย่างสมบูรณ์และชาญฉลาด"""
+    """
+    Creates a complete and intelligent vault structure.
+
+    This function analyzes the old structure, moves files from the old folders
+    to the new ones, and then cleans up the old, empty folders. It also
+    creates README files for any new, empty folders.
+    """
     vault_path = r"F:\01_WRI\Obsidian\Vault"
     
-    print("🎯 เริ่มจัดการ Vault อย่างสมบูรณ์และชาญฉลาด")
+    print("🎯 Starting complete and intelligent vault management")
     print("=" * 70)
     
-    # 1. วิเคราะห์โครงสร้างเก่า
-    print("\n🔍 วิเคราะห์โครงสร้างเก่า...")
+    # 1. Analyze the old structure
+    print("\n🔍 Analyzing old structure...")
     old_structure = analyze_old_structure()
     
     for folder, files in old_structure.items():
         if files:
-            print(f"📁 {folder}: {len(files)} ไฟล์")
+            print(f"📁 {folder}: {len(files)} files")
     
-    # 2. ย้ายไฟล์จาก 08_TEMP ไปยัง 08_Templates-Tools
-    print("\n📁 ย้ายไฟล์จาก 08_TEMP...")
+    # 2. Move files from 08_TEMP to 08_Templates-Tools
+    print("\n📁 Moving files from 08_TEMP...")
     source_path = os.path.join(vault_path, "08_TEMP")
     target_base = os.path.join(vault_path, "08_Templates-Tools")
     
     if os.path.exists(source_path):
-        # ย้ายไฟล์ตามประเภท
+        # Move files based on their type
         file_mapping = {
             # Document Templates
             "Character_Template.md": "Document_Templates/",
@@ -91,7 +106,7 @@ def create_complete_structure():
             # Databases
             "ArcanaDatabase.md": "Databases/",
             
-            # Prompts (ย้ายไป General ถ้ายังไม่มี)
+            # Prompts (moved to General if not already there)
             "AshvalPrompt.md": "Prompts/General/",
             "Ashval Prompt Master.md": "Prompts/General/",
             "GeminiTagger.md": "Prompts/General/",
@@ -108,21 +123,21 @@ def create_complete_structure():
                 target_folder = os.path.join(target_base, file_mapping[file])
                 target_file = os.path.join(target_folder, file)
                 
-                # สร้างโฟลเดอร์ปลายทางถ้ายังไม่มี
+                # Create the destination folder if it doesn't exist
                 os.makedirs(target_folder, exist_ok=True)
                 
-                # ย้ายไฟล์
+                # Move the file
                 if not os.path.exists(target_file):
                     shutil.move(source_file, target_file)
-                    print(f"✅ ย้าย: {file} -> {file_mapping[file]}")
+                    print(f"✅ Moved: {file} -> {file_mapping[file]}")
                     moved_count += 1
                 else:
-                    print(f"⚠️ ไฟล์มีอยู่แล้ว: {file}")
+                    print(f"⚠️ File already exists: {file}")
         
-        print(f"📊 ย้ายไฟล์จาก 08_TEMP: {moved_count} ไฟล์")
+        print(f"📊 Moved files from 08_TEMP: {moved_count} files")
     
-    # 3. ย้ายไฟล์จาก copilot-conversations ไปยัง Default_Prompts
-    print("\n📁 ย้ายไฟล์จาก copilot-conversations...")
+    # 3. Move files from copilot-conversations to Default_Prompts
+    print("\n📁 Moving files from copilot-conversations...")
     source_path = os.path.join(vault_path, "copilot-conversations")
     target_path = os.path.join(vault_path, "08_Templates-Tools", "Prompts", "Default_Prompts")
     
@@ -135,15 +150,15 @@ def create_complete_structure():
                 
                 if not os.path.exists(target_file):
                     shutil.move(source_file, target_file)
-                    print(f"✅ ย้าย: {file}")
+                    print(f"✅ Moved: {file}")
                     moved_count += 1
                 else:
-                    print(f"⚠️ ไฟล์มีอยู่แล้ว: {file}")
+                    print(f"⚠️ File already exists: {file}")
         
-        print(f"📊 ย้ายไฟล์จาก copilot-conversations: {moved_count} ไฟล์")
+        print(f"📊 Moved files from copilot-conversations: {moved_count} files")
     
-    # 4. ย้ายไฟล์จาก 99_INBOX ไปยัง 06_NOTE
-    print("\n📁 ย้ายไฟล์จาก 99_INBOX...")
+    # 4. Move files from 99_INBOX to 06_NOTE
+    print("\n📁 Moving files from 99_INBOX...")
     source_path = os.path.join(vault_path, "99_INBOX")
     target_path = os.path.join(vault_path, "06_NOTE")
     
@@ -156,33 +171,33 @@ def create_complete_structure():
                 
                 if not os.path.exists(target_file):
                     shutil.move(source_file, target_file)
-                    print(f"✅ ย้าย: {file}")
+                    print(f"✅ Moved: {file}")
                     moved_count += 1
                 else:
-                    print(f"⚠️ ไฟล์มีอยู่แล้ว: {file}")
+                    print(f"⚠️ File already exists: {file}")
         
-        print(f"📊 ย้ายไฟล์จาก 99_INBOX: {moved_count} ไฟล์")
+        print(f"📊 Moved files from 99_INBOX: {moved_count} files")
     
-    # 5. ลบโฟลเดอร์เก่าที่ว่างแล้ว
-    print("\n🗑️ ลบโฟลเดอร์เก่าที่ว่างแล้ว...")
+    # 5. Delete old, empty folders
+    print("\n🗑️ Deleting old, empty folders...")
     old_folders = ["08_TEMP", "copilot-conversations", "99_INBOX"]
     
     for folder in old_folders:
         folder_path = os.path.join(vault_path, folder)
         if os.path.exists(folder_path):
             try:
-                # ตรวจสอบว่าโฟลเดอร์ว่างหรือไม่
+                # Check if the folder is empty
                 remaining_files = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
                 if not remaining_files:
                     shutil.rmtree(folder_path)
-                    print(f"✅ ลบโฟลเดอร์ว่าง: {folder}")
+                    print(f"✅ Deleted empty folder: {folder}")
                 else:
-                    print(f"⚠️ โฟลเดอร์ยังมีไฟล์: {folder} ({len(remaining_files)} ไฟล์)")
+                    print(f"⚠️ Folder still contains files: {folder} ({len(remaining_files)} files)")
             except Exception as e:
-                print(f"❌ ไม่สามารถลบโฟลเดอร์: {folder} - {e}")
+                print(f"❌ Could not delete folder: {folder} - {e}")
     
-    # 6. สร้าง README สำหรับโฟลเดอร์ที่ว่าง
-    print("\n📝 สร้าง README สำหรับโฟลเดอร์ที่ว่าง...")
+    # 6. Create READMEs for empty folders
+    print("\n📝 Creating READMEs for empty folders...")
     empty_folders = [
         "Document_Templates",
         "Tools_and_Utilities", 
@@ -197,20 +212,20 @@ def create_complete_structure():
             date = datetime.now().strftime("%Y-%m-%d")
             content = f"""# 📁 {folder.replace('_', ' ')}
 
-## 🎯 วัตถุประสงค์
+## 🎯 Purpose
 {folder.replace('_', ' ').lower()}
 
-## 📋 สถานะ
-- [ ] เพิ่มไฟล์แรก
+## 📋 Status
+- [ ] Add first file
 
 ---
-*อัปเดตล่าสุด: {date}*
+*Last updated: {date}*
 """
             with open(readme_path, 'w', encoding='utf-8') as f:
                 f.write(content)
-            print(f"✅ สร้าง README: {folder}")
+            print(f"✅ Created README: {folder}")
     
-    print("\n🎉 การจัดการ Vault อย่างสมบูรณ์เสร็จสิ้น!")
+    print("\n🎉 Complete vault management finished!")
 
 if __name__ == "__main__":
     create_complete_structure()

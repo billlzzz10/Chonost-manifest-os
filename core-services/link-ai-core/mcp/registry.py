@@ -1,7 +1,8 @@
 """
-MCP Server Registry
-รองรับ Transport หลายแบบ: stdio, python, npx, docker, http
-ตัวอย่าง 16 servers ที่ใช้งานจริง
+MCP Server Registry.
+This module provides a registry for MCP servers, supporting various transport
+layers such as stdio, Python, npx, Docker, and HTTP. It includes examples of
+16 servers used in a real-world application.
 """
 
 from typing import Dict, Optional
@@ -17,10 +18,13 @@ REGISTRY: Dict[str, MCPServer] = {}
 
 def register_server(server: MCPServer) -> None:
     """
-    ลงทะเบียน MCP server ใหม่
+    Registers a new MCP server.
 
     Args:
-        server: MCPServer instance
+        server (MCPServer): The MCP server instance to register.
+
+    Raises:
+        ValueError: If a server with the same name is already registered.
     """
     if server.name in REGISTRY:
         raise ValueError(f"Server '{server.name}' already registered")
@@ -29,51 +33,56 @@ def register_server(server: MCPServer) -> None:
 
 def unregister_server(name: str) -> None:
     """
-    ลบ MCP server ออกจาก registry
+    Unregisters an MCP server from the registry.
 
     Args:
-        name: Server name
+        name (str): The name of the server to unregister.
     """
     if name in REGISTRY:
         del REGISTRY[name]
 
 def get_server(name: str) -> Optional[MCPServer]:
     """
-    ดึง MCP server จาก registry
+    Gets an MCP server from the registry.
 
     Args:
-        name: Server name
+        name (str): The name of the server to retrieve.
 
     Returns:
-        MCPServer instance หรือ None ถ้าไม่พบ
+        Optional[MCPServer]: The MCP server instance, or None if not found.
     """
     return REGISTRY.get(name)
 
 def list_servers() -> Dict[str, MCPServer]:
     """
-    ดึงรายการ MCP servers ทั้งหมด
+    Lists all MCP servers in the registry.
 
     Returns:
-        Dictionary ของ servers
+        Dict[str, MCPServer]: A dictionary of all registered servers.
     """
     return REGISTRY.copy()
 
 def get_server_names() -> list[str]:
     """
-    ดึงรายชื่อ MCP servers
+    Gets the names of all registered MCP servers.
 
     Returns:
-        List ของ server names
+        list[str]: A list of server names.
     """
     return list(REGISTRY.keys())
 
 def clear_registry() -> None:
-    """ล้าง registry ทั้งหมด"""
+    """Clears the entire server registry."""
     REGISTRY.clear()
 
 # ลงทะเบียน MCP servers เริ่มต้น
 def initialize_default_servers():
-    """ลงทะเบียน MCP servers เริ่มต้น 16 ตัว"""
+    """
+    Initializes and registers the 16 default MCP servers.
+
+    This function creates instances of `MCPServer` for various services
+    and registers them with the server registry.
+    """
 
     # ---------- stdio / python ----------
     filesystem_server = MCPServer(
@@ -89,7 +98,7 @@ def initialize_default_servers():
     postgres_server = MCPServer(
         name="postgres",
         kind="stdio",
-        cmd=["mcp-postgres"],                # ไบนารี/สคริปต์ที่พูด MCP ผ่าน stdio
+        cmd=["mcp-postgres"],                # Binary/script that speaks MCP over stdio
         description="PostgreSQL MCP Server",
         version="1.0.0"
     )
@@ -98,7 +107,7 @@ def initialize_default_servers():
     github_server = MCPServer(
         name="github",
         kind="npx",
-        cmd=["npx", "-y", "mcp-github@latest"],  # set GH_TOKEN ใน env
+        cmd=["npx", "-y", "mcp-github@latest"],  # Set GH_TOKEN in env
         env={"GH_TOKEN": "YOUR_TOKEN"},
         description="GitHub MCP Server",
         version="1.0.0"
@@ -239,7 +248,7 @@ def initialize_default_servers():
         version="1.0.0"
     )
 
-    # ลงทะเบียน servers ทั้งหมด
+    # Register all servers
     servers = [
         filesystem_server,
         postgres_server,
@@ -270,18 +279,25 @@ initialize_default_servers()
 
 # MCP Registry Class for unified interface
 class MCPRegistry:
-    """MCP Registry class for unified interface"""
+    """
+    A class that provides a unified interface to the MCP server registry.
+    """
 
     def __init__(self):
-        """Initialize MCP Registry"""
+        """Initializes the MCP Registry."""
         pass
 
     async def list_servers(self):
-        """List all registered servers"""
+        """Lists all registered servers."""
         return list_servers()
 
     async def list_tools(self):
-        """List all available tools from all servers"""
+        """
+        Lists all available tools from all registered servers.
+
+        Returns:
+            list: A list of all available tools.
+        """
         servers = list_servers()
         tools = []
 
@@ -318,13 +334,31 @@ class MCPRegistry:
         return tools
 
     async def get_server(self, name: str):
-        """Get server by name"""
+        """
+        Gets a server by its name.
+
+        Args:
+            name (str): The name of the server to retrieve.
+
+        Returns:
+            The server instance.
+        """
         return get_server(name)
 
     def register_server(self, server):
-        """Register a new server"""
+        """
+        Registers a new server.
+
+        Args:
+            server: The server instance to register.
+        """
         register_server(server)
 
-    def unregister_server(self, name: str):
-        """Unregister a server"""
+    def unregister__server(self, name: str):
+        """
+        Unregisters a server.
+
+        Args:
+            name (str): The name of the server to unregister.
+        """
         unregister_server(name)

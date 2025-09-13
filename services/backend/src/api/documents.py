@@ -14,6 +14,7 @@ from models.document import Document
 router = APIRouter()
 
 class DocumentCreate(BaseModel):
+    """Request model for creating a document."""
     title: str
     content: Optional[str] = None
     file_path: Optional[str] = None
@@ -22,6 +23,7 @@ class DocumentCreate(BaseModel):
     metadata: Optional[dict] = None
 
 class DocumentUpdate(BaseModel):
+    """Request model for updating a document."""
     title: Optional[str] = None
     content: Optional[str] = None
     file_path: Optional[str] = None
@@ -31,6 +33,7 @@ class DocumentUpdate(BaseModel):
     metadata: Optional[dict] = None
 
 class DocumentResponse(BaseModel):
+    """Response model for a document."""
     id: str
     title: str
     content: Optional[str] = None
@@ -43,12 +46,14 @@ class DocumentResponse(BaseModel):
     updated_at: Optional[str] = None
     user_id: Optional[str] = None
 
-@router.post("/", response_model=DocumentResponse)
+@router.post("/", response_model=DocumentResponse, summary="Create a new document")
 async def create_document(
     document_data: DocumentCreate,
     db: AsyncSession = Depends(get_db)
 ):
-    """Create a new document"""
+    """
+    Creates a new document in the database.
+    """
     try:
         document = Document(
             title=document_data.title,
@@ -66,7 +71,7 @@ async def create_document(
         await db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.get("/", response_model=List[DocumentResponse])
+@router.get("/", response_model=List[DocumentResponse], summary="Get a list of documents")
 async def get_documents(
     is_archived: Optional[bool] = None,
     file_type: Optional[str] = None,
@@ -74,7 +79,9 @@ async def get_documents(
     offset: int = 0,
     db: AsyncSession = Depends(get_db)
 ):
-    """Get documents with optional filtering"""
+    """
+    Gets a list of documents with optional filtering.
+    """
     try:
         query = db.query(Document)
         
@@ -90,12 +97,14 @@ async def get_documents(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.get("/{document_id}", response_model=DocumentResponse)
+@router.get("/{document_id}", response_model=DocumentResponse, summary="Get a specific document")
 async def get_document(
     document_id: str,
     db: AsyncSession = Depends(get_db)
 ):
-    """Get a specific document by ID"""
+    """
+    Gets a specific document by its ID.
+    """
     try:
         document = await db.get(Document, document_id)
         if not document:
@@ -104,13 +113,15 @@ async def get_document(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.put("/{document_id}", response_model=DocumentResponse)
+@router.put("/{document_id}", response_model=DocumentResponse, summary="Update a document")
 async def update_document(
     document_id: str,
     document_data: DocumentUpdate,
     db: AsyncSession = Depends(get_db)
 ):
-    """Update a document"""
+    """
+    Updates a document's attributes.
+    """
     try:
         document = await db.get(Document, document_id)
         if not document:
@@ -138,12 +149,14 @@ async def update_document(
         await db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.delete("/{document_id}")
+@router.delete("/{document_id}", summary="Delete a document")
 async def delete_document(
     document_id: str,
     db: AsyncSession = Depends(get_db)
 ):
-    """Delete a document"""
+    """
+    Deletes a document from the database.
+    """
     try:
         document = await db.get(Document, document_id)
         if not document:

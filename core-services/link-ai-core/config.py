@@ -1,12 +1,23 @@
 """
-Configuration settings สำหรับ MCP Orchestrator
+Configuration settings for the MCP Orchestrator.
 """
 
 import os
 from pydantic import BaseModel, Field
 
 class Settings(BaseModel):
-    """Application settings"""
+    """
+    Application settings.
+
+    Attributes:
+        log_level (str): The log level for the application.
+        mcp_ttl_seconds (int): The time-to-live for MCP connections in seconds.
+        mcp_pool_max (int): The maximum number of MCP connections in the pool.
+        host (str): The host to bind the server to.
+        port (int): The port to bind the server to.
+        environment (str): The environment (development, staging, production).
+        debug (bool): A flag indicating whether to enable debug mode.
+    """
     
     # Logging
     log_level: str = Field(
@@ -47,6 +58,14 @@ class Settings(BaseModel):
         default=os.getenv("DEBUG", "false").lower() == "true",
         description="Enable debug mode"
     )
+
+    # AI Provider API Keys
+    openai_api_key: Optional[str] = Field(default=os.getenv("OPENAI_API_KEY"), description="API key for OpenAI")
+    anthropic_api_key: Optional[str] = Field(default=os.getenv("ANTHROPIC_API_KEY"), description="API key for Anthropic")
+    google_api_key: Optional[str] = Field(default=os.getenv("GOOGLE_API_KEY"), description="API key for Google AI")
+    mistral_api_key: Optional[str] = Field(default=os.getenv("MISTRAL_API_KEY"), description="API key for Mistral AI")
+    openrouter_api_key: Optional[str] = Field(default=os.getenv("OPENROUTER_API_KEY"), description="API key for OpenRouter")
+    deepseek_api_key: Optional[str] = Field(default=os.getenv("DEEPSEEK_API_KEY"), description="API key for DeepSeek")
 
 # Global settings instance
 settings = Settings()

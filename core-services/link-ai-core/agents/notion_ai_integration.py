@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Notion AI Integration for Desktop Commander
-การรวม AI กับ Notion สำหรับ Desktop Commander
+Notion AI Integration for Desktop Commander.
+This module provides AI integration with Notion for the Desktop Commander.
 """
 
 import asyncio
@@ -36,16 +36,20 @@ logger = logging.getLogger(__name__)
 
 class NotionAIIntegration:
     """
-    AI Integration for Notion MCP Server
-    การรวม AI กับ Notion MCP Server
+    AI Integration for Notion MCP Server.
+
+    Attributes:
+        server_url (str): The URL of the Notion MCP Server.
+        helper (Optional[NotionAIHelper]): The Notion AI helper client.
+        is_initialized (bool): A flag indicating if the integration is initialized.
     """
     
     def __init__(self, server_url: str = "http://localhost:8000"):
         """
-        Initialize Notion AI Integration
+        Initializes the Notion AI Integration.
         
         Args:
-            server_url: URL ของ Notion MCP Server
+            server_url (str): The URL of the Notion MCP Server.
         """
         self.server_url = server_url
         self.helper: Optional[NotionAIHelper] = None
@@ -53,13 +57,13 @@ class NotionAIIntegration:
         
     async def initialize(self, token: str) -> bool:
         """
-        Initialize the AI integration
+        Initializes the AI integration.
         
         Args:
-            token: Notion Integration Token
+            token (str): The Notion Integration Token.
             
         Returns:
-            Initialization success status
+            bool: The initialization success status.
         """
         try:
             self.helper = NotionAIHelper(self.server_url)
@@ -78,14 +82,14 @@ class NotionAIIntegration:
             return False
     
     async def cleanup(self):
-        """Cleanup resources"""
+        """Cleans up resources."""
         if self.helper:
             await self.helper.cleanup()
             self.is_initialized = False
             logger.info("🧹 Notion AI Integration cleaned up")
     
     def _check_initialized(self):
-        """Check if integration is initialized"""
+        """Checks if the integration is initialized."""
         if not self.is_initialized or not self.helper:
             raise RuntimeError("Notion AI Integration not initialized. Call initialize() first.")
     
@@ -97,16 +101,16 @@ class NotionAIIntegration:
         analysis_type: str = "basic"
     ) -> Dict[str, Any]:
         """
-        Analyze file and export to Notion
+        Analyzes a file and exports it to Notion.
         
         Args:
-            file_path: Path to file
-            parent_page_id: Parent page ID
-            database_id: Database ID (optional)
-            analysis_type: Type of analysis (basic, detailed, code)
+            file_path (str): The path to the file.
+            parent_page_id (str): The ID of the parent page.
+            database_id (Optional[str]): The ID of the database (optional).
+            analysis_type (str): The type of analysis (basic, detailed, code).
             
         Returns:
-            Analysis and export result
+            Dict[str, Any]: The analysis and export result.
         """
         self._check_initialized()
         
@@ -167,13 +171,13 @@ class NotionAIIntegration:
     
     async def _detailed_file_analysis(self, file_path: Path) -> Dict[str, Any]:
         """
-        Perform detailed file analysis
+        Performs detailed file analysis.
         
         Args:
-            file_path: Path to file
+            file_path (Path): The path to the file.
             
         Returns:
-            Detailed analysis data
+            Dict[str, Any]: Detailed analysis data.
         """
         analysis = {}
         
@@ -204,7 +208,15 @@ class NotionAIIntegration:
             return {"analysis_error": str(e)}
     
     async def _python_analysis(self, content: str) -> Dict[str, Any]:
-        """Analyze Python code"""
+        """
+        Analyzes Python code.
+
+        Args:
+            content (str): The content of the Python code.
+
+        Returns:
+            Dict[str, Any]: The analysis result.
+        """
         analysis = {"language": "Python"}
         
         try:
@@ -230,7 +242,15 @@ class NotionAIIntegration:
         return analysis
     
     async def _javascript_analysis(self, content: str) -> Dict[str, Any]:
-        """Analyze JavaScript/TypeScript code"""
+        """
+        Analyzes JavaScript/TypeScript code.
+
+        Args:
+            content (str): The content of the JavaScript/TypeScript code.
+
+        Returns:
+            Dict[str, Any]: The analysis result.
+        """
         analysis = {"language": "JavaScript/TypeScript"}
         
         try:
@@ -253,7 +273,15 @@ class NotionAIIntegration:
         return analysis
     
     async def _markdown_analysis(self, content: str) -> Dict[str, Any]:
-        """Analyze Markdown content"""
+        """
+        Analyzes Markdown content.
+
+        Args:
+            content (str): The content of the Markdown file.
+
+        Returns:
+            Dict[str, Any]: The analysis result.
+        """
         analysis = {"language": "Markdown"}
         
         try:
@@ -276,7 +304,15 @@ class NotionAIIntegration:
         return analysis
     
     async def _json_analysis(self, content: str) -> Dict[str, Any]:
-        """Analyze JSON content"""
+        """
+        Analyzes JSON content.
+
+        Args:
+            content (str): The content of the JSON file.
+
+        Returns:
+            Dict[str, Any]: The analysis result.
+        """
         analysis = {"language": "JSON"}
         
         try:
@@ -297,13 +333,13 @@ class NotionAIIntegration:
     
     async def _code_analysis(self, file_path: Path) -> Dict[str, Any]:
         """
-        Perform code-specific analysis
+        Performs code-specific analysis.
         
         Args:
-            file_path: Path to code file
+            file_path (Path): The path to the code file.
             
         Returns:
-            Code analysis data
+            Dict[str, Any]: The code analysis data.
         """
         return await self._detailed_file_analysis(file_path)
     
@@ -316,17 +352,17 @@ class NotionAIIntegration:
         analysis_type: str = "basic"
     ) -> Dict[str, Any]:
         """
-        Batch analyze directory and export to Notion
+        Batch analyzes a directory and exports it to Notion.
         
         Args:
-            directory_path: Directory path
-            parent_page_id: Parent page ID
-            database_id: Database ID (optional)
-            file_patterns: File patterns to include (e.g., ["*.py", "*.js"])
-            analysis_type: Type of analysis
+            directory_path (str): The path to the directory.
+            parent_page_id (str): The ID of the parent page.
+            database_id (Optional[str]): The ID of the database (optional).
+            file_patterns (Optional[List[str]]): File patterns to include (e.g., ["*.py", "*.js"]).
+            analysis_type (str): The type of analysis.
             
         Returns:
-            Batch analysis result
+            Dict[str, Any]: The batch analysis result.
         """
         self._check_initialized()
         
@@ -410,15 +446,15 @@ class NotionAIIntegration:
         include_analysis: bool = True
     ) -> Dict[str, Any]:
         """
-        Create comprehensive project documentation
+        Creates comprehensive project documentation.
         
         Args:
-            project_path: Project directory path
-            parent_page_id: Parent page ID
-            include_analysis: Whether to include file analysis
+            project_path (str): The path to the project directory.
+            parent_page_id (str): The ID of the parent page.
+            include_analysis (bool): Whether to include file analysis.
             
         Returns:
-            Documentation creation result
+            Dict[str, Any]: The documentation creation result.
         """
         self._check_initialized()
         
@@ -454,8 +490,7 @@ class NotionAIIntegration:
 # Example usage for Desktop Commander
 async def example_desktop_commander_integration():
     """
-    Example of how Desktop Commander can use Notion AI Integration
-    ตัวอย่างการใช้งาน Notion AI Integration โดย Desktop Commander
+    Example of how Desktop Commander can use Notion AI Integration.
     """
     # Initialize integration
     integration = NotionAIIntegration()

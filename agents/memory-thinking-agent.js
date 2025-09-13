@@ -1,6 +1,14 @@
 const { useMCPTool, accessMCPResource } = require('../services/mcp-toolbox');
 
+/**
+ * @class MemoryThinkingAgent
+ * @description An agent that combines memory and sequential thinking for complex decision-making.
+ */
 class MemoryThinkingAgent {
+  /**
+   * @param {object} [config={}] - The configuration for the agent.
+   * @param {string} [config.memoryFilePath] - The path to the memory file.
+   */
   constructor(config = {}) {
     this.memoryServer = 'memory';
     this.thinkingServer = 'sequentialthinking';
@@ -13,7 +21,7 @@ class MemoryThinkingAgent {
   }
 
   /**
-   * เริ่มต้น memory graph สำหรับ code review context
+   * Initializes the memory graph for the code review context.
    * @returns {Promise<void>}
    */
   async initializeMemoryGraph() {
@@ -34,8 +42,9 @@ class MemoryThinkingAgent {
   }
 
   /**
-   * สร้าง core entities ใน knowledge graph
+   * Creates core entities in the knowledge graph.
    * @returns {Promise<void>}
+   * @private
    */
   async createCoreEntities() {
     const entities = [
@@ -102,8 +111,9 @@ class MemoryThinkingAgent {
   }
 
   /**
-   * สร้าง core relations ระหว่าง entities
+   * Creates core relations between entities.
    * @returns {Promise<void>}
+   * @private
    */
   async createCoreRelations() {
     const relations = [
@@ -147,9 +157,9 @@ class MemoryThinkingAgent {
   }
 
   /**
-   * เพิ่ม observations ใหม่ให้ entities
-   * @param {string} entityName - ชื่อ entity
-   * @param {Array<string>} observations - รายการ observations ใหม่
+   * Adds new observations to entities.
+   * @param {string} entityName - The name of the entity.
+   * @param {Array<string>} observations - A list of new observations.
    * @returns {Promise<void>}
    */
   async addObservations(entityName, observations) {
@@ -166,10 +176,10 @@ class MemoryThinkingAgent {
   }
 
   /**
-   * Sequential thinking process สำหรับ code review decisions
-   * @param {Object} reviewContext - Context ของการตรวจสอบ
-   * @param {number} totalThoughts - จำนวน thoughts ที่ต้องการ (default: 5)
-   * @returns {Promise<Object>} ผลลัพธ์การคิด
+   * Performs a sequential thinking process for code review decisions.
+   * @param {Object} reviewContext - The context of the review.
+   * @param {number} [totalThoughts=5] - The desired number of thoughts.
+   * @returns {Promise<Object>} The result of the thinking process.
    */
   async performSequentialThinking(reviewContext, totalThoughts = 5) {
     console.log('🧠 Starting sequential thinking process...');
@@ -208,11 +218,12 @@ class MemoryThinkingAgent {
   }
 
   /**
-   * สร้าง thought เดียวใน sequential thinking process
-   * @param {Object} context - Context ปัจจุบัน
-   * @param {number} thoughtNumber - ลำดับ thought
-   * @param {number} totalThoughts - จำนวน thoughts ทั้งหมด
-   * @returns {Promise<Object>}
+   * Generates a single thought in the sequential thinking process.
+   * @param {Object} context - The current context.
+   * @param {number} thoughtNumber - The sequence number of the thought.
+   * @param {number} totalThoughts - The total number of thoughts.
+   * @returns {Promise<Object>} The generated thought.
+   * @private
    */
   async generateThought(context, thoughtNumber, totalThoughts) {
     const thoughtPrompt = `
@@ -259,10 +270,11 @@ Next thought needed? (true/false)
   }
 
   /**
-   * อัปเดต context จาก thought
-   * @param {Object} currentContext
-   * @param {Object} thought
-   * @returns {Promise<Object>}
+   * Updates the context based on a thought.
+   * @param {Object} currentContext - The current context.
+   * @param {Object} thought - The thought to process.
+   * @returns {Promise<Object>} The updated context.
+   * @private
    */
   async updateContextFromThought(currentContext, thought) {
     // Extract key insights from thought
@@ -283,9 +295,10 @@ Next thought needed? (true/false)
   }
 
   /**
-   * สร้าง final decision จาก sequential thinking
-   * @param {Object} context
-   * @returns {Promise<Object>}
+   * Generates a final decision from the sequential thinking process.
+   * @param {Object} context - The final context.
+   * @returns {Promise<Object>} The final decision object.
+   * @private
    */
   async generateFinalDecision(context) {
     const decisionPrompt = `
@@ -341,9 +354,9 @@ Format:
   }
 
   /**
-   * Context-aware code review decision
-   * @param {Object} codeReviewResult - ผลจาก CodeReviewAgent
-   * @returns {Promise<Object>} Decision กับ reasoning
+   * Makes a context-aware code review decision.
+   * @param {Object} codeReviewResult - The result from the CodeReviewAgent.
+   * @returns {Promise<Object>} A decision object with reasoning.
    */
   async makeContextAwareDecision(codeReviewResult) {
     try {
@@ -380,9 +393,10 @@ Format:
   }
 
   /**
-   * Fallback decision เมื่อ MCP tools ล้มเหลว
-   * @param {Object} codeReviewResult
-   * @returns {Object}
+   * Provides a fallback decision when MCP tools fail.
+   * @param {Object} codeReviewResult - The result from the CodeReviewAgent.
+   * @returns {Object} A fallback decision object.
+   * @private
    */
   fallbackDecision(codeReviewResult) {
     console.log('🔄 Using fallback decision logic');
@@ -433,8 +447,9 @@ Format:
   }
 
   /**
-   * Load project context จาก memory
-   * @returns {Promise<Object>}
+   * Loads the project context from memory.
+   * @returns {Promise<Object>} The project context.
+   * @private
    */
   async loadProjectContext() {
     try {
@@ -467,10 +482,11 @@ Format:
   }
 
   /**
-   * Store decision ใน memory
-   * @param {string} filePath
-   * @param {Object} decision
+   * Stores a decision in memory.
+   * @param {string} filePath - The path to the file.
+   * @param {Object} decision - The decision object.
    * @returns {Promise<void>}
+   * @private
    */
   async storeDecision(filePath, decision) {
     // Create entity for this decision
@@ -499,9 +515,10 @@ Format:
   }
 
   /**
-   * Extract insights จาก thought content
-   * @param {string} thoughtContent
-   * @returns {Array}
+   * Extracts insights from thought content.
+   * @param {string} thoughtContent - The content of the thought.
+   * @returns {Array} A list of extracted insights.
+   * @private
    */
   extractInsights(thoughtContent) {
     const insights = [];
@@ -527,8 +544,9 @@ Format:
   }
 
   /**
-   * คำนวณ confidence จาก thinking process
-   * @returns {number}
+   * Calculates the confidence score from the thinking process.
+   * @returns {number} The confidence score.
+   * @private
    */
   calculateConfidence() {
     if (this.thoughtHistory.length === 0) return 0.5;
@@ -543,7 +561,7 @@ Format:
   }
 
   /**
-   * Clear memory context (สำหรับ testing)
+   * Clears the memory context (for testing purposes).
    * @returns {Promise<void>}
    */
   async clearMemory() {

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Smart Vault Manager - เครื่องมือจัดการ Vault ที่ชาญฉลาดและรองรับการเปลี่ยนแปลง
+Smart Vault Manager - An intelligent and adaptive tool for managing a vault.
 """
 
 import os
@@ -12,17 +12,36 @@ from datetime import datetime
 import difflib
 
 class SmartVaultManager:
-    """เครื่องมือจัดการ Vault ที่ชาญฉลาด"""
+    """
+    An intelligent tool for managing a vault.
+
+    Attributes:
+        vault_path (Path): The path to the vault.
+        analysis_result (dict): The result of the structure analysis.
+        management_plan (dict): The generated management plan.
+        operations_log (list): A log of the operations performed.
+    """
     
     def __init__(self, vault_path: str):
+        """
+        Initializes the SmartVaultManager.
+
+        Args:
+            vault_path (str): The path to the vault.
+        """
         self.vault_path = Path(vault_path)
         self.analysis_result = {}
         self.management_plan = {}
         self.operations_log = []
         
     def analyze_current_structure(self) -> Dict[str, Any]:
-        """วิเคราะห์โครงสร้างปัจจุบันอย่างละเอียด"""
-        print("🔍 วิเคราะห์โครงสร้างปัจจุบัน...")
+        """
+        Analyzes the current structure in detail.
+
+        Returns:
+            Dict[str, Any]: The analysis result.
+        """
+        print("🔍 Analyzing current structure...")
         
         analysis = {
             'timestamp': datetime.now().isoformat(),
@@ -42,14 +61,14 @@ class SmartVaultManager:
             }
         }
         
-        # วิเคราะห์โฟลเดอร์หลัก
+        # Analyze main folders
         main_folders = [
             '00_DASHBOARD', '01_MANUSCRIPT', '02_CHARACTERS', 
             '03_WORLDBUILDING', '04_PLOT-TIMELINE', '05_SYSTEMS-LORE', '06_NOTE',
             '08_Templates-Tools'
         ]
         
-        # ตรวจสอบโฟลเดอร์ที่ซ้ำซ้อน
+        # Check for duplicate folders
         all_folders = [f.name for f in self.vault_path.iterdir() if f.is_dir()]
         duplicate_patterns = self._find_duplicate_patterns(all_folders)
         
@@ -60,19 +79,19 @@ class SmartVaultManager:
                 analysis['folders'][folder_name] = folder_info
                 analysis['statistics']['total_folders'] += 1
                 
-                # ตรวจสอบโฟลเดอร์ว่าง
+                # Check for empty folders
                 if folder_info['file_count'] == 0:
                     analysis['empty_folders'].append(folder_name)
                 
-                # ตรวจสอบปัญหาการจัดการ
+                # Check for management issues
                 if folder_info['has_management_issues']:
                     analysis['structure_issues'].append({
                         'folder': folder_name,
-                        'issue': 'ขาดไฟล์จัดการ (README, Dashboard, Index)',
+                        'issue': 'Missing management file (README, Dashboard, Index)',
                         'severity': 'medium'
                     })
         
-        # วิเคราะห์โฟลเดอร์อื่นๆ
+        # Analyze other folders
         other_folders = [f for f in all_folders if f not in main_folders]
         for folder_name in other_folders:
             folder_path = self.vault_path / folder_name
@@ -80,11 +99,11 @@ class SmartVaultManager:
             analysis['folders'][folder_name] = folder_info
             analysis['statistics']['total_folders'] += 1
             
-            # ตรวจสอบโฟลเดอร์ที่อาจซ้ำซ้อน
+            # Check for potentially duplicate folders
             if any(pattern in folder_name for pattern in duplicate_patterns):
                 analysis['duplicate_folders'].append(folder_name)
         
-        # วิเคราะห์ไฟล์ในโฟลเดอร์ Templates-Tools
+        # Analyze files in the Templates-Tools folder
         templates_path = self.vault_path / "08_Templates-Tools"
         if templates_path.exists():
             analysis['templates_analysis'] = self._analyze_templates_structure(templates_path)
@@ -93,13 +112,21 @@ class SmartVaultManager:
         return analysis
     
     def _analyze_folder(self, folder_path: Path) -> Dict[str, Any]:
-        """วิเคราะห์โฟลเดอร์เดียว"""
+        """
+        Analyzes a single folder.
+
+        Args:
+            folder_path (Path): The path to the folder.
+
+        Returns:
+            Dict[str, Any]: The analysis result for the folder.
+        """
         files = list(folder_path.rglob("*"))
         md_files = [f for f in files if f.is_file() and f.suffix == '.md']
         json_files = [f for f in files if f.is_file() and f.suffix == '.json']
         other_files = [f for f in files if f.is_file() and f.suffix not in ['.md', '.json']]
         
-        # ตรวจสอบไฟล์จัดการ
+        # Check for management files
         has_readme = any('readme' in f.name.lower() for f in md_files)
         has_dashboard = any('dashboard' in f.name.lower() for f in md_files)
         has_index = any('index' in f.name.lower() for f in md_files)
@@ -115,12 +142,20 @@ class SmartVaultManager:
             'has_dashboard': has_dashboard,
             'has_index': has_index,
             'has_management_issues': not (has_readme or has_dashboard or has_index),
-            'files': [f.name for f in md_files[:10]],  # แสดง 10 ไฟล์แรก
+            'files': [f.name for f in md_files[:10]],  # Show the first 10 files
             'subfolders': [f.name for f in files if f.is_dir()]
         }
     
     def _analyze_templates_structure(self, templates_path: Path) -> Dict[str, Any]:
-        """วิเคราะห์โครงสร้าง Templates-Tools"""
+        """
+        Analyzes the structure of the Templates-Tools folder.
+
+        Args:
+            templates_path (Path): The path to the Templates-Tools folder.
+
+        Returns:
+            Dict[str, Any]: The analysis result.
+        """
         analysis = {
             'subfolders': {},
             'file_distribution': {},
@@ -148,18 +183,31 @@ class SmartVaultManager:
         return analysis
     
     def _find_duplicate_patterns(self, folder_names: List[str]) -> List[str]:
-        """หารูปแบบโฟลเดอร์ที่ซ้ำซ้อน"""
+        """
+        Finds duplicate folder patterns.
+
+        Args:
+            folder_names (List[str]): A list of folder names.
+
+        Returns:
+            List[str]: A list of duplicate folder patterns.
+        """
         patterns = []
         for name in folder_names:
-            # หาชื่อที่คล้ายกัน
+            # Find similar names
             similar = difflib.get_close_matches(name, folder_names, n=2, cutoff=0.6)
             if len(similar) > 1:
                 patterns.append(name)
         return patterns
     
     def generate_management_plan(self) -> Dict[str, Any]:
-        """สร้างแผนการจัดการ"""
-        print("📋 สร้างแผนการจัดการ...")
+        """
+        Generates a management plan.
+
+        Returns:
+            Dict[str, Any]: The generated management plan.
+        """
+        print("📋 Generating management plan...")
         
         plan = {
             'timestamp': datetime.now().isoformat(),
@@ -180,7 +228,7 @@ class SmartVaultManager:
         
         analysis = self.analysis_result
         
-        # 1. แก้ไขปัญหาวิกฤต
+        # 1. Address critical issues
         if analysis['duplicate_folders']:
             plan['summary']['critical_issues'] += len(analysis['duplicate_folders'])
             plan['operations']['cleanup'].append({
@@ -188,9 +236,9 @@ class SmartVaultManager:
                 'folders': analysis['duplicate_folders'],
                 'priority': 'critical'
             })
-            plan['recommendations'].append('แก้ไขโฟลเดอร์ซ้ำซ้อนก่อน')
+            plan['recommendations'].append('Resolve duplicate folders first')
         
-        # 2. สร้างโครงสร้างที่ขาดหาย
+        # 2. Create missing structure
         if 'templates_analysis' in analysis:
             missing = analysis['templates_analysis']['missing_structure']
             if missing:
@@ -200,13 +248,13 @@ class SmartVaultManager:
                     'priority': 'high'
                 })
         
-        # 3. ย้ายไฟล์ที่กระจาย
+        # 3. Move scattered files
         if analysis['folders']:
             for folder_name, folder_info in analysis['folders'].items():
                 if folder_name not in ['00_DASHBOARD', '01_MANUSCRIPT', '02_CHARACTERS', 
                                      '03_WORLDBUILDING', '04_PLOT-TIMELINE', '05_SYSTEMS-LORE', '06_NOTE',
                                      '08_Templates-Tools']:
-                    # โฟลเดอร์เก่าที่ควรย้าย
+                    # Old folders that should be moved
                     if folder_info['file_count'] > 0:
                         plan['operations']['move_files'].append({
                             'action': 'move_old_folder',
@@ -215,7 +263,7 @@ class SmartVaultManager:
                             'priority': 'medium'
                         })
         
-        # 4. สร้างไฟล์จัดการ
+        # 4. Create management files
         for folder_name, folder_info in analysis['folders'].items():
             if folder_info['has_management_issues']:
                 plan['operations']['create_management_files'].append({
@@ -224,7 +272,7 @@ class SmartVaultManager:
                     'priority': 'medium'
                 })
         
-        # 5. จัดระเบียบ Templates-Tools
+        # 5. Organize Templates-Tools
         if 'templates_analysis' in analysis:
             templates_analysis = analysis['templates_analysis']
             for subfolder, info in templates_analysis['subfolders'].items():
@@ -247,8 +295,17 @@ class SmartVaultManager:
         return plan
     
     def _determine_target_folder(self, folder_name: str, folder_info: Dict[str, Any]) -> str:
-        """กำหนดโฟลเดอร์ปลายทางสำหรับไฟล์"""
-        # ตรรกะการจัดหมวดหมู่
+        """
+        Determines the target folder for a file.
+
+        Args:
+            folder_name (str): The name of the folder.
+            folder_info (Dict[str, Any]): Information about the folder.
+
+        Returns:
+            str: The target folder.
+        """
+        # Classification logic
         if 'prompt' in folder_name.lower() or 'copilot' in folder_name.lower():
             return '08_Templates-Tools/Prompts/Default_Prompts'
         elif 'template' in folder_name.lower():
@@ -263,36 +320,36 @@ class SmartVaultManager:
             return '06_NOTE'  # default
     
     def display_analysis_report(self):
-        """แสดงรายงานการวิเคราะห์"""
+        """Displays the analysis report."""
         analysis = self.analysis_result
         
         print("\n" + "="*80)
-        print("📊 รายงานการวิเคราะห์โครงสร้าง Vault")
+        print("📊 Vault Structure Analysis Report")
         print("="*80)
         
-        print(f"\n📁 ข้อมูลพื้นฐาน:")
+        print(f"\n📁 Basic Information:")
         print(f"   Path: {analysis['vault_path']}")
-        print(f"   โฟลเดอร์ทั้งหมด: {analysis['statistics']['total_folders']}")
-        print(f"   ไฟล์ทั้งหมด: {analysis['statistics']['total_files']}")
-        print(f"   ไฟล์ Markdown: {analysis['statistics']['md_files']}")
+        print(f"   Total folders: {analysis['statistics']['total_folders']}")
+        print(f"   Total files: {analysis['statistics']['total_files']}")
+        print(f"   Markdown files: {analysis['statistics']['md_files']}")
         
         if analysis['duplicate_folders']:
-            print(f"\n⚠️ โฟลเดอร์ที่ซ้ำซ้อน:")
+            print(f"\n⚠️ Duplicate Folders:")
             for folder in analysis['duplicate_folders']:
                 print(f"   - {folder}")
         
         if analysis['empty_folders']:
-            print(f"\n📁 โฟลเดอร์ว่าง:")
+            print(f"\n📁 Empty Folders:")
             for folder in analysis['empty_folders']:
                 print(f"   - {folder}")
         
         if analysis['structure_issues']:
-            print(f"\n❌ ปัญหาการจัดการ:")
+            print(f"\n❌ Management Issues:")
             for issue in analysis['structure_issues']:
                 print(f"   - {issue['folder']}: {issue['issue']}")
         
-        # แสดงรายละเอียดโฟลเดอร์หลัก
-        print(f"\n📋 รายละเอียดโฟลเดอร์หลัก:")
+        # Display details of main folders
+        print(f"\n📋 Main Folder Details:")
         main_folders = ['00_DASHBOARD', '01_MANUSCRIPT', '02_CHARACTERS', 
                        '03_WORLDBUILDING', '04_PLOT-TIMELINE', '05_SYSTEMS-LORE', '06_NOTE']
         
@@ -300,106 +357,125 @@ class SmartVaultManager:
             if folder in analysis['folders']:
                 info = analysis['folders'][folder]
                 status = "✅" if not info['has_management_issues'] else "❌"
-                print(f"   {status} {folder}: {info['file_count']} ไฟล์")
+                print(f"   {status} {folder}: {info['file_count']} files")
     
     def display_management_plan(self):
-        """แสดงแผนการจัดการ"""
+        """Displays the management plan."""
         plan = self.management_plan
         
         print("\n" + "="*80)
-        print("📋 แผนการจัดการ Vault")
+        print("📋 Vault Management Plan")
         print("="*80)
         
-        print(f"\n📊 สรุปแผน:")
-        print(f"   การดำเนินการทั้งหมด: {plan['summary']['total_operations']}")
-        print(f"   ปัญหาวิกฤต: {plan['summary']['critical_issues']}")
+        print(f"\n📊 Plan Summary:")
+        print(f"   Total operations: {plan['summary']['total_operations']}")
+        print(f"   Critical issues: {plan['summary']['critical_issues']}")
         
         if plan['operations']['cleanup']:
-            print(f"\n🚨 การแก้ไขปัญหาวิกฤต:")
+            print(f"\n🚨 Critical Issue Resolution:")
             for op in plan['operations']['cleanup']:
                 print(f"   - {op['action']}: {op['folders']}")
         
         if plan['operations']['create_structure']:
-            print(f"\n🏗️ การสร้างโครงสร้าง:")
+            print(f"\n🏗️ Structure Creation:")
             for op in plan['operations']['create_structure']:
                 print(f"   - {op['action']}: {op['folders']}")
         
         if plan['operations']['move_files']:
-            print(f"\n📁 การย้ายไฟล์:")
+            print(f"\n📁 File Movement:")
             for op in plan['operations']['move_files']:
-                print(f"   - ย้าย {op['source']} -> {op['target']}")
+                print(f"   - Move {op['source']} -> {op['target']}")
         
         if plan['operations']['create_management_files']:
-            print(f"\n📝 การสร้างไฟล์จัดการ:")
+            print(f"\n📝 Management File Creation:")
             for op in plan['operations']['create_management_files']:
-                print(f"   - สร้าง README สำหรับ {op['folder']}")
+                print(f"   - Create README for {op['folder']}")
         
         if plan['recommendations']:
-            print(f"\n💡 คำแนะนำ:")
+            print(f"\n💡 Recommendations:")
             for rec in plan['recommendations']:
                 print(f"   - {rec}")
     
     def execute_plan(self, confirm: bool = True) -> bool:
-        """ดำเนินการตามแผน"""
+        """
+        Executes the management plan.
+
+        Args:
+            confirm (bool, optional): Whether to ask for confirmation before executing. Defaults to True.
+
+        Returns:
+            bool: True if the plan was executed successfully, False otherwise.
+        """
         if confirm:
             print("\n" + "="*80)
-            print("🚀 เริ่มดำเนินการตามแผน")
+            print("🚀 Starting plan execution")
             print("="*80)
             
-            response = input("\n❓ ต้องการดำเนินการตามแผนนี้หรือไม่? (y/N): ")
+            response = input("\n❓ Do you want to execute this plan? (y/N): ")
             if response.lower() != 'y':
-                print("❌ ยกเลิกการดำเนินการ")
+                print("❌ Execution cancelled")
                 return False
         
         plan = self.management_plan
         
         try:
-            # ดำเนินการตามลำดับความสำคัญ
+            # Execute in order of priority
             operations_order = ['cleanup', 'create_structure', 'move_files', 'create_management_files', 'organize']
             
             for op_type in operations_order:
                 if plan['operations'][op_type]:
-                    print(f"\n🔧 ดำเนินการ: {op_type}")
+                    print(f"\n🔧 Executing: {op_type}")
                     for op in plan['operations'][op_type]:
                         self._execute_operation(op)
             
-            print("\n✅ การดำเนินการเสร็จสิ้น!")
+            print("\n✅ Execution complete!")
             return True
             
         except Exception as e:
-            print(f"\n❌ เกิดข้อผิดพลาด: {e}")
+            print(f"\n❌ An error occurred: {e}")
             return False
     
     def _execute_operation(self, operation: Dict[str, Any]):
-        """ดำเนินการเดียว"""
+        """
+        Executes a single operation.
+
+        Args:
+            operation (Dict[str, Any]): The operation to execute.
+        """
         action = operation['action']
         
         if action == 'resolve_duplicates':
-            print(f"   🗑️ แก้ไขโฟลเดอร์ซ้ำซ้อน: {operation['folders']}")
+            print(f"   🗑️ Resolving duplicate folders: {operation['folders']}")
             # TODO: Implement duplicate resolution
             
         elif action == 'create_missing_folders':
             for folder in operation['folders']:
                 folder_path = self.vault_path / "08_Templates-Tools" / folder
                 folder_path.mkdir(parents=True, exist_ok=True)
-                print(f"   ✅ สร้างโฟลเดอร์: {folder}")
+                print(f"   ✅ Created folder: {folder}")
         
         elif action == 'move_old_folder':
             source = self.vault_path / operation['source']
             target = self.vault_path / operation['target']
             if source.exists():
                 # TODO: Implement file moving logic
-                print(f"   📁 ย้าย: {operation['source']} -> {operation['target']}")
+                print(f"   📁 Moving: {operation['source']} -> {operation['target']}")
         
         elif action == 'create_readme':
             folder_path = self.vault_path / operation['folder']
             readme_path = folder_path / "README.md"
             if not readme_path.exists():
                 # TODO: Implement README creation
-                print(f"   📝 สร้าง README: {operation['folder']}")
+                print(f"   📝 Creating README for: {operation['folder']}")
     
     def save_report(self, filename: str = "vault_management_report.json"):
-        """บันทึกรายงาน"""
+        """
+        Saves the analysis and management plan to a report file.
+
+        Args:
+            filename (str, optional): The name of the report file.
+                Defaults to "vault_management_report.json".
+        """
         report = {
             'analysis': self.analysis_result,
             'plan': self.management_plan,
@@ -411,41 +487,41 @@ class SmartVaultManager:
         with open(report_path, 'w', encoding='utf-8') as f:
             json.dump(report, f, ensure_ascii=False, indent=2)
         
-        print(f"📄 บันทึกรายงาน: {filename}")
+        print(f"📄 Report saved to: {filename}")
 
 def main():
-    """ฟังก์ชันหลัก"""
+    """Main function."""
     vault_path = r"F:\01_WRI\Obsidian\Vault"
     
-    print("🎯 Smart Vault Manager - เครื่องมือจัดการ Vault ที่ชาญฉลาด")
+    print("🎯 Smart Vault Manager - An intelligent tool for managing a vault")
     print("="*80)
     
-    # สร้างเครื่องมือ
+    # Create the manager
     manager = SmartVaultManager(vault_path)
     
-    # 1. วิเคราะห์โครงสร้าง
+    # 1. Analyze the structure
     analysis = manager.analyze_current_structure()
     
-    # 2. แสดงรายงานการวิเคราะห์
+    # 2. Display the analysis report
     manager.display_analysis_report()
     
-    # 3. สร้างแผนการจัดการ
+    # 3. Generate a management plan
     plan = manager.generate_management_plan()
     
-    # 4. แสดงแผนการจัดการ
+    # 4. Display the management plan
     manager.display_management_plan()
     
-    # 5. บันทึกรายงาน
+    # 5. Save the report
     manager.save_report()
     
-    # 6. ถามผู้ใช้ว่าต้องการดำเนินการหรือไม่
+    # 6. Ask the user if they want to proceed
     print("\n" + "="*80)
-    print("🎯 ขั้นตอนต่อไป")
+    print("🎯 Next Steps")
     print("="*80)
-    print("1. ตรวจสอบรายงานการวิเคราะห์")
-    print("2. ตรวจสอบแผนการจัดการ")
-    print("3. ตัดสินใจว่าจะดำเนินการหรือไม่")
-    print("4. เรียกใช้ manager.execute_plan() เพื่อดำเนินการ")
+    print("1. Review the analysis report")
+    print("2. Review the management plan")
+    print("3. Decide whether to proceed")
+    print("4. Call manager.execute_plan() to proceed")
 
 if __name__ == "__main__":
     main()

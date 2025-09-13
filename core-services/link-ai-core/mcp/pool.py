@@ -1,6 +1,6 @@
 """
-MCP Connection Pool
-จัดการ connection pool สำหรับ MCP servers รองรับ transport หลายแบบ
+MCP Connection Pool.
+This module provides a connection pool for MCP servers, supporting various transport layers.
 """
 
 import asyncio
@@ -36,9 +36,23 @@ except ImportError:
     logger = logging.getLogger(__name__)
 
 class MCPPool:
-    """Connection pool สำหรับ MCP servers รองรับ transport หลายแบบ"""
+    """
+    A connection pool for MCP servers that supports multiple transport types.
+
+    This class manages a pool of MCP clients to avoid the overhead of creating
+    a new client for every request. It also handles client expiration and eviction.
+    """
     
     def __init__(self, maxsize: int = None, ttl_seconds: int = None):
+        """
+        Initializes the MCP pool.
+
+        Args:
+            maxsize (int, optional): The maximum number of clients to keep in the pool.
+                                     Defaults to the value from settings.
+            ttl_seconds (int, optional): The time-to-live for clients in seconds.
+                                         Defaults to the value from settings.
+        """
         self.maxsize = maxsize or settings.mcp_pool_max
         self.ttl_seconds = ttl_seconds or settings.mcp_ttl_seconds
         
@@ -55,41 +69,38 @@ class MCPPool:
 
     async def get(self, key: str, server: MCPServer) -> MCPClient:
         """
-        ดึง MCP client จาก pool หรือสร้างใหม่
-        
+        Gets an MCP client from the pool or creates a new one.
+
+        If a valid client for the given key exists in the pool, it is returned.
+        Otherwise, a new client is created and added to the pool.
+
         Args:
-            key: Pool key (usually server name)
-            server: MCPServer configuration
-            
+            key (str): The pool key, which is typically the server name.
+            server (MCPServer): The configuration for the MCP server.
+
         Returns:
-            MCPClient instance
+            MCPClient: An MCP client instance.
         """
         async with self._lock:
             now = time.time()
             
-            # ตรวจสอบว่ามี client ใน pool หรือไม่
             if key in self._pool:
                 client, created_ts, last_used_ts = self._pool.pop(key)
                 
-                # ตรวจสอบ TTL
                 if now - created_ts <= self.ttl_seconds:
-                    # Client ยังใช้งานได้ - อัปเดต timestamp และย้ายไปท้าย queue
                     self._pool[key] = (client, created_ts, now)
                     self._stats["pool_hits"] += 1
                     logger.debug(f"Pool hit for {key}")
                     return client
                 else:
-                    # Client หมดอายุ - หยุดและลบ
                     logger.debug(f"Client {key} expired, stopping")
                     await client.stop()
                     self._stats["active_connections"] -= 1
             
-            # สร้าง client ใหม่
             try:
                 client = MCPClient(server)
                 await client.start()
                 
-                # เพิ่มเข้า pool
                 self._pool[key] = (client, now, now)
                 self._stats["total_connections"] += 1
                 self._stats["active_connections"] += 1
@@ -97,9 +108,7 @@ class MCPPool:
                 
                 logger.info(f"Created new MCP client for {key} (transport: {server.kind})")
                 
-                # ตรวจสอบ pool size limit
                 while len(self._pool) > self.maxsize:
-                    # ลบ client ที่เก่าที่สุด
                     oldest_key, (oldest_client, _, _) = self._pool.popitem(last=False)
                     logger.debug(f"Pool full, removing oldest client: {oldest_key}")
                     await oldest_client.stop()
@@ -114,17 +123,22 @@ class MCPPool:
 
     async def release(self, key: str) -> None:
         """
-        คืน client กลับไปยัง pool (ไม่ทำอะไรใน implementation นี้)
-        Client จะถูกเก็บไว้ใน pool จนกว่าจะหมดอายุ
+        Releases a client back to the pool.
+
+        In this implementation, this method does nothing, as clients are kept
+        in the pool until they expire.
+
+        Args:
+            key (str): The pool key.
         """
         logger.debug(f"Client {key} released back to pool")
 
     async def remove(self, key: str) -> None:
         """
-        ลบ client ออกจาก pool
-        
+        Removes a client from the pool.
+
         Args:
-            key: Pool key
+            key (str): The pool key.
         """
         async with self._lock:
             if key in self._pool:
@@ -134,7 +148,7 @@ class MCPPool:
                 logger.info(f"Removed client {key} from pool")
 
     async def clear(self) -> None:
-        """ล้าง pool ทั้งหมด"""
+        """Clears the entire pool, stopping all clients."""
         async with self._lock:
             logger.info("Clearing MCP pool")
             for key, (client, _, _) in self._pool.items():
@@ -144,18 +158,24 @@ class MCPPool:
             self._stats["active_connections"] = 0
 
     async def health_check(self) -> Dict[str, any]:
-        """ตรวจสอบสุขภาพของ pool"""
+        """
+        Checks the health of the clients in the pool.
+
+        This method iterates through the clients in the pool, checks their status,
+        and removes any unhealthy clients.
+
+        Returns:
+            Dict[str, any]: A dictionary containing the health check results.
+        """
         async with self._lock:
             healthy_clients = 0
             total_clients = len(self._pool)
             
             for key, (client, created_ts, last_used_ts) in self._pool.items():
                 try:
-                    # ตรวจสอบว่า client ยังทำงานอยู่หรือไม่
                     if client.initialized:
                         healthy_clients += 1
                     else:
-                        # Client ไม่ทำงาน - ลบออก
                         logger.warning(f"Unhealthy client {key} detected, removing")
                         await client.stop()
                         self._pool.pop(key, None)
@@ -163,7 +183,6 @@ class MCPPool:
                         
                 except Exception as e:
                     logger.error(f"Error checking client {key} health: {e}")
-                    # ลบ client ที่มีปัญหา
                     self._pool.pop(key, None)
                     self._stats["active_connections"] -= 1
             
@@ -177,7 +196,12 @@ class MCPPool:
             }
 
     def get_stats(self) -> Dict[str, any]:
-        """ดึงสถิติของ pool"""
+        """
+        Gets the statistics for the pool.
+
+        Returns:
+            Dict[str, any]: A dictionary containing the pool's statistics.
+        """
         return {
             "pool_size": len(self._pool),
             "max_size": self.maxsize,
@@ -186,7 +210,7 @@ class MCPPool:
         }
 
     async def close(self) -> None:
-        """ปิด pool และหยุด clients ทั้งหมด"""
+        """Closes the pool and stops all clients."""
         logger.info("Closing MCP pool")
         await self.clear()
 

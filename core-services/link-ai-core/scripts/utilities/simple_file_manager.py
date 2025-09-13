@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-Simple File Manager - ใช้เครื่องมือที่มีอยู่แล้วจัดการโครงสร้างไฟล์
+Simple File Manager.
+This script uses existing tools to manage the file structure of a project.
 """
 
 import os
@@ -15,15 +16,32 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class SimpleFileManager:
-    """เครื่องมือจัดการไฟล์อย่างง่าย"""
+    """
+    A simple file manager tool.
+
+    This class provides methods for analyzing, creating, and modifying the
+    file structure of a project.
+    """
     
     def __init__(self, base_path: str):
+        """
+        Initializes the SimpleFileManager.
+
+        Args:
+            base_path (str): The base path of the project.
+        """
         self.base_path = Path(base_path)
         self.operations_log = []
         
     def analyze_current_structure(self) -> Dict[str, Any]:
-        """วิเคราะห์โครงสร้างปัจจุบัน"""
-        logger.info(f"🔍 วิเคราะห์โครงสร้าง: {self.base_path}")
+        """
+        Analyzes the current file structure.
+
+        Returns:
+            Dict[str, Any]: A dictionary containing the analysis of the
+                            current file structure.
+        """
+        logger.info(f"🔍 Analyzing structure: {self.base_path}")
         
         structure = {
             "base_path": str(self.base_path),
@@ -49,24 +67,34 @@ class SimpleFileManager:
                     structure["total_items"] += 1
                     
         except Exception as e:
-            logger.error(f"❌ เกิดข้อผิดพลาดในการวิเคราะห์: {e}")
+            logger.error(f"❌ Error during analysis: {e}")
             
         return structure
     
     def create_new_structure(self, structure_plan: Dict[str, Any]) -> bool:
-        """สร้างโครงสร้างใหม่ตามแผน"""
-        logger.info("🏗️ เริ่มสร้างโครงสร้างใหม่")
+        """
+        Creates a new file structure based on a plan.
+
+        Args:
+            structure_plan (Dict[str, Any]): A dictionary containing the plan
+                                             for the new file structure.
+
+        Returns:
+            bool: True if the new structure was created successfully, False
+                  otherwise.
+        """
+        logger.info("🏗️ Starting to create new structure")
         
         try:
-            # สร้างโฟลเดอร์หลัก
+            # Create main folders
             for folder_name in structure_plan.get("main_folders", []):
                 folder_path = self.base_path / folder_name
                 if not folder_path.exists():
                     folder_path.mkdir(parents=True, exist_ok=True)
-                    logger.info(f"✅ สร้างโฟลเดอร์: {folder_name}")
-                    self.operations_log.append(f"สร้างโฟลเดอร์: {folder_name}")
+                    logger.info(f"✅ Created folder: {folder_name}")
+                    self.operations_log.append(f"Created folder: {folder_name}")
             
-            # สร้างโฟลเดอร์ย่อย
+            # Create subfolders
             for folder_path, subfolders in structure_plan.get("subfolders", {}).items():
                 parent_path = self.base_path / folder_path
                 if parent_path.exists():
@@ -74,18 +102,27 @@ class SimpleFileManager:
                         subfolder_path = parent_path / subfolder
                         if not subfolder_path.exists():
                             subfolder_path.mkdir(parents=True, exist_ok=True)
-                            logger.info(f"✅ สร้างโฟลเดอร์ย่อย: {folder_path}/{subfolder}")
-                            self.operations_log.append(f"สร้างโฟลเดอร์ย่อย: {folder_path}/{subfolder}")
+                            logger.info(f"✅ Created subfolder: {folder_path}/{subfolder}")
+                            self.operations_log.append(f"Created subfolder: {folder_path}/{subfolder}")
             
             return True
             
         except Exception as e:
-            logger.error(f"❌ เกิดข้อผิดพลาดในการสร้างโครงสร้าง: {e}")
+            logger.error(f"❌ Error creating new structure: {e}")
             return False
     
     def move_files_to_new_structure(self, file_mapping: Dict[str, str]) -> bool:
-        """ย้ายไฟล์ไปยังโครงสร้างใหม่"""
-        logger.info("📁 เริ่มย้ายไฟล์")
+        """
+        Moves files to a new structure based on a mapping.
+
+        Args:
+            file_mapping (Dict[str, str]): A dictionary containing the mapping
+                                           of source paths to target paths.
+
+        Returns:
+            bool: True if the files were moved successfully, False otherwise.
+        """
+        logger.info("📁 Starting to move files")
         
         try:
             for source_path, target_path in file_mapping.items():
@@ -93,42 +130,57 @@ class SimpleFileManager:
                 target = self.base_path / target_path
                 
                 if source.exists():
-                    # สร้างโฟลเดอร์ปลายทางถ้ายังไม่มี
+                    # Create the target folder if it doesn't exist
                     target.parent.mkdir(parents=True, exist_ok=True)
                     
-                    # ย้ายไฟล์
+                    # Move the file
                     shutil.move(str(source), str(target))
-                    logger.info(f"✅ ย้ายไฟล์: {source_path} -> {target_path}")
-                    self.operations_log.append(f"ย้ายไฟล์: {source_path} -> {target_path}")
+                    logger.info(f"✅ Moved file: {source_path} -> {target_path}")
+                    self.operations_log.append(f"Moved file: {source_path} -> {target_path}")
                 else:
-                    logger.warning(f"⚠️ ไม่พบไฟล์: {source_path}")
+                    logger.warning(f"⚠️ File not found: {source_path}")
                     
             return True
             
         except Exception as e:
-            logger.error(f"❌ เกิดข้อผิดพลาดในการย้ายไฟล์: {e}")
+            logger.error(f"❌ Error moving files: {e}")
             return False
     
     def remove_duplicate_files(self, duplicate_list: List[str]) -> bool:
-        """ลบไฟล์ซ้ำซ้อน"""
-        logger.info("🗑️ เริ่มลบไฟล์ซ้ำซ้อน")
+        """
+        Removes duplicate files.
+
+        Args:
+            duplicate_list (List[str]): A list of paths to the duplicate
+                                        files to be removed.
+
+        Returns:
+            bool: True if the duplicate files were removed successfully, False
+                  otherwise.
+        """
+        logger.info("🗑️ Starting to remove duplicate files")
         
         try:
             for file_path in duplicate_list:
                 full_path = self.base_path / file_path
                 if full_path.exists():
                     full_path.unlink()
-                    logger.info(f"✅ ลบไฟล์ซ้ำซ้อน: {file_path}")
-                    self.operations_log.append(f"ลบไฟล์ซ้ำซ้อน: {file_path}")
+                    logger.info(f"✅ Removed duplicate file: {file_path}")
+                    self.operations_log.append(f"Removed duplicate file: {file_path}")
                     
             return True
             
         except Exception as e:
-            logger.error(f"❌ เกิดข้อผิดพลาดในการลบไฟล์: {e}")
+            logger.error(f"❌ Error removing files: {e}")
             return False
     
     def generate_structure_report(self) -> Dict[str, Any]:
-        """สร้างรายงานโครงสร้าง"""
+        """
+        Generates a report of the current file structure.
+
+        Returns:
+            Dict[str, Any]: A dictionary containing the structure report.
+        """
         current_structure = self.analyze_current_structure()
         
         report = {
@@ -144,15 +196,28 @@ class SimpleFileManager:
         return report
     
     def save_report(self, report: Dict[str, Any], filename: str = "structure_report.json"):
-        """บันทึกรายงาน"""
+        """
+        Saves a report to a file.
+
+        Args:
+            report (Dict[str, Any]): The report to save.
+            filename (str, optional): The name of the file to save the report
+                                     to. Defaults to "structure_report.json".
+        """
         report_path = self.base_path / filename
         with open(report_path, 'w', encoding='utf-8') as f:
             json.dump(report, f, ensure_ascii=False, indent=2)
-        logger.info(f"📄 บันทึกรายงาน: {filename}")
+        logger.info(f"📄 Saved report: {filename}")
 
 def main():
-    """ฟังก์ชันหลัก"""
-    # กำหนดโครงสร้างใหม่ตามที่คุณต้องการ
+    """
+    The main function of the script.
+
+    This function defines the new file structure, the file mapping, and the
+    list of duplicate files, and then uses the `SimpleFileManager` to
+    restructure the project.
+    """
+    # Define the new structure as desired
     new_structure = {
         "main_folders": [
             "00_DASHBOARD",

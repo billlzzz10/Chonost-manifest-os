@@ -1,10 +1,17 @@
 #!/usr/bin/env python3
 """
-Chat Memory Manager
-ระบบจัดการ Memory สำหรับการแชตจาก UI
+Chat Memory Manager.
+This module provides memory management for chat conversations from the UI.
 
-This module provides memory management for chat conversations
-โมดูลนี้ให้การจัดการ memory สำหรับการสนทนาในแชต
+The manager uses a SQLite database to store session and message data.
+The database schema consists of two main tables:
+- `chat_sessions`: Stores session information, including user ID, title,
+  timestamps, and metadata.
+- `chat_messages`: Stores individual messages, linked to a session. It
+  includes the message type, content, timestamp, and metadata.
+
+This module is designed to be thread-safe and includes an in-memory cache
+for frequently accessed sessions and messages to improve performance.
 """
 
 import json
@@ -25,7 +32,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class MessageType(Enum):
-    """ประเภทของข้อความ"""
+    """An enumeration for the types of messages."""
     USER = "user"
     AI = "ai"
     SYSTEM = "system"
@@ -33,7 +40,7 @@ class MessageType(Enum):
     COMMAND = "command"
 
 class MemoryType(Enum):
-    """ประเภทของ Memory"""
+    """An enumeration for the types of memory."""
     CONVERSATION = "conversation"
     CONTEXT = "context"
     KNOWLEDGE = "knowledge"
@@ -42,7 +49,19 @@ class MemoryType(Enum):
 
 @dataclass
 class ChatMessage:
-    """โครงสร้างข้อมูลสำหรับข้อความในแชต"""
+    """
+    A data structure for a chat message.
+
+    Attributes:
+        id (str): The ID of the message.
+        session_id (str): The ID of the session the message belongs to.
+        message_type (MessageType): The type of the message.
+        content (str): The content of the message.
+        timestamp (datetime): The timestamp of the message.
+        metadata (Dict[str, Any]): Metadata for the message.
+        parent_message_id (Optional[str]): The ID of the parent message.
+        response_to (Optional[str]): The ID of the message being responded to.
+    """
     id: str
     session_id: str
     message_type: MessageType
@@ -53,7 +72,12 @@ class ChatMessage:
     response_to: Optional[str] = None
     
     def to_dict(self) -> Dict[str, Any]:
-        """แปลงเป็น dictionary"""
+        """
+        Converts the message to a dictionary.
+
+        Returns:
+            Dict[str, Any]: The message as a dictionary.
+        """
         return {
             "id": self.id,
             "session_id": self.session_id,
@@ -67,7 +91,15 @@ class ChatMessage:
     
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'ChatMessage':
-        """สร้างจาก dictionary"""
+        """
+        Creates a message from a dictionary.
+
+        Args:
+            data (Dict[str, Any]): The dictionary to create the message from.
+
+        Returns:
+            ChatMessage: The created message.
+        """
         return cls(
             id=data["id"],
             session_id=data["session_id"],
@@ -81,7 +113,18 @@ class ChatMessage:
 
 @dataclass
 class ChatSession:
-    """โครงสร้างข้อมูลสำหรับ session ของแชต"""
+    """
+    A data structure for a chat session.
+
+    Attributes:
+        id (str): The ID of the session.
+        user_id (str): The ID of the user.
+        title (str): The title of the session.
+        created_at (datetime): The timestamp when the session was created.
+        updated_at (datetime): The timestamp when the session was last updated.
+        metadata (Dict[str, Any]): Metadata for the session.
+        is_active (bool): A flag indicating if the session is active.
+    """
     id: str
     user_id: str
     title: str
@@ -91,7 +134,12 @@ class ChatSession:
     is_active: bool = True
     
     def to_dict(self) -> Dict[str, Any]:
-        """แปลงเป็น dictionary"""
+        """
+        Converts the session to a dictionary.
+
+        Returns:
+            Dict[str, Any]: The session as a dictionary.
+        """
         return {
             "id": self.id,
             "user_id": self.user_id,
@@ -104,7 +152,15 @@ class ChatSession:
     
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'ChatSession':
-        """สร้างจาก dictionary"""
+        """
+        Creates a session from a dictionary.
+
+        Args:
+            data (Dict[str, Any]): The dictionary to create the session from.
+
+        Returns:
+            ChatSession: The created session.
+        """
         return cls(
             id=data["id"],
             user_id=data["user_id"],
@@ -116,10 +172,21 @@ class ChatSession:
         )
 
 class ChatMemoryManager:
-    """ระบบจัดการ Memory สำหรับการแชต"""
+    """
+    A system for managing chat memory.
+
+    Attributes:
+        db_path (Path): The path to the database file.
+        lock (threading.Lock): A lock for thread-safe operations.
+    """
     
     def __init__(self, db_path: str = "data/chat_memory.db"):
-        """เริ่มต้น Chat Memory Manager"""
+        """
+        Initializes the ChatMemoryManager.
+
+        Args:
+            db_path (str, optional): The path to the database file. Defaults to "data/chat_memory.db".
+        """
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self.lock = threading.Lock()
@@ -135,7 +202,7 @@ class ChatMemoryManager:
         logger.info(f"Chat Memory Manager initialized with database: {self.db_path}")
     
     def _init_database(self):
-        """เริ่มต้นฐานข้อมูล"""
+        """Initializes the database."""
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             
@@ -176,7 +243,17 @@ class ChatMemoryManager:
             conn.commit()
     
     def create_session(self, user_id: str, title: str = "New Chat", metadata: Optional[Dict[str, Any]] = None) -> ChatSession:
-        """สร้าง session ใหม่"""
+        """
+        Creates a new session.
+
+        Args:
+            user_id (str): The ID of the user.
+            title (str, optional): The title of the session. Defaults to "New Chat".
+            metadata (Optional[Dict[str, Any]], optional): Metadata for the session. Defaults to None.
+
+        Returns:
+            ChatSession: The created session.
+        """
         session_id = str(uuid.uuid4())
         now = datetime.now()
         
@@ -216,7 +293,20 @@ class ChatMemoryManager:
     def add_message(self, session_id: str, message_type: MessageType, content: str, 
                    metadata: Optional[Dict[str, Any]] = None, parent_message_id: Optional[str] = None,
                    response_to: Optional[str] = None) -> ChatMessage:
-        """เพิ่มข้อความใหม่"""
+        """
+        Adds a new message.
+
+        Args:
+            session_id (str): The ID of the session.
+            message_type (MessageType): The type of the message.
+            content (str): The content of the message.
+            metadata (Optional[Dict[str, Any]], optional): Metadata for the message. Defaults to None.
+            parent_message_id (Optional[str], optional): The ID of the parent message. Defaults to None.
+            response_to (Optional[str], optional): The ID of the message being responded to. Defaults to None.
+
+        Returns:
+            ChatMessage: The added message.
+        """
         message_id = str(uuid.uuid4())
         now = datetime.now()
         
@@ -267,7 +357,15 @@ class ChatMemoryManager:
         return message
     
     def get_session(self, session_id: str) -> Optional[ChatSession]:
-        """ดึงข้อมูล session"""
+        """
+        Gets session information.
+
+        Args:
+            session_id (str): The ID of the session.
+
+        Returns:
+            Optional[ChatSession]: The session information, or None if not found.
+        """
         # Check cache first
         if session_id in self._session_cache:
             return self._session_cache[session_id]
@@ -296,7 +394,17 @@ class ChatMemoryManager:
     
     def get_messages(self, session_id: str, limit: Optional[int] = None, 
                     offset: int = 0) -> List[ChatMessage]:
-        """ดึงข้อความจาก session"""
+        """
+        Gets messages from a session.
+
+        Args:
+            session_id (str): The ID of the session.
+            limit (Optional[int], optional): The maximum number of messages to return. Defaults to None.
+            offset (int, optional): The offset for pagination. Defaults to 0.
+
+        Returns:
+            List[ChatMessage]: A list of messages.
+        """
         # Check cache first
         if session_id in self._message_cache:
             messages = self._message_cache[session_id]
@@ -338,7 +446,17 @@ class ChatMemoryManager:
     
     def get_user_sessions(self, user_id: str, limit: Optional[int] = None, 
                          offset: int = 0) -> List[ChatSession]:
-        """ดึง sessions ของ user"""
+        """
+        Gets a user's sessions.
+
+        Args:
+            user_id (str): The ID of the user.
+            limit (Optional[int], optional): The maximum number of sessions to return. Defaults to None.
+            offset (int, optional): The offset for pagination. Defaults to 0.
+
+        Returns:
+            List[ChatSession]: A list of the user's sessions.
+        """
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             
@@ -368,7 +486,16 @@ class ChatMemoryManager:
             return sessions
     
     def update_session_title(self, session_id: str, title: str) -> bool:
-        """อัปเดตชื่อ session"""
+        """
+        Updates a session's title.
+
+        Args:
+            session_id (str): The ID of the session.
+            title (str): The new title.
+
+        Returns:
+            bool: True if the update was successful, False otherwise.
+        """
         with self.lock:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
@@ -390,7 +517,15 @@ class ChatMemoryManager:
         return False
     
     def deactivate_session(self, session_id: str) -> bool:
-        """ปิดใช้งาน session"""
+        """
+        Deactivates a session.
+
+        Args:
+            session_id (str): The ID of the session.
+
+        Returns:
+            bool: True if the deactivation was successful, False otherwise.
+        """
         with self.lock:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
@@ -411,7 +546,15 @@ class ChatMemoryManager:
         return False
     
     def delete_session(self, session_id: str) -> bool:
-        """ลบ session และข้อความทั้งหมด"""
+        """
+        Deletes a session and all its messages.
+
+        Args:
+            session_id (str): The ID of the session.
+
+        Returns:
+            bool: True if the deletion was successful, False otherwise.
+        """
         with self.lock:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
@@ -435,7 +578,17 @@ class ChatMemoryManager:
         return False
     
     def search_messages(self, session_id: str, query: str, limit: int = 10) -> List[ChatMessage]:
-        """ค้นหาข้อความใน session"""
+        """
+        Searches for messages in a session.
+
+        Args:
+            session_id (str): The ID of the session.
+            query (str): The search query.
+            limit (int, optional): The maximum number of results to return. Defaults to 10.
+
+        Returns:
+            List[ChatMessage]: A list of matching messages.
+        """
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             cursor.execute("""
@@ -464,7 +617,21 @@ class ChatMemoryManager:
             return messages
     
     def get_conversation_context(self, session_id: str, message_limit: int = 10) -> str:
-        """ดึง context ของการสนทนา"""
+        """
+        Gets the conversation context as a formatted string.
+
+        Args:
+            session_id (str): The ID of the session.
+            message_limit (int, optional): The maximum number of recent
+                                           messages to include. Defaults to 10.
+
+        Returns:
+            str: A newline-separated string of the conversation history,
+                 formatted as "ROLE: content".
+                 Example:
+                     USER: Hello
+                     AI: Hi, how can I help you?
+        """
         messages = self.get_messages(session_id, limit=message_limit)
         
         context = []
@@ -475,7 +642,15 @@ class ChatMemoryManager:
         return "\n".join(context)
     
     def cleanup_old_sessions(self, days: int = 30) -> int:
-        """ลบ sessions เก่า"""
+        """
+        Deletes old sessions.
+
+        Args:
+            days (int, optional): The minimum age of sessions to delete. Defaults to 30.
+
+        Returns:
+            int: The number of deleted sessions.
+        """
         cutoff_date = datetime.now() - timedelta(days=days)
         
         with self.lock:
@@ -511,7 +686,12 @@ class ChatMemoryManager:
         return 0
     
     def get_statistics(self) -> Dict[str, Any]:
-        """ดึงสถิติของระบบ"""
+        """
+        Gets system statistics.
+
+        Returns:
+            Dict[str, Any]: A dictionary of system statistics.
+        """
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
             
@@ -551,7 +731,15 @@ class ChatMemoryManager:
             }
     
     def export_session(self, session_id: str) -> Dict[str, Any]:
-        """ส่งออก session เป็น JSON"""
+        """
+        Exports a session to JSON.
+
+        Args:
+            session_id (str): The ID of the session to export.
+
+        Returns:
+            Dict[str, Any]: The exported session data.
+        """
         session = self.get_session(session_id)
         if not session:
             return {}
@@ -565,7 +753,15 @@ class ChatMemoryManager:
         }
     
     def import_session(self, session_data: Dict[str, Any]) -> str:
-        """นำเข้า session จาก JSON"""
+        """
+        Imports a session from JSON.
+
+        Args:
+            session_data (Dict[str, Any]): The session data to import.
+
+        Returns:
+            str: The ID of the imported session.
+        """
         session_dict = session_data["session"]
         messages_data = session_data.get("messages", [])
         

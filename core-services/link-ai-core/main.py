@@ -1,5 +1,5 @@
 """
-MCP AI Orchestrator - Main Entry Point
+MCP AI Orchestrator - Main Entry Point.
 """
 
 import asyncio
@@ -46,7 +46,9 @@ except ImportError as e:
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint"""
+    """
+    A health check endpoint for the service.
+    """
     return {
         "status": "healthy",
         "service": "mcp-orchestrator",
@@ -55,7 +57,9 @@ async def health_check():
 
 @app.get("/mcp/servers")
 async def list_servers():
-    """List available MCP servers"""
+    """
+    Lists the available MCP servers.
+    """
     if not mcp_registry:
         raise HTTPException(status_code=503, detail="MCP registry not available")
 
@@ -67,7 +71,9 @@ async def list_servers():
 
 @app.get("/mcp/tools")
 async def list_tools():
-    """List available MCP tools"""
+    """
+    Lists the available MCP tools.
+    """
     if not mcp_registry:
         raise HTTPException(status_code=503, detail="MCP registry not available")
 
@@ -79,7 +85,9 @@ async def list_tools():
 
 @app.post("/mcp/call")
 async def call_tool(tool_call: dict):
-    """Execute MCP tool"""
+    """
+    Executes an MCP tool.
+    """
     if not mcp_client:
         raise HTTPException(status_code=503, detail="MCP client not available")
 
@@ -101,7 +109,9 @@ async def call_tool(tool_call: dict):
 
 @app.get("/mcp/status")
 async def get_status():
-    """Get MCP orchestrator status"""
+    """
+    Gets the status of the MCP orchestrator.
+    """
     return {
         "status": "operational" if mcp_registry and mcp_client else "degraded",
         "registry": "available" if mcp_registry else "unavailable",

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Advanced File System MCP Desktop Chat App
-แอปเดสทอปแบบแชตขั้นสูงสำหรับวิเคราะห์ไฟล์ระบบ
+Advanced File System MCP Desktop Chat App.
+An advanced desktop chat application for analyzing file systems.
 """
 
 import tkinter as tk
@@ -15,7 +15,23 @@ import os
 from file_system_analyzer import FileSystemMCPTool
 
 class AdvancedFileSystemChatApp:
+    """
+    An advanced desktop chat application for analyzing file systems.
+
+    Attributes:
+        root: The root Tkinter window.
+        tool (FileSystemMCPTool): The file system analysis tool.
+        current_session_id (str): The current scan session ID.
+        scanning (bool): A flag indicating if a scan is in progress.
+        chat_history (list): A list of chat messages.
+    """
     def __init__(self, root):
+        """
+        Initializes the AdvancedFileSystemChatApp.
+
+        Args:
+            root: The root Tkinter window.
+        """
         self.root = root
         self.root.title("Advanced File System MCP Chat")
         self.root.geometry("1400x900")
@@ -32,11 +48,11 @@ class AdvancedFileSystemChatApp:
         self.setup_styles()
         
         # Welcome message
-        self.add_system_message("🚀 ยินดีต้อนรับสู่ Advanced File System MCP Chat!")
-        self.add_system_message("💡 ฟีเจอร์ใหม่:\n• 📊 แสดงผลแบบกราฟ\n• 💾 บันทึกการสนทนา\n• 🔍 ค้นหาขั้นสูง\n• 🎨 UI ที่สวยงาม")
+        self.add_system_message("🚀 Welcome to the Advanced File System MCP Chat!")
+        self.add_system_message("💡 New features:\n• 📊 Graphical display\n• 💾 Save conversation\n• 🔍 Advanced search\n• 🎨 Beautiful UI")
         
     def setup_styles(self):
-        """ตั้งค่าสไตล์ของ UI"""
+        """Sets up the UI styles."""
         style = ttk.Style()
         style.theme_use('clam')
         
@@ -46,7 +62,7 @@ class AdvancedFileSystemChatApp:
         style.configure('Input.TFrame', background='#3c3c3c')
         
     def setup_ui(self):
-        """สร้าง UI หลัก"""
+        """Creates the main UI."""
         # Main container
         main_frame = ttk.Frame(self.root, style='Main.TFrame')
         main_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
@@ -69,7 +85,12 @@ class AdvancedFileSystemChatApp:
         self.setup_analysis_tab()
         
     def setup_title_bar(self, parent):
-        """สร้างแถบหัวข้อ"""
+        """
+        Creates the title bar.
+
+        Args:
+            parent: The parent widget.
+        """
         title_frame = ttk.Frame(parent, style='Main.TFrame')
         title_frame.pack(fill=tk.X, pady=(0, 10))
         
@@ -87,7 +108,7 @@ class AdvancedFileSystemChatApp:
         
         # Session status
         self.session_label = tk.Label(status_frame,
-                                     text="Session: ไม่มี",
+                                     text="Session: None",
                                      font=('Segoe UI', 10),
                                      fg='#cccccc',
                                      bg='#1e1e1e')
@@ -95,16 +116,16 @@ class AdvancedFileSystemChatApp:
         
         # Connection status
         self.status_label = tk.Label(status_frame,
-                                    text="🟢 พร้อมใช้งาน",
+                                    text="🟢 Ready",
                                     font=('Segoe UI', 10),
                                     fg='#00ff00',
                                     bg='#1e1e1e')
         self.status_label.pack(side=tk.LEFT)
         
     def setup_chat_tab(self):
-        """สร้างแท็บแชต"""
+        """Creates the chat tab."""
         chat_frame = ttk.Frame(self.notebook, style='Chat.TFrame')
-        self.notebook.add(chat_frame, text="💬 แชต")
+        self.notebook.add(chat_frame, text="💬 Chat")
         
         # Chat area
         self.setup_chat_area(chat_frame)
@@ -116,9 +137,9 @@ class AdvancedFileSystemChatApp:
         self.setup_input_area(chat_frame)
         
     def setup_analysis_tab(self):
-        """สร้างแท็บการวิเคราะห์"""
+        """Creates the analysis tab."""
         analysis_frame = ttk.Frame(self.notebook, style='Chat.TFrame')
-        self.notebook.add(analysis_frame, text="📊 การวิเคราะห์")
+        self.notebook.add(analysis_frame, text="📊 Analysis")
         
         # Analysis controls
         controls_frame = ttk.Frame(analysis_frame, style='Chat.TFrame')
@@ -126,10 +147,10 @@ class AdvancedFileSystemChatApp:
         
         # Quick analysis buttons
         quick_buttons = [
-            ("📈 สถิติไฟล์", self.quick_file_stats),
-            ("🔍 ไฟล์ซ้ำ", self.quick_duplicates),
-            ("📁 โครงสร้าง", self.quick_structure),
-            ("💾 ขนาดไฟล์", self.quick_size_analysis)
+            ("📈 File Stats", self.quick_file_stats),
+            ("🔍 Duplicates", self.quick_duplicates),
+            ("📁 Structure", self.quick_structure),
+            ("💾 Size Analysis", self.quick_size_analysis)
         ]
         
         for text, command in quick_buttons:
@@ -158,7 +179,12 @@ class AdvancedFileSystemChatApp:
         self.analysis_display.pack(fill=tk.BOTH, expand=True)
         
     def setup_chat_area(self, parent):
-        """สร้างพื้นที่แชต"""
+        """
+        Creates the chat area.
+
+        Args:
+            parent: The parent widget.
+        """
         chat_frame = ttk.Frame(parent, style='Chat.TFrame')
         chat_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
         
@@ -176,13 +202,18 @@ class AdvancedFileSystemChatApp:
         self.chat_display.pack(fill=tk.BOTH, expand=True)
         
     def setup_control_panel(self, parent):
-        """สร้างแผงควบคุม"""
+        """
+        Creates the control panel.
+
+        Args:
+            parent: The parent widget.
+        """
         control_frame = ttk.Frame(parent, style='Input.TFrame')
         control_frame.pack(fill=tk.X, pady=(0, 10))
         
         # Scan button
         self.scan_btn = tk.Button(control_frame,
-                                 text="📁 สแกนโฟลเดอร์",
+                                 text="📁 Scan Folder",
                                  command=self.scan_folder,
                                  bg='#007acc',
                                  fg='white',
@@ -194,7 +225,7 @@ class AdvancedFileSystemChatApp:
         
         # Clear chat button
         clear_btn = tk.Button(control_frame,
-                             text="🗑️ ล้างแชต",
+                             text="🗑️ Clear Chat",
                              command=self.clear_chat,
                              bg='#dc3545',
                              fg='white',
@@ -206,7 +237,7 @@ class AdvancedFileSystemChatApp:
         
         # Export button
         export_btn = tk.Button(control_frame,
-                              text="📤 ส่งออก",
+                              text="📤 Export",
                               command=self.export_results,
                               bg='#28a745',
                               fg='white',
@@ -217,7 +248,12 @@ class AdvancedFileSystemChatApp:
         export_btn.pack(side=tk.LEFT)
         
     def setup_input_area(self, parent):
-        """สร้างพื้นที่ป้อนข้อมูล"""
+        """
+        Creates the input area.
+
+        Args:
+            parent: The parent widget.
+        """
         input_frame = ttk.Frame(parent, style='Input.TFrame')
         input_frame.pack(fill=tk.X)
         
@@ -233,7 +269,7 @@ class AdvancedFileSystemChatApp:
         
         # Send button
         send_btn = tk.Button(input_frame,
-                            text="ส่ง",
+                            text="Send",
                             command=self.send_message,
                             bg='#007acc',
                             fg='white',
@@ -242,8 +278,15 @@ class AdvancedFileSystemChatApp:
                             padx=20)
         send_btn.pack(side=tk.RIGHT)
         
-    def add_message(self, sender, message, message_type="normal"):
-        """เพิ่มข้อความในแชต"""
+    def add_message(self, sender: str, message: str, message_type: str = "normal"):
+        """
+        Adds a message to the chat.
+
+        Args:
+            sender (str): The sender of the message.
+            message (str): The message content.
+            message_type (str, optional): The type of the message. Defaults to "normal".
+        """
         self.chat_display.config(state=tk.NORMAL)
         
         # Timestamp
@@ -256,17 +299,17 @@ class AdvancedFileSystemChatApp:
             self.chat_display.tag_add("system", f"end-{len(formatted_message)+1}c", "end-1c")
             self.chat_display.tag_config("system", foreground="#00ff00")
         elif message_type == "user":
-            formatted_message = f"[{timestamp}] 👤 คุณ: {message}\n\n"
+            formatted_message = f"[{timestamp}] 👤 You: {message}\n\n"
             self.chat_display.insert(tk.END, formatted_message)
             self.chat_display.tag_add("user", f"end-{len(formatted_message)+1}c", "end-1c")
             self.chat_display.tag_config("user", foreground="#007acc")
         elif message_type == "result":
-            formatted_message = f"[{timestamp}] 📊 ผลลัพธ์:\n{message}\n\n"
+            formatted_message = f"[{timestamp}] 📊 Result:\n{message}\n\n"
             self.chat_display.insert(tk.END, formatted_message)
             self.chat_display.tag_add("result", f"end-{len(formatted_message)+1}c", "end-1c")
             self.chat_display.tag_config("result", foreground="#ffaa00")
         elif message_type == "error":
-            formatted_message = f"[{timestamp}] ❌ ข้อผิดพลาด: {message}\n\n"
+            formatted_message = f"[{timestamp}] ❌ Error: {message}\n\n"
             self.chat_display.insert(tk.END, formatted_message)
             self.chat_display.tag_add("error", f"end-{len(formatted_message)+1}c", "end-1c")
             self.chat_display.tag_config("error", foreground="#ff4444")
@@ -282,22 +325,27 @@ class AdvancedFileSystemChatApp:
             'type': message_type
         })
         
-    def add_system_message(self, message):
-        """เพิ่มข้อความระบบ"""
+    def add_system_message(self, message: str):
+        """
+        Adds a system message to the chat.
+
+        Args:
+            message (str): The system message.
+        """
         self.add_message("system", message, "system")
         
     def scan_folder(self):
-        """สแกนโฟลเดอร์"""
+        """Scans a folder."""
         if self.scanning:
-            messagebox.showwarning("กำลังสแกน", "กรุณารอให้การสแกนเสร็จสิ้น")
+            messagebox.showwarning("Scanning", "Please wait for the current scan to finish.")
             return
             
-        folder_path = filedialog.askdirectory(title="เลือกโฟลเดอร์ที่ต้องการสแกน")
+        folder_path = filedialog.askdirectory(title="Select a folder to scan")
         if not folder_path:
             return
             
         self.scanning = True
-        self.status_label.config(text="🟡 กำลังสแกน...", fg='#ffaa00')
+        self.status_label.config(text="🟡 Scanning...", fg='#ffaa00')
         self.scan_btn.config(state=tk.DISABLED)
         
         # Run scan in separate thread
@@ -305,10 +353,15 @@ class AdvancedFileSystemChatApp:
         thread.daemon = True
         thread.start()
         
-    def _perform_scan(self, folder_path):
-        """ทำการสแกนในเธรดแยก"""
+    def _perform_scan(self, folder_path: str):
+        """
+        Performs the scan in a separate thread.
+
+        Args:
+            folder_path (str): The path to the folder to scan.
+        """
         try:
-            self.add_system_message(f"🔍 เริ่มสแกนโฟลเดอร์: {folder_path}")
+            self.add_system_message(f"🔍 Starting to scan folder: {folder_path}")
             
             scan_params = {
                 "action": "scan",
@@ -325,20 +378,20 @@ class AdvancedFileSystemChatApp:
             
             if "Session ID:" in result:
                 self.current_session_id = result.split("Session ID: ")[1].strip()
-                self.add_system_message(f"✅ สแกนเสร็จสิ้น! Session ID: {self.current_session_id}")
+                self.add_system_message(f"✅ Scan complete! Session ID: {self.current_session_id}")
                 self.session_label.config(text=f"Session: {self.current_session_id[:8]}...")
             else:
-                self.add_system_message(f"❌ การสแกนล้มเหลว: {result}")
+                self.add_system_message(f"❌ Scan failed: {result}")
                 
         except Exception as e:
-            self.add_system_message(f"❌ เกิดข้อผิดพลาด: {str(e)}")
+            self.add_system_message(f"❌ An error occurred: {str(e)}")
         finally:
             self.scanning = False
-            self.status_label.config(text="🟢 พร้อมใช้งาน", fg='#00ff00')
+            self.status_label.config(text="🟢 Ready", fg='#00ff00')
             self.scan_btn.config(state=tk.NORMAL)
             
     def send_message(self, event=None):
-        """ส่งข้อความ"""
+        """Sends a message."""
         message = self.input_field.get().strip()
         if not message:
             return
@@ -351,11 +404,16 @@ class AdvancedFileSystemChatApp:
         thread.daemon = True
         thread.start()
         
-    def _process_message(self, message):
-        """ประมวลผลข้อความ"""
+    def _process_message(self, message: str):
+        """
+        Processes a message.
+
+        Args:
+            message (str): The message to process.
+        """
         try:
             if not self.current_session_id:
-                self.add_system_message("⚠️ กรุณาสแกนโฟลเดอร์ก่อนใช้งาน")
+                self.add_system_message("⚠️ Please scan a folder before use.")
                 return
                 
             # Check for special commands
@@ -363,7 +421,7 @@ class AdvancedFileSystemChatApp:
                 self._show_help()
                 return
             elif message.lower().startswith("/scan"):
-                self.add_system_message("ใช้ปุ่ม 'สแกนโฟลเดอร์' เพื่อสแกนโฟลเดอร์ใหม่")
+                self.add_system_message("Use the 'Scan Folder' button to scan a new folder.")
                 return
             elif message.lower().startswith("/clear"):
                 self.clear_chat()
@@ -385,18 +443,26 @@ class AdvancedFileSystemChatApp:
                     formatted_result = self._format_result(result_data.get('data', result_data))
                     self.add_message("result", formatted_result, "result")
                 else:
-                    self.add_message("error", result_data.get('error', 'ไม่สามารถประมวลผลได้'), "error")
+                    self.add_message("error", result_data.get('error', 'Could not process'), "error")
             except json.JSONDecodeError:
                 self.add_message("result", result, "result")
                 
         except Exception as e:
-            self.add_message("error", f"เกิดข้อผิดพลาด: {str(e)}", "error")
+            self.add_message("error", f"An error occurred: {str(e)}", "error")
             
     def _format_result(self, data):
-        """จัดรูปแบบผลลัพธ์"""
+        """
+        Formats the result.
+
+        Args:
+            data: The data to format.
+
+        Returns:
+            str: The formatted result.
+        """
         if isinstance(data, list):
             if not data:
-                return "ไม่พบข้อมูล"
+                return "No data found"
             
             # Check if it's a list of dictionaries (table data)
             if isinstance(data[0], dict):
@@ -409,9 +475,17 @@ class AdvancedFileSystemChatApp:
             return str(data)
             
     def _format_table(self, data):
-        """จัดรูปแบบตาราง"""
+        """
+        Formats data as a table.
+
+        Args:
+            data: The data to format.
+
+        Returns:
+            str: The formatted table.
+        """
         if not data:
-            return "ไม่พบข้อมูล"
+            return "No data found"
             
         # Get headers
         headers = list(data[0].keys())
@@ -441,47 +515,47 @@ class AdvancedFileSystemChatApp:
         return "\n".join(table)
         
     def _show_help(self):
-        """แสดงความช่วยเหลือ"""
+        """Shows the help message."""
         help_text = """
-📋 คำสั่งที่ใช้งานได้:
+📋 Available Commands:
 
 🔍 Natural Language Queries:
-• "show me large files" - แสดงไฟล์ขนาดใหญ่
-• "find duplicate files" - ค้นหาไฟล์ซ้ำ
-• "give me summary" - สรุปข้อมูล
-• "show files with extension .py" - แสดงไฟล์ตามนามสกุล
+• "show me large files"
+• "find duplicate files"
+• "give me summary"
+• "show files with extension .py"
 
 🔧 Special Commands:
-• /help - แสดงความช่วยเหลือ
-• /scan - ข้อมูลการสแกน
-• /clear - ล้างแชต
+• /help - Show this help message
+• /scan - Scan information
+• /clear - Clear the chat
 
 💡 Tips:
-• ใช้ภาษาธรรมชาติในการค้นหา
-• ระบบจะประมวลผลแบบ real-time
-• ผลลัพธ์จะแสดงในรูปแบบตาราง
+• Use natural language for searching.
+• The system processes in real-time.
+• Results are displayed in a table format.
         """
         self.add_system_message(help_text)
         
     def clear_chat(self):
-        """ล้างแชต"""
-        if messagebox.askyesno("ยืนยัน", "คุณต้องการล้างการสนทนาทั้งหมดหรือไม่?"):
+        """Clears the chat."""
+        if messagebox.askyesno("Confirm", "Are you sure you want to clear the entire conversation?"):
             self.chat_display.config(state=tk.NORMAL)
             self.chat_display.delete(1.0, tk.END)
             self.chat_display.config(state=tk.DISABLED)
             self.chat_history.clear()
-            self.add_system_message("🗑️ การสนทนาถูกล้างแล้ว")
+            self.add_system_message("🗑️ Conversation cleared.")
             
     def export_results(self):
-        """ส่งออกผลลัพธ์"""
+        """Exports the results."""
         if not self.current_session_id:
-            messagebox.showwarning("ไม่มีข้อมูล", "กรุณาสแกนโฟลเดอร์ก่อนส่งออกผลลัพธ์")
+            messagebox.showwarning("No Data", "Please scan a folder before exporting results.")
             return
             
         filename = filedialog.asksaveasfilename(
             defaultextension=".txt",
             filetypes=[("Text files", "*.txt"), ("All files", "*.*")],
-            title="ส่งออกผลลัพธ์"
+            title="Export Results"
         )
         if filename:
             try:
@@ -496,15 +570,15 @@ class AdvancedFileSystemChatApp:
                     f.write("=" * 50 + "\n\n")
                     f.write(chat_content)
                     
-                messagebox.showinfo("สำเร็จ", f"ส่งออกผลลัพธ์ไปยัง {filename}")
+                messagebox.showinfo("Success", f"Results exported to {filename}")
             except Exception as e:
-                messagebox.showerror("ข้อผิดพลาด", f"ไม่สามารถส่งออกได้: {str(e)}")
+                messagebox.showerror("Error", f"Could not export: {str(e)}")
                 
     # Quick analysis methods
     def quick_file_stats(self):
-        """สถิติไฟล์ด่วน"""
+        """Gets quick file statistics."""
         if not self.current_session_id:
-            messagebox.showwarning("ไม่มีข้อมูล", "กรุณาสแกนโฟลเดอร์ก่อนใช้งาน")
+            messagebox.showwarning("No Data", "Please scan a folder before use.")
             return
             
         try:
@@ -516,16 +590,16 @@ class AdvancedFileSystemChatApp:
             
             self.analysis_display.config(state=tk.NORMAL)
             self.analysis_display.delete(1.0, tk.END)
-            self.analysis_display.insert(1.0, f"📈 สถิติไฟล์\n{result}")
+            self.analysis_display.insert(1.0, f"📈 File Statistics\n{result}")
             self.analysis_display.config(state=tk.DISABLED)
             
         except Exception as e:
-            messagebox.showerror("ข้อผิดพลาด", str(e))
+            messagebox.showerror("Error", str(e))
             
     def quick_duplicates(self):
-        """ไฟล์ซ้ำด่วน"""
+        """Gets quick duplicate files."""
         if not self.current_session_id:
-            messagebox.showwarning("ไม่มีข้อมูล", "กรุณาสแกนโฟลเดอร์ก่อนใช้งาน")
+            messagebox.showwarning("No Data", "Please scan a folder before use.")
             return
             
         try:
@@ -537,16 +611,16 @@ class AdvancedFileSystemChatApp:
             
             self.analysis_display.config(state=tk.NORMAL)
             self.analysis_display.delete(1.0, tk.END)
-            self.analysis_display.insert(1.0, f"🔍 ไฟล์ซ้ำ\n{result}")
+            self.analysis_display.insert(1.0, f"🔍 Duplicate Files\n{result}")
             self.analysis_display.config(state=tk.DISABLED)
             
         except Exception as e:
-            messagebox.showerror("ข้อผิดพลาด", str(e))
+            messagebox.showerror("Error", str(e))
             
     def quick_structure(self):
-        """โครงสร้างด่วน"""
+        """Gets quick folder structure."""
         if not self.current_session_id:
-            messagebox.showwarning("ไม่มีข้อมูล", "กรุณาสแกนโฟลเดอร์ก่อนใช้งาน")
+            messagebox.showwarning("No Data", "Please scan a folder before use.")
             return
             
         try:
@@ -558,16 +632,16 @@ class AdvancedFileSystemChatApp:
             
             self.analysis_display.config(state=tk.NORMAL)
             self.analysis_display.delete(1.0, tk.END)
-            self.analysis_display.insert(1.0, f"📁 โครงสร้างโฟลเดอร์\n{result}")
+            self.analysis_display.insert(1.0, f"📁 Folder Structure\n{result}")
             self.analysis_display.config(state=tk.DISABLED)
             
         except Exception as e:
-            messagebox.showerror("ข้อผิดพลาด", str(e))
+            messagebox.showerror("Error", str(e))
             
     def quick_size_analysis(self):
-        """วิเคราะห์ขนาดด่วน"""
+        """Gets quick size analysis."""
         if not self.current_session_id:
-            messagebox.showwarning("ไม่มีข้อมูล", "กรุณาสแกนโฟลเดอร์ก่อนใช้งาน")
+            messagebox.showwarning("No Data", "Please scan a folder before use.")
             return
             
         try:
@@ -580,14 +654,14 @@ class AdvancedFileSystemChatApp:
             
             self.analysis_display.config(state=tk.NORMAL)
             self.analysis_display.delete(1.0, tk.END)
-            self.analysis_display.insert(1.0, f"💾 ไฟล์ขนาดใหญ่\n{result}")
+            self.analysis_display.insert(1.0, f"💾 Large Files\n{result}")
             self.analysis_display.config(state=tk.DISABLED)
             
         except Exception as e:
-            messagebox.showerror("ข้อผิดพลาด", str(e))
+            messagebox.showerror("Error", str(e))
 
 def main():
-    """ฟังก์ชันหลัก"""
+    """Main function."""
     root = tk.Tk()
     app = AdvancedFileSystemChatApp(root)
     

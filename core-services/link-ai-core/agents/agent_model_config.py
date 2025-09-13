@@ -1,10 +1,16 @@
 # 🤖 Agent Model Configuration
-# กำหนดค่า Ollama models สำหรับแต่ละ Agent
+# Sets Ollama models for each agent.
 
 class AgentModelConfig:
-    """กำหนดค่า Ollama models สำหรับ AI Agent Ecosystem"""
+    """
+    Sets Ollama models for the AI Agent Ecosystem.
+
+    Attributes:
+        AVAILABLE_MODELS (dict): A dictionary of available models in the system.
+        AGENT_MODELS (dict): A dictionary mapping agents to their models.
+    """
     
-    # Models ที่มีอยู่ในระบบ
+    # Models available in the system
     AVAILABLE_MODELS = {
         "deepseek-coder:6.7b-instruct": {
             "size": "3.8 GB",
@@ -33,33 +39,41 @@ class AgentModelConfig:
         }
     }
     
-    # การกำหนด Model ให้แต่ละ Agent
+    # Assigning models to each agent
     AGENT_MODELS = {
         "project_planner": {
             "primary": "llama3.1:8b",
             "fallback": "deepseek-r1:7b",
-            "reason": "เก่งในการวางแผนและจัดการโครงการ"
+            "reason": "Excels at planning and project management"
         },
         "guardian": {
             "primary": "qwen3:8b", 
             "fallback": "deepseek-r1:7b",
-            "reason": "เก่งในการวิเคราะห์และประเมินความเสี่ยง"
+            "reason": "Excels at analysis and risk assessment"
         },
         "developer": {
             "primary": "deepseek-coder:6.7b-instruct",
             "fallback": "phi4:latest",
-            "reason": "เก่งในการเขียนโค้ดและแก้ไขปัญหา"
+            "reason": "Excels at writing code and debugging"
         },
         "qa_agent": {
             "primary": "deepseek-coder:6.7b-instruct",
             "fallback": "llama3.1:8b", 
-            "reason": "เก่งในการทดสอบและตรวจสอบคุณภาพโค้ด"
+            "reason": "Excels at testing and code quality assurance"
         }
     }
     
     @classmethod
     def get_agent_model(cls, agent_name: str) -> dict:
-        """ดึงข้อมูล model สำหรับ Agent"""
+        """
+        Gets the model information for an agent.
+
+        Args:
+            agent_name (str): The name of the agent.
+
+        Returns:
+            dict: A dictionary containing the model information.
+        """
         return cls.AGENT_MODELS.get(agent_name, {
             "primary": "llama3.1:8b",
             "fallback": "deepseek-r1:7b",
@@ -68,20 +82,41 @@ class AgentModelConfig:
     
     @classmethod
     def list_available_models(cls) -> dict:
-        """แสดงรายการ models ที่มีอยู่"""
+        """
+        Lists the available models.
+
+        Returns:
+            dict: A dictionary of available models.
+        """
         return cls.AVAILABLE_MODELS
     
     @classmethod
     def get_model_info(cls, model_name: str) -> dict:
-        """ดึงข้อมูล model"""
+        """
+        Gets information about a model.
+
+        Args:
+            model_name (str): The name of the model.
+
+        Returns:
+            dict: A dictionary containing the model information.
+        """
         return cls.AVAILABLE_MODELS.get(model_name, {})
     
     @classmethod
     def validate_model(cls, model_name: str) -> bool:
-        """ตรวจสอบว่า model มีอยู่หรือไม่"""
+        """
+        Validates if a model exists.
+
+        Args:
+            model_name (str): The name of the model.
+
+        Returns:
+            bool: True if the model exists, False otherwise.
+        """
         return model_name in cls.AVAILABLE_MODELS
 
-# ตัวอย่างการใช้งาน
+# Example usage
 if __name__ == "__main__":
     config = AgentModelConfig()
     

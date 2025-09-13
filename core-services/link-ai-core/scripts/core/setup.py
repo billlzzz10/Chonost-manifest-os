@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Setup script for MCP AI Orchestrator
+A setup script for the MCP AI Orchestrator.
 """
 
 import os
@@ -10,7 +10,17 @@ from pathlib import Path
 from typing import Optional
 
 def run_command(cmd: str, cwd: Optional[str] = None) -> bool:
-    """Run a command and return success status."""
+    """
+    Runs a command and returns its success status.
+
+    Args:
+        cmd (str): The command to run.
+        cwd (Optional[str], optional): The working directory to run the
+                                     command in. Defaults to None.
+
+    Returns:
+        bool: True if the command was successful, False otherwise.
+    """
     try:
         result = subprocess.run(
             cmd, 
@@ -30,7 +40,12 @@ def run_command(cmd: str, cwd: Optional[str] = None) -> bool:
         return False
 
 def check_python_version() -> bool:
-    """Check if Python version is compatible."""
+    """
+    Checks if the current Python version is compatible.
+
+    Returns:
+        bool: True if the Python version is compatible, False otherwise.
+    """
     version = sys.version_info
     if version.major < 3 or (version.major == 3 and version.minor < 8):
         print("❌ Python 3.8 or higher is required")
@@ -39,7 +54,13 @@ def check_python_version() -> bool:
     return True
 
 def install_dependencies() -> bool:
-    """Install project dependencies."""
+    """
+    Installs the project dependencies.
+
+    Returns:
+        bool: True if the dependencies were installed successfully, False
+              otherwise.
+    """
     print("\n📦 Installing dependencies...")
     
     # Install main package in development mode
@@ -55,7 +76,12 @@ def install_dependencies() -> bool:
     return True
 
 def setup_mcp_server() -> bool:
-    """Setup the MCP Server."""
+    """
+    Sets up the MCP Server.
+
+    Returns:
+        bool: True if the MCP Server was set up successfully, False otherwise.
+    """
     print("\n🔧 Setting up MCP Server...")
     
     mcp_server_dir = Path("services/mcp-server")
@@ -71,7 +97,13 @@ def setup_mcp_server() -> bool:
     return True
 
 def create_directories() -> bool:
-    """Create necessary directories."""
+    """
+    Creates the necessary directories for the project.
+
+    Returns:
+        bool: True if the directories were created successfully, False
+              otherwise.
+    """
     print("\n📁 Creating directories...")
     
     directories = [
@@ -89,7 +121,12 @@ def create_directories() -> bool:
     return True
 
 def setup_environment() -> bool:
-    """Setup environment variables."""
+    """
+    Sets up the environment variables for the project.
+
+    Returns:
+        bool: True if the environment was set up successfully, False otherwise.
+    """
     print("\n🔐 Setting up environment...")
     
     env_file = Path(".env")
@@ -106,7 +143,11 @@ def setup_environment() -> bool:
     return True
 
 def main() -> None:
-    """Main setup function."""
+    """
+    The main setup function.
+
+    This function calls the other setup functions to set up the project.
+    """
     print("🚀 Setting up MCP AI Orchestrator...")
     
     # Check Python version

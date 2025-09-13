@@ -25,8 +25,9 @@ function Show-Help {
     Write-Host "  advanced  - เปิดแอปแชตขั้นสูง" -ForegroundColor Green
     Write-Host "  ai        - เปิดแอปแชตที่รวม AI" -ForegroundColor Green
     Write-Host "  dataset   - สร้างชุดข้อมูลฝึก AI" -ForegroundColor Green
-    Write-Host "  test      - ทดสอบการเชื่อมต่อ Ollama" -ForegroundColor Green
-    Write-Host "  ollama    - ทดสอบการเชื่อมต่อ Ollama (alias)" -ForegroundColor Green
+    Write-Host "  unified   - เปิดแอป Unified Chat" -ForegroundColor Green
+    Write-Host "  test      - ทดสอบ AI connection" -ForegroundColor Green
+    Write-Host "  ollama    - ทดสอบ AI connection (alias)" -ForegroundColor Green
     Write-Host ""
     Write-Host "💡 ตัวอย่างการใช้งาน:" -ForegroundColor Cyan
     Write-Host "  .\start.ps1 chat           # เปิดแอปแชตพื้นฐาน"
@@ -118,10 +119,16 @@ switch ($App.ToLower()) {
             Write-Host "  • test_dataset.json" -ForegroundColor Gray
         }
     }
+    "unified" {
+        Write-Host "🚀 เปิดแอป Unified Chat..." -ForegroundColor Cyan
+        if (Test-FileExists "apps/unified_chat_app.py") {
+            Invoke-PythonScript "apps/unified_chat_app.py"
+        }
+    }
     { $_ -in @("test", "ollama") } {
-        Write-Host "🧪 ทดสอบการเชื่อมต่อ Ollama..." -ForegroundColor Cyan
-        if (Test-FileExists "ollama_client.py") {
-            Invoke-PythonScript "ollama_client.py"
+        Write-Host "🧪 ทดสอบการเชื่อมต่อ AI ผ่าน Unified App..." -ForegroundColor Cyan
+        if (Test-FileExists "apps/unified_chat_app.py") {
+            Invoke-PythonScript "apps/unified_chat_app.py"
         }
     }
     default {

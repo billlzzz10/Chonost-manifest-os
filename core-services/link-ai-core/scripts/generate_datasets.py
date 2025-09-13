@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-สคริปต์สำหรับการสร้างดาต้าเซ็ตอัตโนมัติ
+A script for automatically generating datasets.
 """
 
 import sys
 import os
 from pathlib import Path
 
-# เพิ่ม src directory เข้าไปใน Python path
+# Add the src directory to the Python path
 project_root = Path(__file__).parent.parent
 src_path = project_root / "src"
 sys.path.insert(0, str(src_path))
@@ -20,9 +20,15 @@ except ImportError:
     sys.exit(1)
 
 def main() -> None:
-    """ฟังก์ชันหลักสำหรับการรันการสร้างดาต้าเซ็ต"""
+    """
+    The main function for running the dataset generation process.
+
+    This function checks for the required log file path argument, creates a
+    `DatasetGenerator` instance, generates all datasets from the log file,
+    and then creates a summary report.
+    """
     
-    # ตรวจสอบ arguments
+    # Check for arguments
     if len(sys.argv) < 2:
         print("Usage: python generate_datasets.py <log_file_path>")
         print("Example: python generate_datasets.py logs/conversation.log")

@@ -1,6 +1,7 @@
 """
-🎯 RAG System - Retrieval-Augmented Generation
-ระบบ RAG ที่ครบครันสำหรับ Synapse Backend Monolith
+🎯 RAG System - Retrieval-Augmented Generation.
+
+A comprehensive RAG system for the Synapse Backend Monolith.
 
 Features:
 - Vector Database Integration (ChromaDB, Pinecone, Weaviate)
@@ -51,99 +52,12 @@ except ImportError:
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-class OllamaEmbeddingClient:
-    """Client สำหรับจัดการ Ollama Embedding API"""
-    
-    def __init__(self, base_url: str = "http://localhost:11434"):
-        self.base_url = base_url
-        self.session = requests.Session()
-        self.session.timeout = 30
-    
-    async def test_connection(self) -> bool:
-        """ทดสอบการเชื่อมต่อกับ Ollama server"""
-        try:
-            response = self.session.get(f"{self.base_url}/api/tags")
-            return response.status_code == 200
-        except Exception as e:
-            logger.error(f"❌ ไม่สามารถเชื่อมต่อกับ Ollama server: {e}")
-            return False
-    
-    async def get_available_models(self) -> List[str]:
-        """ดึงรายการโมเดล embedding ที่ใช้งานได้"""
-        try:
-            response = self.session.get(f"{self.base_url}/api/tags")
-            if response.status_code == 200:
-                models = response.json().get('models', [])
-                # กรองเฉพาะโมเดล embedding
-                embedding_models = [
-                    model['name'] for model in models 
-                    if 'embed' in model['name'].lower() or 
-                       model['name'] in ['nomic-embed-text', 'all-minilm']
-                ]
-                return embedding_models
-            else:
-                return []
-        except Exception as e:
-            logger.error(f"❌ ไม่สามารถดึงรายการโมเดลได้: {e}")
-            return []
-    
-    async def get_embedding(self, text: str, model_name: str) -> Optional[List[float]]:
-        """สร้าง embedding สำหรับข้อความ"""
-        try:
-            response = self.session.post(
-                f"{self.base_url}/api/embeddings",
-                json={
-                    "model": model_name,
-                    "prompt": text
-                },
-                timeout=30
-            )
-            
-            if response.status_code == 200:
-                result = response.json()
-                return result.get('embedding', [])
-            else:
-                logger.error(f"❌ Ollama API error: {response.status_code} - {response.text}")
-                return None
-                
-        except Exception as e:
-            logger.error(f"❌ เกิดข้อผิดพลาดในการสร้าง embedding: {e}")
-            return None
-    
-    async def get_embeddings_batch(self, texts: List[str], model_name: str) -> List[Optional[List[float]]]:
-        """สร้าง embedding สำหรับข้อความหลายๆ ตัวพร้อมกัน"""
-        try:
-            # สร้าง embeddings แบบ batch
-            embeddings = []
-            for text in texts:
-                embedding = await self.get_embedding(text, model_name)
-                embeddings.append(embedding)
-            return embeddings
-            
-        except Exception as e:
-            logger.error(f"❌ เกิดข้อผิดพลาดในการสร้าง batch embeddings: {e}")
-            return [None] * len(texts)
-    
-    async def get_model_info(self, model_name: str) -> Optional[Dict[str, Any]]:
-        """ดึงข้อมูลโมเดล"""
-        try:
-            response = self.session.post(
-                f"{self.base_url}/api/show",
-                json={"name": model_name}
-            )
-            
-            if response.status_code == 200:
-                return response.json()
-            else:
-                return None
-                
-        except Exception as e:
-            logger.error(f"❌ ไม่สามารถดึงข้อมูลโมเดลได้: {e}")
-            return None
+# Import the unified client
+from ..utils.unified_ai_client import get_client
 
 @dataclass
 class Document:
-    """เอกสารสำหรับ RAG System"""
+    """A document for the RAG System."""
     id: str
     content: str
     metadata: Dict[str, Any]
@@ -153,19 +67,20 @@ class Document:
     created_at: datetime = None
     
     def __post_init__(self):
+        """Initializes the created_at timestamp if it's not set."""
         if self.created_at is None:
             self.created_at = datetime.now()
 
 @dataclass
 class SearchResult:
-    """ผลลัพธ์การค้นหา"""
+    """A search result from the RAG System."""
     document: Document
     score: float
     relevance: str  # 'high', 'medium', 'low'
 
 @dataclass
 class RAGResponse:
-    """การตอบกลับจาก RAG System"""
+    """A response from the RAG System."""
     answer: str
     sources: List[Document]
     confidence: float
@@ -173,145 +88,79 @@ class RAGResponse:
     processing_time: float
 
 class EmbeddingProvider:
-    """Provider สำหรับ Embedding Models"""
-    
+    """A provider for Embedding Models that uses the UnifiedAIClient."""
+
     def __init__(self, provider_type: str = "ollama", model_name: str = "nomic-embed-text"):
+        """
+        Initializes the EmbeddingProvider.
+
+        Args:
+            provider_type (str, optional): The type of embedding provider. Defaults to "ollama".
+            model_name (str, optional): The name of the embedding model. Defaults to "nomic-embed-text".
+        """
         self.provider_type = provider_type
         self.model_name = model_name
-        self.model = None
-        self.ollama_client = None
-        self.setup_model()
-    
-    def setup_model(self):
-        """ตั้งค่า embedding model"""
-        try:
-            if self.provider_type == "ollama":
-                # ใช้ Ollama local embedding
-                self.model = "ollama"
-                self.ollama_client = OllamaEmbeddingClient()
-                logger.info(f"✅ ใช้ Ollama embedding model: {self.model_name}")
-                
-            elif self.provider_type == "sentence_transformers":
-                if SENTENCE_TRANSFORMERS_AVAILABLE:
-                    self.model = SentenceTransformer(self.model_name)
-                    logger.info(f"✅ ใช้ Sentence Transformers: {self.model_name}")
-                else:
-                    logger.warning("⚠️ Sentence Transformers ไม่พร้อมใช้งาน")
-                    
-            elif self.provider_type == "openai":
-                # ใช้ OpenAI embedding
-                self.model = "openai"
-                logger.info(f"✅ ใช้ OpenAI embedding model: {self.model_name}")
-                
-            else:
-                logger.warning(f"⚠️ ไม่รองรับ provider: {self.provider_type}")
-                
-        except Exception as e:
-            logger.error(f"❌ เกิดข้อผิดพลาดในการตั้งค่า embedding model: {e}")
-            self.model = None
-    
-    async def get_available_models(self) -> List[str]:
-        """ดึงรายการโมเดล embedding ที่ใช้งานได้"""
-        try:
-            if self.provider_type == "ollama":
-                return await self.ollama_client.get_available_models()
-            else:
-                return [self.model_name]
-        except Exception as e:
-            logger.error(f"❌ ไม่สามารถดึงรายการโมเดลได้: {e}")
-            return []
-    
+        self.ai_client = get_client()
+        if not self.ai_client.get_provider(self.provider_type):
+             logger.warning(f"⚠️ Provider '{self.provider_type}' not available in UnifiedAIClient.")
+             self.is_ready = False
+        else:
+            self.is_ready = True
+            logger.info(f"✅ EmbeddingProvider initialized for provider '{self.provider_type}' with model '{self.model_name}'.")
+
     async def test_connection(self) -> bool:
-        """ทดสอบการเชื่อมต่อกับ embedding service"""
-        try:
-            if self.provider_type == "ollama":
-                return await self.ollama_client.test_connection()
-            else:
-                return True
-        except Exception as e:
-            logger.error(f"❌ การทดสอบการเชื่อมต่อล้มเหลว: {e}")
+        """
+        Tests the connection to the embedding service via the UnifiedAIClient.
+
+        Returns:
+            bool: True if the connection is successful, False otherwise.
+        """
+        if not self.is_ready:
             return False
-    
+        try:
+            # A simple embedding call to test the connection.
+            result = self.ai_client.embed(self.provider_type, "test", model=self.model_name)
+            return result.get('success', False)
+        except Exception as e:
+            logger.error(f"❌ Connection test failed for {self.provider_type}: {e}")
+            return False
+
     async def get_embedding(self, text: str) -> Optional[List[float]]:
-        """สร้าง embedding สำหรับข้อความ"""
-        if not self.model:
+        """
+        Creates an embedding for a text using the UnifiedAIClient.
+
+        Args:
+            text (str): The text to create an embedding for.
+
+        Returns:
+            Optional[List[float]]: The created embedding, or None if an error occurred.
+        """
+        if not self.is_ready:
+            logger.error(f"❌ Embedding provider '{self.provider_type}' is not ready.")
             return None
-            
+
         try:
-            if self.provider_type == "ollama":
-                return await self._get_ollama_embedding(text)
-            elif self.provider_type == "sentence_transformers":
-                return await self._get_sentence_transformers_embedding(text)
-            elif self.provider_type == "openai":
-                return await self._get_openai_embedding(text)
+            result = self.ai_client.embed(self.provider_type, text, model=self.model_name)
+            if result and result.get('success'):
+                return result.get('embedding')
             else:
+                logger.error(f"❌ Error creating embedding with {self.provider_type}: {result.get('error')}")
                 return None
-                
         except Exception as e:
-            logger.error(f"❌ เกิดข้อผิดพลาดในการสร้าง embedding: {e}")
-            return None
-    
-    async def _get_ollama_embedding(self, text: str) -> Optional[List[float]]:
-        """สร้าง embedding ด้วย Ollama"""
-        try:
-            if self.ollama_client:
-                return await self.ollama_client.get_embedding(text, self.model_name)
-            else:
-                # Fallback to direct API call
-                response = requests.post(
-                    "http://localhost:11434/api/embeddings",
-                    json={"model": self.model_name, "prompt": text},
-                    timeout=10
-                )
-                
-                if response.status_code == 200:
-                    return response.json().get('embedding', [])
-                else:
-                    return None
-                    
-        except Exception as e:
-            logger.error(f"❌ Ollama embedding error: {e}")
-            return None
-    
-    async def _get_sentence_transformers_embedding(self, text: str) -> Optional[List[float]]:
-        """สร้าง embedding ด้วย Sentence Transformers"""
-        try:
-            # ใช้ ThreadPoolExecutor เพื่อไม่ให้ block event loop
-            loop = asyncio.get_event_loop()
-            with ThreadPoolExecutor() as executor:
-                embedding = await loop.run_in_executor(
-                    executor, 
-                    lambda: self.model.encode(text).tolist()
-                )
-            return embedding
-            
-        except Exception as e:
-            logger.error(f"❌ Sentence Transformers embedding error: {e}")
-            return None
-    
-    async def _get_openai_embedding(self, text: str) -> Optional[List[float]]:
-        """สร้าง embedding ด้วย OpenAI"""
-        try:
-            # ต้องมี OPENAI_API_KEY ใน environment
-            import os
-            from openai import OpenAI
-            
-            client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-            response = client.embeddings.create(
-                model=self.model_name,
-                input=text
-            )
-            
-            return response.data[0].embedding
-            
-        except Exception as e:
-            logger.error(f"❌ OpenAI embedding error: {e}")
+            logger.error(f"❌ Exception during embedding: {e}")
             return None
 
 class VectorDatabase:
-    """Vector Database Manager"""
+    """Vector Database Manager."""
     
     def __init__(self, db_type: str = "chromadb", config: Dict[str, Any] = None):
+        """
+        Initializes the VectorDatabase.
+
+        Args:
+            db_type (str, optional): The type of vector database. Defaults to "chromadb".
+            config (Dict[str, Any], optional): The configuration for the vector database. Defaults to None.
+        """
         self.db_type = db_type
         self.config = config or {}
         self.client = None
@@ -319,7 +168,7 @@ class VectorDatabase:
         self.setup_database()
     
     def setup_database(self):
-        """ตั้งค่า vector database"""
+        """Sets up the vector database."""
         try:
             if self.db_type == "chromadb":
                 self._setup_chromadb()
@@ -328,15 +177,15 @@ class VectorDatabase:
             elif self.db_type == "sqlite":
                 self._setup_sqlite_vector()
             else:
-                logger.warning(f"⚠️ ไม่รองรับ vector database: {self.db_type}")
+                logger.warning(f"⚠️ Vector database not supported: {self.db_type}")
                 
         except Exception as e:
-            logger.error(f"❌ เกิดข้อผิดพลาดในการตั้งค่า vector database: {e}")
+            logger.error(f"❌ Error setting up vector database: {e}")
     
     def _setup_chromadb(self):
-        """ตั้งค่า ChromaDB"""
+        """Sets up ChromaDB."""
         if not CHROMADB_AVAILABLE:
-            logger.warning("⚠️ ChromaDB ไม่พร้อมใช้งาน")
+            logger.warning("⚠️ ChromaDB not available")
             return
             
         try:
@@ -354,15 +203,15 @@ class VectorDatabase:
                 metadata={"description": "Synapse RAG Documents"}
             )
             
-            logger.info("✅ ChromaDB พร้อมใช้งาน")
+            logger.info("✅ ChromaDB is ready")
             
         except Exception as e:
             logger.error(f"❌ ChromaDB setup error: {e}")
     
     def _setup_pinecone(self):
-        """ตั้งค่า Pinecone"""
+        """Sets up Pinecone."""
         if not PINECONE_AVAILABLE:
-            logger.warning("⚠️ Pinecone ไม่พร้อมใช้งาน")
+            logger.warning("⚠️ Pinecone not available")
             return
             
         try:
@@ -370,13 +219,13 @@ class VectorDatabase:
             environment = self.config.get("environment")
             
             if not api_key or not environment:
-                logger.warning("⚠️ ต้องการ Pinecone API key และ environment")
+                logger.warning("⚠️ Pinecone API key and environment are required")
                 return
             
             pinecone.init(api_key=api_key, environment=environment)
             index_name = self.config.get("index_name", "synapse-rag")
             
-            # สร้าง index ถ้ายังไม่มี
+            # Create index if it doesn't exist
             if index_name not in pinecone.list_indexes():
                 pinecone.create_index(
                     name=index_name,
@@ -385,18 +234,18 @@ class VectorDatabase:
                 )
             
             self.collection = pinecone.Index(index_name)
-            logger.info("✅ Pinecone พร้อมใช้งาน")
+            logger.info("✅ Pinecone is ready")
             
         except Exception as e:
             logger.error(f"❌ Pinecone setup error: {e}")
     
     def _setup_sqlite_vector(self):
-        """ตั้งค่า SQLite สำหรับ vector storage"""
+        """Sets up SQLite for vector storage."""
         try:
             db_path = self.config.get("db_path", "./synapse_vectors.db")
             self.client = sqlite3.connect(db_path)
             
-            # สร้างตารางสำหรับเก็บ vectors
+            # Create table for storing vectors
             self.client.execute("""
                 CREATE TABLE IF NOT EXISTS document_vectors (
                     id TEXT PRIMARY KEY,
@@ -408,20 +257,25 @@ class VectorDatabase:
                 )
             """)
             
-            # สร้าง index สำหรับการค้นหา
+            # Create index for searching
             self.client.execute("""
                 CREATE INDEX IF NOT EXISTS idx_document_source 
                 ON document_vectors(source)
             """)
             
             self.client.commit()
-            logger.info("✅ SQLite Vector Database พร้อมใช้งาน")
+            logger.info("✅ SQLite Vector Database is ready")
             
         except Exception as e:
             logger.error(f"❌ SQLite vector setup error: {e}")
     
     async def test_connection(self) -> bool:
-        """ทดสอบการเชื่อมต่อกับ vector database"""
+        """
+        Tests the connection to the vector database.
+
+        Returns:
+            bool: True if the connection is successful, False otherwise.
+        """
         try:
             if self.db_type == "chromadb":
                 return self.client is not None and self.collection is not None
@@ -432,13 +286,21 @@ class VectorDatabase:
             else:
                 return False
         except Exception as e:
-            logger.error(f"❌ การทดสอบการเชื่อมต่อ vector database ล้มเหลว: {e}")
+            logger.error(f"❌ Vector database connection test failed: {e}")
             return False
     
     async def add_documents(self, documents: List[Document]) -> bool:
-        """เพิ่มเอกสารลงใน vector database"""
+        """
+        Adds documents to the vector database.
+
+        Args:
+            documents (List[Document]): A list of documents to add.
+
+        Returns:
+            bool: True if the documents were added successfully, False otherwise.
+        """
         if not self.collection and not self.client:
-            logger.error("❌ Vector database ไม่พร้อมใช้งาน")
+            logger.error("❌ Vector database not available")
             return False
         
         try:
@@ -452,11 +314,19 @@ class VectorDatabase:
                 return False
                 
         except Exception as e:
-            logger.error(f"❌ เกิดข้อผิดพลาดในการเพิ่มเอกสาร: {e}")
+            logger.error(f"❌ Error adding documents: {e}")
             return False
     
     async def _add_to_chromadb(self, documents: List[Document]) -> bool:
-        """เพิ่มเอกสารลงใน ChromaDB"""
+        """
+        Adds documents to ChromaDB.
+
+        Args:
+            documents (List[Document]): A list of documents to add.
+
+        Returns:
+            bool: True if the documents were added successfully, False otherwise.
+        """
         try:
             ids = [doc.id for doc in documents]
             contents = [doc.content for doc in documents]
@@ -477,7 +347,7 @@ class VectorDatabase:
                     metadatas=metadatas
                 )
             
-            logger.info(f"✅ เพิ่มเอกสาร {len(documents)} รายการลงใน ChromaDB")
+            logger.info(f"✅ Added {len(documents)} documents to ChromaDB")
             return True
             
         except Exception as e:
@@ -485,7 +355,15 @@ class VectorDatabase:
             return False
     
     async def _add_to_pinecone(self, documents: List[Document]) -> bool:
-        """เพิ่มเอกสารลงใน Pinecone"""
+        """
+        Adds documents to Pinecone.
+
+        Args:
+            documents (List[Document]): A list of documents to add.
+
+        Returns:
+            bool: True if the documents were added successfully, False otherwise.
+        """
         try:
             vectors = []
             for doc in documents:
@@ -502,7 +380,7 @@ class VectorDatabase:
             
             if vectors:
                 self.collection.upsert(vectors=vectors)
-                logger.info(f"✅ เพิ่มเอกสาร {len(vectors)} รายการลงใน Pinecone")
+                logger.info(f"✅ Added {len(vectors)} documents to Pinecone")
                 return True
             else:
                 return False
@@ -512,7 +390,15 @@ class VectorDatabase:
             return False
     
     async def _add_to_sqlite(self, documents: List[Document]) -> bool:
-        """เพิ่มเอกสารลงใน SQLite"""
+        """
+        Adds documents to SQLite.
+
+        Args:
+            documents (List[Document]): A list of documents to add.
+
+        Returns:
+            bool: True if the documents were added successfully, False otherwise.
+        """
         try:
             cursor = self.client.cursor()
             
@@ -527,7 +413,7 @@ class VectorDatabase:
                 """, (doc.id, doc.content, embedding_json, metadata_json, doc.source))
             
             self.client.commit()
-            logger.info(f"✅ เพิ่มเอกสาร {len(documents)} รายการลงใน SQLite")
+            logger.info(f"✅ Added {len(documents)} documents to SQLite")
             return True
             
         except Exception as e:
@@ -535,9 +421,18 @@ class VectorDatabase:
             return False
     
     async def search(self, query_embedding: List[float], top_k: int = 5) -> List[SearchResult]:
-        """ค้นหาเอกสารที่คล้ายคลึง"""
+        """
+        Searches for similar documents.
+
+        Args:
+            query_embedding (List[float]): The embedding of the query.
+            top_k (int, optional): The number of results to return. Defaults to 5.
+
+        Returns:
+            List[SearchResult]: A list of search results.
+        """
         if not self.collection and not self.client:
-            logger.error("❌ Vector database ไม่พร้อมใช้งาน")
+            logger.error("❌ Vector database not available")
             return []
         
         try:
@@ -551,11 +446,20 @@ class VectorDatabase:
                 return []
                 
         except Exception as e:
-            logger.error(f"❌ เกิดข้อผิดพลาดในการค้นหา: {e}")
+            logger.error(f"❌ Error during search: {e}")
             return []
     
     async def _search_chromadb(self, query_embedding: List[float], top_k: int) -> List[SearchResult]:
-        """ค้นหาใน ChromaDB"""
+        """
+        Searches in ChromaDB.
+
+        Args:
+            query_embedding (List[float]): The embedding of the query.
+            top_k (int): The number of results to return.
+
+        Returns:
+            List[SearchResult]: A list of search results.
+        """
         try:
             results = self.collection.query(
                 query_embeddings=[query_embedding],
@@ -569,7 +473,7 @@ class VectorDatabase:
                 metadata = results['metadatas'][0][i]
                 distance = results['distances'][0][i]
                 
-                # แปลง distance เป็น score (0-1)
+                # Convert distance to score (0-1)
                 score = 1 - distance
                 
                 document = Document(
@@ -592,7 +496,16 @@ class VectorDatabase:
             return []
     
     async def _search_pinecone(self, query_embedding: List[float], top_k: int) -> List[SearchResult]:
-        """ค้นหาใน Pinecone"""
+        """
+        Searches in Pinecone.
+
+        Args:
+            query_embedding (List[float]): The embedding of the query.
+            top_k (int): The number of results to return.
+
+        Returns:
+            List[SearchResult]: A list of search results.
+        """
         try:
             results = self.collection.query(
                 vector=query_embedding,
@@ -624,7 +537,16 @@ class VectorDatabase:
             return []
     
     async def _search_sqlite(self, query_embedding: List[float], top_k: int) -> List[SearchResult]:
-        """ค้นหาใน SQLite (cosine similarity)"""
+        """
+        Searches in SQLite (cosine similarity).
+
+        Args:
+            query_embedding (List[float]): The embedding of the query.
+            top_k (int): The number of results to return.
+
+        Returns:
+            List[SearchResult]: A list of search results.
+        """
         try:
             cursor = self.client.cursor()
             cursor.execute("SELECT id, content, embedding, metadata, source FROM document_vectors")
@@ -640,7 +562,7 @@ class VectorDatabase:
                     if embedding:
                         embedding_np = np.array(embedding)
                         
-                        # คำนวณ cosine similarity
+                        # Calculate cosine similarity
                         similarity = np.dot(query_embedding_np, embedding_np) / (
                             np.linalg.norm(query_embedding_np) * np.linalg.norm(embedding_np)
                         )
@@ -661,10 +583,10 @@ class VectorDatabase:
                         ))
                         
                 except Exception as e:
-                    logger.warning(f"⚠️ ไม่สามารถประมวลผลเอกสาร {doc_id}: {e}")
+                    logger.warning(f"⚠️ Could not process document {doc_id}: {e}")
                     continue
             
-            # เรียงลำดับตาม score และเลือก top_k
+            # Sort results by score and select top_k
             results.sort(key=lambda x: x.score, reverse=True)
             return results[:top_k]
             
@@ -673,7 +595,15 @@ class VectorDatabase:
             return []
     
     def _get_relevance(self, score: float) -> str:
-        """กำหนดระดับความเกี่ยวข้อง"""
+        """
+        Determines the relevance level based on the score.
+
+        Args:
+            score (float): The similarity score.
+
+        Returns:
+            str: The relevance level ('high', 'medium', or 'low').
+        """
         if score >= 0.8:
             return "high"
         elif score >= 0.6:
@@ -685,19 +615,36 @@ class DocumentProcessor:
     """Document Processing & Chunking"""
     
     def __init__(self, chunk_size: int = 1000, chunk_overlap: int = 200):
+        """
+        Initializes the DocumentProcessor.
+
+        Args:
+            chunk_size (int, optional): The size of each chunk. Defaults to 1000.
+            chunk_overlap (int, optional): The overlap between chunks. Defaults to 200.
+        """
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
     
     def process_document(self, content: str, metadata: Dict[str, Any], source: str) -> List[Document]:
-        """ประมวลผลเอกสารและแบ่งเป็น chunks"""
+        """
+        Processes a document and splits it into chunks.
+
+        Args:
+            content (str): The content of the document.
+            metadata (Dict[str, Any]): The metadata of the document.
+            source (str): The source of the document.
+
+        Returns:
+            List[Document]: A list of document chunks.
+        """
         try:
-            # ทำความสะอาดเนื้อหา
+            # Clean content
             cleaned_content = self._clean_content(content)
             
-            # แบ่งเป็น chunks
+            # Split into chunks
             chunks = self._create_chunks(cleaned_content)
             
-            # สร้าง Document objects
+            # Create Document objects
             documents = []
             for i, chunk in enumerate(chunks):
                 doc_id = self._generate_doc_id(source, i, chunk)
@@ -717,26 +664,42 @@ class DocumentProcessor:
                 
                 documents.append(document)
             
-            logger.info(f"✅ ประมวลผลเอกสาร {source} เป็น {len(documents)} chunks")
+            logger.info(f"✅ Processed document {source} into {len(documents)} chunks")
             return documents
             
         except Exception as e:
-            logger.error(f"❌ เกิดข้อผิดพลาดในการประมวลผลเอกสาร: {e}")
+            logger.error(f"❌ Error processing document: {e}")
             return []
     
     def _clean_content(self, content: str) -> str:
-        """ทำความสะอาดเนื้อหา"""
-        # ลบ whitespace ที่ไม่จำเป็น
+        """
+        Cleans the content.
+
+        Args:
+            content (str): The content to clean.
+
+        Returns:
+            str: The cleaned content.
+        """
+        # Remove unnecessary whitespace
         content = " ".join(content.split())
         
-        # ลบ special characters ที่ไม่ต้องการ
+        # Remove unwanted special characters
         import re
         content = re.sub(r'[^\w\s\.\,\!\?\;\:\-\(\)\[\]\{\}]', '', content)
         
         return content.strip()
     
     def _create_chunks(self, content: str) -> List[str]:
-        """แบ่งเนื้อหาเป็น chunks"""
+        """
+        Splits content into chunks.
+
+        Args:
+            content (str): The content to split.
+
+        Returns:
+            List[str]: A list of content chunks.
+        """
         if len(content) <= self.chunk_size:
             return [content]
         
@@ -746,9 +709,9 @@ class DocumentProcessor:
         while start < len(content):
             end = start + self.chunk_size
             
-            # หาจุดแบ่งที่เหมาะสม (ประโยคหรือย่อหน้า)
+            # Find a suitable split point (sentence or paragraph)
             if end < len(content):
-                # หาจุดสิ้นสุดประโยคที่ใกล้ที่สุด
+                # Find the nearest sentence end
                 sentence_end = content.rfind('.', start, end)
                 paragraph_end = content.rfind('\n\n', start, end)
                 
@@ -761,7 +724,7 @@ class DocumentProcessor:
             if chunk:
                 chunks.append(chunk)
             
-            # เลื่อนไปยัง chunk ถัดไป (มี overlap)
+            # Move to the next chunk (with overlap)
             start = end - self.chunk_overlap
             if start >= len(content):
                 break
@@ -769,15 +732,54 @@ class DocumentProcessor:
         return chunks
     
     def _generate_doc_id(self, source: str, chunk_index: int, content: str) -> str:
-        """สร้าง ID สำหรับเอกสาร"""
-        # ใช้ hash ของ source + chunk_index + content
+        """
+        Generates an ID for a document.
+
+        Args:
+            source (str): The source of the document.
+            chunk_index (int): The index of the chunk.
+            content (str): The content of the chunk.
+
+        Returns:
+            str: The generated document ID.
+        """
+        # Use a hash of the source, chunk index, and content
         content_hash = hashlib.md5(f"{source}_{chunk_index}_{content}".encode()).hexdigest()
         return f"doc_{content_hash[:12]}"
 
 class RAGSystem:
-    """RAG System หลัก"""
+    """
+    The main Retrieval-Augmented Generation (RAG) System.
+
+    This class orchestrates the entire RAG pipeline, from document processing
+    and embedding to searching and response generation. It integrates with
+    various components like an `EmbeddingProvider`, a `VectorDatabase`, and
+    a `DocumentProcessor`.
+
+    While not directly coupled, this system is designed to work in tandem with a
+    memory system like `ChatMemoryManager`. A typical workflow involves:
+    1.  Retrieving conversation history from `ChatMemoryManager`.
+    2.  Using the context from the history to formulate a query for this RAGSystem.
+    3.  Searching for relevant documents with `search()`.
+    4.  Generating a context-aware response with `generate_response()`.
+
+    Attributes:
+        config (Dict[str, Any]): The configuration dictionary.
+        embedding_provider (EmbeddingProvider): The provider for text embeddings.
+        vector_db (VectorDatabase): The vector database for document storage
+                                    and retrieval.
+        document_processor (DocumentProcessor): The tool for cleaning and
+                                                chunking documents.
+        cache (redis.Redis): A Redis client for caching search results.
+    """
     
     def __init__(self, config: Dict[str, Any] = None):
+        """
+        Initializes the RAGSystem.
+
+        Args:
+            config (Dict[str, Any], optional): The configuration for the RAG system. Defaults to None.
+        """
         self.config = config or {}
         
         # Initialize components
@@ -803,103 +805,63 @@ class RAGSystem:
             db=self.config.get("redis_db", 0),
             decode_responses=True
         )
+        self.ai_client = get_client() # Add the unified client
         
-        logger.info("🚀 RAG System พร้อมใช้งาน")
+        logger.info("🚀 RAG System is ready")
     
     async def initialize_system(self) -> Dict[str, Any]:
-        """เริ่มต้นระบบและทดสอบการเชื่อมต่อ"""
+        """
+        Initializes the system and tests connections.
+
+        Returns:
+            Dict[str, Any]: The status of the system.
+        """
         status = {
             "embedding_provider": False,
             "vector_database": False,
             "cache_system": False,
-            "available_models": [],
             "system_ready": False
         }
         
         try:
-            # ทดสอบ embedding provider
-            logger.info("🔍 ทดสอบการเชื่อมต่อ Embedding Provider...")
+            # Test embedding provider
+            logger.info("🔍 Testing Embedding Provider connection...")
             status["embedding_provider"] = await self.embedding_provider.test_connection()
             
-            if status["embedding_provider"]:
-                # ดึงรายการโมเดลที่ใช้งานได้
-                status["available_models"] = await self.embedding_provider.get_available_models()
-                logger.info(f"✅ พบโมเดล embedding: {status['available_models']}")
-            
-            # ทดสอบ vector database
-            logger.info("🔍 ทดสอบการเชื่อมต่อ Vector Database...")
+            # Test vector database
+            logger.info("🔍 Testing Vector Database connection...")
             status["vector_database"] = await self.vector_db.test_connection()
             
-            # ทดสอบ cache system
-            logger.info("🔍 ทดสอบการเชื่อมต่อ Cache System...")
+            # Test cache system
+            logger.info("🔍 Testing Cache System connection...")
             try:
                 self.cache.ping()
                 status["cache_system"] = True
-                logger.info("✅ Cache System พร้อมใช้งาน")
+                logger.info("✅ Cache System is ready")
             except Exception as e:
-                logger.warning(f"⚠️ Cache System ไม่พร้อมใช้งาน: {e}")
+                logger.warning(f"⚠️ Cache System not available: {e}")
             
-            # ตรวจสอบว่าระบบพร้อมใช้งานหรือไม่
+            # Check if the system is ready
             status["system_ready"] = status["embedding_provider"] and status["vector_database"]
             
             if status["system_ready"]:
-                logger.info("🎉 RAG System พร้อมใช้งานอย่างสมบูรณ์!")
+                logger.info("🎉 RAG System is fully operational!")
             else:
-                logger.warning("⚠️ RAG System ไม่พร้อมใช้งานบางส่วน")
+                logger.warning("⚠️ RAG System is partially operational")
             
             return status
             
         except Exception as e:
-            logger.error(f"❌ เกิดข้อผิดพลาดในการเริ่มต้นระบบ: {e}")
+            logger.error(f"❌ Error initializing system: {e}")
             return status
-    
-    async def get_embedding_models(self) -> List[Dict[str, Any]]:
-        """ดึงรายการโมเดล embedding พร้อมข้อมูล"""
-        try:
-            models = await self.embedding_provider.get_available_models()
-            model_info = []
-            
-            for model_name in models:
-                if hasattr(self.embedding_provider, 'ollama_client') and self.embedding_provider.ollama_client:
-                    info = await self.embedding_provider.ollama_client.get_model_info(model_name)
-                    model_info.append({
-                        "name": model_name,
-                        "type": "ollama",
-                        "info": info
-                    })
-                else:
-                    model_info.append({
-                        "name": model_name,
-                        "type": self.embedding_provider.provider_type,
-                        "info": None
-                    })
-            
-            return model_info
-            
-        except Exception as e:
-            logger.error(f"❌ ไม่สามารถดึงรายการโมเดลได้: {e}")
-            return []
-    
-    async def switch_embedding_model(self, model_name: str) -> bool:
-        """เปลี่ยนโมเดล embedding"""
-        try:
-            # ตรวจสอบว่าโมเดลมีอยู่หรือไม่
-            available_models = await self.embedding_provider.get_available_models()
-            if model_name not in available_models:
-                logger.error(f"❌ ไม่พบโมเดล: {model_name}")
-                return False
-            
-            # เปลี่ยนโมเดล
-            self.embedding_provider.model_name = model_name
-            logger.info(f"✅ เปลี่ยนเป็นโมเดล embedding: {model_name}")
-            return True
-            
-        except Exception as e:
-            logger.error(f"❌ ไม่สามารถเปลี่ยนโมเดลได้: {e}")
-            return False
     
     async def get_system_status(self) -> Dict[str, Any]:
-        """ดึงสถานะระบบ"""
+        """
+        Gets the system status.
+
+        Returns:
+            Dict[str, Any]: The status of the system.
+        """
         try:
             status = {
                 "embedding_provider": {
@@ -920,7 +882,7 @@ class RAGSystem:
                 }
             }
             
-            # ทดสอบ cache
+            # Test cache
             try:
                 self.cache.ping()
                 status["cache_system"]["connected"] = True
@@ -930,23 +892,33 @@ class RAGSystem:
             return status
             
         except Exception as e:
-            logger.error(f"❌ ไม่สามารถดึงสถานะระบบได้: {e}")
+            logger.error(f"❌ Could not get system status: {e}")
             return {}
     
     async def add_document(self, content: str, metadata: Dict[str, Any], source: str) -> bool:
-        """เพิ่มเอกสารลงใน RAG system"""
+        """
+        Adds a document to the RAG system.
+
+        Args:
+            content (str): The content of the document.
+            metadata (Dict[str, Any]): The metadata of the document.
+            source (str): The source of the document.
+
+        Returns:
+            bool: True if the document was added successfully, False otherwise.
+        """
         try:
-            # ประมวลผลเอกสาร
+            # Process the document
             documents = self.document_processor.process_document(content, metadata, source)
             
             if not documents:
                 return False
             
-            # สร้าง embeddings
+            # Create embeddings
             for doc in documents:
                 doc.embedding = await self.embedding_provider.get_embedding(doc.content)
             
-            # เพิ่มลงใน vector database
+            # Add to vector database
             success = await self.vector_db.add_documents(documents)
             
             if success:
@@ -954,62 +926,94 @@ class RAGSystem:
                 cache_key = f"doc_meta:{source}"
                 self.cache.setex(cache_key, 3600, json.dumps(metadata))
                 
-                logger.info(f"✅ เพิ่มเอกสาร {source} สำเร็จ ({len(documents)} chunks)")
+                logger.info(f"✅ Added document {source} successfully ({len(documents)} chunks)")
             
             return success
             
         except Exception as e:
-            logger.error(f"❌ เกิดข้อผิดพลาดในการเพิ่มเอกสาร: {e}")
+            logger.error(f"❌ Error adding document: {e}")
             return False
     
     async def search(self, query: str, top_k: int = 5, use_cache: bool = True) -> List[SearchResult]:
-        """ค้นหาเอกสารที่เกี่ยวข้อง"""
+        """
+        Searches for relevant documents.
+
+        Args:
+            query (str): The search query.
+            top_k (int, optional): The number of results to return. Defaults to 5.
+            use_cache (bool, optional): Whether to use the cache. Defaults to True.
+
+        Returns:
+            List[SearchResult]: A list of search results.
+
+        Example:
+            >>> rag = RAGSystem()
+            >>> results = await rag.search("What is the Synapse architecture?")
+            >>> for result in results:
+            ...     print(f"Source: {result.document.source}, Score: {result.score}")
+        """
         try:
-            # ตรวจสอบ cache
+            # Check cache
             if use_cache:
                 cache_key = f"search:{hashlib.md5(query.encode()).hexdigest()}"
                 cached_result = self.cache.get(cache_key)
                 if cached_result:
-                    logger.info("✅ ใช้ผลลัพธ์จาก cache")
+                    logger.info("✅ Using result from cache")
                     return [SearchResult(**json.loads(item)) for item in json.loads(cached_result)]
             
-            # สร้าง query embedding
+            # Create query embedding
             query_embedding = await self.embedding_provider.get_embedding(query)
             if not query_embedding:
-                logger.error("❌ ไม่สามารถสร้าง query embedding ได้")
+                logger.error("❌ Could not create query embedding")
                 return []
             
-            # ค้นหาใน vector database
+            # Search in vector database
             results = await self.vector_db.search(query_embedding, top_k)
             
-            # Cache ผลลัพธ์
+            # Cache results
             if use_cache and results:
                 cache_key = f"search:{hashlib.md5(query.encode()).hexdigest()}"
                 cache_data = json.dumps([asdict(result) for result in results])
-                self.cache.setex(cache_key, 1800, cache_data)  # Cache 30 นาที
+                self.cache.setex(cache_key, 1800, cache_data)  # Cache for 30 minutes
             
             return results
             
         except Exception as e:
-            logger.error(f"❌ เกิดข้อผิดพลาดในการค้นหา: {e}")
+            logger.error(f"❌ Error during search: {e}")
             return []
     
     async def generate_response(self, query: str, context_documents: List[Document], 
                               llm_provider: str = "ollama") -> RAGResponse:
-        """สร้างการตอบกลับโดยใช้ RAG"""
+        """
+        Generates a response using RAG.
+
+        Args:
+            query (str): The user's query.
+            context_documents (List[Document]): A list of context documents.
+            llm_provider (str, optional): The LLM provider to use. Defaults to "ollama".
+
+        Returns:
+            RAGResponse: The generated response.
+
+        Example:
+            >>> search_results = await rag.search("What is Synapse?")
+            >>> documents = [res.document for res in search_results]
+            >>> response = await rag.generate_response("What is the Synapse architecture?", documents)
+            >>> print(response.answer)
+        """
         try:
             start_time = datetime.now()
             
-            # สร้าง context จากเอกสารที่เกี่ยวข้อง
+            # Build context from relevant documents
             context = self._build_context(context_documents)
             
-            # สร้าง prompt สำหรับ LLM
+            # Create prompt for LLM
             prompt = self._create_rag_prompt(query, context)
             
-            # เรียกใช้ LLM
+            # Call LLM
             answer = await self._call_llm(prompt, llm_provider)
             
-            # คำนวณ confidence score
+            # Calculate confidence score
             confidence = self._calculate_confidence(context_documents)
             
             processing_time = (datetime.now() - start_time).total_seconds()
@@ -1023,9 +1027,9 @@ class RAGSystem:
             )
             
         except Exception as e:
-            logger.error(f"❌ เกิดข้อผิดพลาดในการสร้างการตอบกลับ: {e}")
+            logger.error(f"❌ Error generating response: {e}")
             return RAGResponse(
-                answer="ขออภัย เกิดข้อผิดพลาดในการประมวลผล",
+                answer="Sorry, an error occurred while processing your request.",
                 sources=[],
                 confidence=0.0,
                 context_used="",
@@ -1033,105 +1037,107 @@ class RAGSystem:
             )
     
     def _build_context(self, documents: List[Document]) -> str:
-        """สร้าง context จากเอกสาร"""
+        """
+        Builds the context from documents.
+
+        Args:
+            documents (List[Document]): A list of context documents.
+
+        Returns:
+            str: The built context.
+        """
         context_parts = []
         
         for i, doc in enumerate(documents, 1):
-            context_parts.append(f"เอกสาร {i} (จาก {doc.source}):\n{doc.content}\n")
+            context_parts.append(f"Document {i} (from {doc.source}):\n{doc.content}\n")
         
         return "\n".join(context_parts)
     
     def _create_rag_prompt(self, query: str, context: str) -> str:
-        """สร้าง prompt สำหรับ RAG"""
-        return f"""
-คุณเป็น AI Assistant ที่ช่วยตอบคำถามโดยใช้ข้อมูลจากเอกสารที่ให้มา
+        """
+        Creates a prompt for RAG.
 
-ข้อมูลที่เกี่ยวข้อง:
+        Args:
+            query (str): The user's query.
+            context (str): The context from relevant documents.
+
+        Returns:
+            str: The created prompt.
+        """
+        return f"""
+You are an AI Assistant that helps answer questions using the provided documents.
+
+Relevant Information:
 {context}
 
-คำถาม: {query}
+Question: {query}
 
-กรุณาตอบคำถามโดยใช้ข้อมูลจากเอกสารที่ให้มาเท่านั้น หากไม่มีข้อมูลที่เกี่ยวข้อง ให้บอกว่าไม่สามารถตอบได้
+Please answer the question using only the information from the provided documents. If the information is not available, say that you cannot answer.
 
-คำตอบ:
+Answer:
 """
     
     async def _call_llm(self, prompt: str, provider: str) -> str:
-        """เรียกใช้ LLM"""
+        """
+        Calls the LLM using the UnifiedAIClient.
+
+        Args:
+            prompt (str): The prompt for the LLM.
+            provider (str): The LLM provider to use.
+
+        Returns:
+            str: The response from the LLM.
+        """
         try:
-            if provider == "ollama":
-                return await self._call_ollama(prompt)
-            elif provider == "openai":
-                return await self._call_openai(prompt)
+            if not self.ai_client.get_provider(provider):
+                return f"LLM provider '{provider}' is not supported or configured."
+
+            messages = [{"role": "user", "content": prompt}]
+            # Use a default model from config if available, otherwise let the strategy decide
+            model = self.config.get(f"{provider}_model")
+            
+            result = self.ai_client.generate_response(provider, messages, model=model)
+
+            if result and result.get('success'):
+                return result.get('content', 'No content received.')
             else:
-                return "ไม่รองรับ LLM provider นี้"
-                
+                error_msg = result.get('error', 'An unknown error occurred')
+                logger.error(f"❌ LLM call error with {provider}: {error_msg}")
+                return f"An error occurred while calling the {provider} LLM."
+
         except Exception as e:
-            logger.error(f"❌ LLM call error: {e}")
-            return "เกิดข้อผิดพลาดในการเรียกใช้ LLM"
-    
-    async def _call_ollama(self, prompt: str) -> str:
-        """เรียกใช้ Ollama"""
-        try:
-            model = self.config.get("ollama_model", "llama3.1:8b")
-            
-            response = requests.post(
-                "http://localhost:11434/api/generate",
-                json={
-                    "model": model,
-                    "prompt": prompt,
-                    "stream": False
-                },
-                timeout=30
-            )
-            
-            if response.status_code == 200:
-                return response.json().get('response', '')
-            else:
-                return "ไม่สามารถเชื่อมต่อกับ Ollama ได้"
-                
-        except Exception as e:
-            logger.error(f"❌ Ollama call error: {e}")
-            return "เกิดข้อผิดพลาดในการเรียกใช้ Ollama"
-    
-    async def _call_openai(self, prompt: str) -> str:
-        """เรียกใช้ OpenAI"""
-        try:
-            import os
-            from openai import OpenAI
-            
-            client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-            model = self.config.get("openai_model", "gpt-3.5-turbo")
-            
-            response = client.chat.completions.create(
-                model=model,
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=1000,
-                temperature=0.7
-            )
-            
-            return response.choices[0].message.content
-            
-        except Exception as e:
-            logger.error(f"❌ OpenAI call error: {e}")
-            return "เกิดข้อผิดพลาดในการเรียกใช้ OpenAI"
+            logger.error(f"❌ Exception during LLM call: {e}")
+            return "An unexpected error occurred while calling the LLM."
     
     def _calculate_confidence(self, documents: List[Document]) -> float:
-        """คำนวณ confidence score"""
+        """
+        Calculates the confidence score.
+
+        Args:
+            documents (List[Document]): A list of context documents.
+
+        Returns:
+            float: The confidence score.
+        """
         if not documents:
             return 0.0
         
-        # คำนวณจากจำนวนเอกสารที่เกี่ยวข้องและความหลากหลายของแหล่งข้อมูล
+        # Calculate based on the number of relevant documents and the diversity of sources
         unique_sources = len(set(doc.source for doc in documents))
         total_docs = len(documents)
         
-        # Confidence = (จำนวนเอกสาร * ความหลากหลายของแหล่งข้อมูล) / 10
+        # Confidence = (number of documents * diversity of sources) / 10
         confidence = (total_docs * unique_sources) / 10.0
         
-        return min(confidence, 1.0)  # จำกัดไม่เกิน 1.0
+        return min(confidence, 1.0)  # Limit to 1.0
     
     async def get_statistics(self) -> Dict[str, Any]:
-        """ดึงสถิติของ RAG system"""
+        """
+        Gets statistics of the RAG system.
+
+        Returns:
+            Dict[str, Any]: A dictionary of statistics.
+        """
         try:
             stats = {
                 "total_documents": 0,
@@ -1141,24 +1147,32 @@ class RAGSystem:
                 "cache_status": "connected" if self.cache.ping() else "disconnected"
             }
             
-            # ดึงสถิติจาก vector database
+            # Get statistics from the vector database
             if self.vector_db.db_type == "chromadb" and self.vector_db.collection:
                 stats["total_chunks"] = self.vector_db.collection.count()
             
             return stats
             
         except Exception as e:
-            logger.error(f"❌ เกิดข้อผิดพลาดในการดึงสถิติ: {e}")
+            logger.error(f"❌ Error getting statistics: {e}")
             return {"error": str(e)}
 
-# Factory function สำหรับสร้าง RAG System
+# Factory function for creating a RAG System
 def create_rag_system(config: Dict[str, Any] = None) -> RAGSystem:
-    """สร้าง RAG System instance"""
+    """
+    Creates a RAG System instance.
+
+    Args:
+        config (Dict[str, Any], optional): The configuration for the RAG system. Defaults to None.
+
+    Returns:
+        RAGSystem: A RAG System instance.
+    """
     return RAGSystem(config)
 
 # Example usage
 if __name__ == "__main__":
-    # ตัวอย่างการใช้งาน
+    # Example configuration
     config = {
         "embedding_provider": "ollama",
         "embedding_model": "nomic-embed-text",
@@ -1175,16 +1189,17 @@ if __name__ == "__main__":
     }
     
     async def test_rag():
+        """Tests the RAG system."""
         rag = create_rag_system(config)
         
-        # เพิ่มเอกสารตัวอย่าง
+        # Add a sample document
         sample_content = """
-        Synapse Backend Monolith เป็นสถาปัตยกรรมที่ออกแบบมาเพื่อเป็นศูนย์กลางของระบบทั้งหมด
-        ระบบนี้จะช่วยให้การพัฒนาระยะแรกทำได้อย่างรวดเร็ว และสามารถทยอยแยกส่วนประกอบที่สำคัญ
-        ออกเป็น Microservices ในภายหลังได้
+        The Synapse Backend Monolith is an architecture designed to be the central hub of the entire system.
+        This system allows for rapid initial development and allows for important components to be gradually
+        separated into Microservices later on.
         
-        ระบบใช้ Python ร่วมกับ FastAPI เป็นแกนหลัก เนื่องจากเป็น Framework ที่มีประสิทธิภาพสูง
-        และเหมาะกับการทำงานด้าน API และ AI เป็นอย่างยิ่ง
+        The system uses Python with FastAPI as its core, as it is a high-performance framework
+        that is well-suited for API and AI work.
         """
         
         metadata = {
@@ -1194,24 +1209,24 @@ if __name__ == "__main__":
         }
         
         success = await rag.add_document(sample_content, metadata, "architecture_doc")
-        print(f"เพิ่มเอกสารสำเร็จ: {success}")
+        print(f"Document added successfully: {success}")
         
-        # ทดสอบการค้นหา
-        results = await rag.search("สถาปัตยกรรม Synapse", top_k=3)
-        print(f"พบเอกสารที่เกี่ยวข้อง: {len(results)} รายการ")
+        # Test search
+        results = await rag.search("Synapse architecture", top_k=3)
+        print(f"Found {len(results)} relevant documents:")
         
         for result in results:
             print(f"- {result.document.source}: {result.score:.3f}")
         
-        # ทดสอบการสร้างการตอบกลับ
+        # Test response generation
         if results:
             response = await rag.generate_response(
-                "Synapse Backend Monolith คืออะไร?",
+                "What is the Synapse Backend Monolith?",
                 [result.document for result in results]
             )
-            print(f"\nคำตอบ: {response.answer}")
-            print(f"ความเชื่อมั่น: {response.confidence:.3f}")
-            print(f"เวลาในการประมวลผล: {response.processing_time:.2f} วินาที")
+            print(f"\nAnswer: {response.answer}")
+            print(f"Confidence: {response.confidence:.3f}")
+            print(f"Processing time: {response.processing_time:.2f} seconds")
     
-    # รัน test
+    # Run test
     asyncio.run(test_rag())

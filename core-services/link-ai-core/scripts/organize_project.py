@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-Project Organization Script
-จัดระเบียบโครงสร้างโปรเจ็ค FileSystemMCP
+Project Organization Script.
+This script organizes the project structure for the FileSystemMCP project
+by moving scripts and configuration files to their appropriate directories.
 """
 
 import os
@@ -9,9 +10,14 @@ import shutil
 from pathlib import Path
 
 def organize_scripts():
-    """จัดระเบียบ scripts ไปยังโฟลเดอร์ที่เหมาะสม"""
+    """
+    Organizes scripts into appropriate subdirectories.
+
+    This function creates subdirectories for core, utilities, startup, and
+    analysis scripts, and then moves the relevant scripts into them.
+    """
     
-    # สร้างโฟลเดอร์ย่อยถ้ายังไม่มี
+    # Create subdirectories if they don't exist
     folders = {
         'core': 'scripts/core',
         'utilities': 'scripts/utilities', 
@@ -23,7 +29,7 @@ def organize_scripts():
         os.makedirs(folder_path, exist_ok=True)
         print(f"✅ Created/ensured folder: {folder_path}")
     
-    # กำหนดการย้ายไฟล์
+    # Define file moves
     file_moves = {
         # Core Scripts
         'scripts/guardian.py': 'scripts/core/',
@@ -48,7 +54,7 @@ def organize_scripts():
         'scripts/generate_datasets.py': 'scripts/analysis/',
     }
     
-    # ย้ายไฟล์
+    # Move files
     moved_count = 0
     for source, destination in file_moves.items():
         if os.path.exists(source):
@@ -64,9 +70,14 @@ def organize_scripts():
     print(f"\n📊 Summary: Moved {moved_count} files")
 
 def organize_configs():
-    """จัดระเบียบ configuration files"""
+    """
+    Organizes configuration files into appropriate subdirectories.
+
+    This function creates subdirectories for core, database, and AI
+    configurations, and then moves the relevant configuration files into them.
+    """
     
-    # สร้างโฟลเดอร์ config หลัก
+    # Create main config folders
     os.makedirs('config/core', exist_ok=True)
     os.makedirs('config/database', exist_ok=True)
     os.makedirs('config/ai', exist_ok=True)
@@ -94,7 +105,7 @@ def organize_configs():
     print(f"\n📊 Config Summary: Moved {moved_count} files")
 
 def cleanup_empty_folders():
-    """ลบโฟลเดอร์ที่ว่างเปล่า"""
+    """Removes empty folders from the project."""
     empty_folders = []
     
     for root, dirs, files in os.walk('.', topdown=False):
@@ -113,7 +124,12 @@ def cleanup_empty_folders():
             print(f"   - {folder}")
 
 def main():
-    """Main function"""
+    """
+    The main function of the script.
+
+    This function calls the other functions to organize the project's scripts
+    and configuration files, and then cleans up any empty folders.
+    """
     print("🧹 Starting Project Organization...")
     print("=" * 50)
     

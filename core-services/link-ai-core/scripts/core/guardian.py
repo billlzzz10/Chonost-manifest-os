@@ -9,16 +9,27 @@ PROJECT_ROOT = pathlib.Path(__file__).parent.parent.resolve()
 ROADMAP_PATH = PROJECT_ROOT / "ROADMAP.md"
 
 class TaskAnalyzer:
-    """Analyzer for development roadmap tasks"""
+    """
+    An analyzer for development roadmap tasks.
+
+    This class parses a roadmap file, extracts tasks, and provides analysis
+    and verification of the tasks.
+    """
     
     def __init__(self) -> None:
+        """Initializes the TaskAnalyzer."""
         self.tasks: List[Dict] = []
         self.phases: Dict[str, Dict] = {}
         self.current_phase = ""
         self.current_section = ""
         
     def parse_roadmap_content(self, content: str) -> None:
-        """Parse roadmap content and extract tasks with proper structure"""
+        """
+        Parses the roadmap content and extracts tasks with a proper structure.
+
+        Args:
+            content (str): The content of the roadmap file.
+        """
         lines = content.split('\n')
         
         for line_num, line in enumerate(lines, 1):
@@ -63,12 +74,22 @@ class TaskAnalyzer:
                     self.phases[self.current_phase]['tasks'].append(task_info)
     
     def _parse_task_line(self, line: str) -> Optional[Dict]:
-        """Parse individual task line with multiple formats"""
-        # Format 1: - [x] Task name [file: path]
-        # Format 2: - [ ] Task name [file: path] 
-        # Format 3: - [x] Task name
-        # Format 4: - [ ] Task name
-        
+        """
+        Parses an individual task line with multiple formats.
+
+        This method supports the following formats:
+        - `- [x] Task name [file: path]`
+        - `- [ ] Task name [file: path]`
+        - `- [x] Task name`
+        - `- [ ] Task name`
+
+        Args:
+            line (str): The task line to parse.
+
+        Returns:
+            Optional[Dict]: A dictionary containing the task information, or
+                            None if the line is not a valid task.
+        """
         # Updated regex patterns to match actual roadmap format
         patterns = [
             # Pattern for tasks with file references
@@ -105,7 +126,15 @@ class TaskAnalyzer:
         return None
     
     def verify_file_existence(self) -> Dict[str, List[Dict]]:
-        """Verify if files mentioned in tasks actually exist"""
+        """
+        Verifies if the files mentioned in the tasks actually exist.
+
+        Returns:
+            Dict[str, List[Dict]]: A dictionary containing the verification
+                                   results, categorized into existing files,
+                                   missing files, and tasks with no file
+                                   specified.
+        """
         verification_results: Dict[str, List[Dict]] = {
             'existing_files': [],
             'missing_files': [],
@@ -125,7 +154,14 @@ class TaskAnalyzer:
         return verification_results
     
     def get_statistics(self) -> Dict:
-        """Get comprehensive statistics"""
+        """
+        Gets comprehensive statistics about the tasks.
+
+        Returns:
+            Dict: A dictionary containing the statistics, including the total
+                  number of tasks, the number of completed tasks, the overall
+                  completion rate, and statistics for each phase.
+        """
         total_tasks = len(self.tasks)
         completed_tasks = sum(1 for task in self.tasks if task['completed'])
         
@@ -149,7 +185,12 @@ class TaskAnalyzer:
         }
     
     def generate_detailed_report(self) -> str:
-        """Generate detailed analysis report"""
+        """
+        Generates a detailed analysis report.
+
+        Returns:
+            str: A string containing the detailed analysis report.
+        """
         stats = self.get_statistics()
         verification = self.verify_file_existence()
         
@@ -208,8 +249,8 @@ class TaskAnalyzer:
 
 def analyze_and_verify_roadmap() -> None:
     """
-    วิเคราะห์ Roadmap, นับความคืบหน้า, และตรวจสอบไฟล์ในโค้ดเบส
-    เวอร์ชันที่ปรับปรุงแล้ว - แม่นยำและครบถ้วน
+    Analyzes the roadmap, calculates progress, and verifies files in the codebase.
+    This is an improved version that is more accurate and complete.
     """
     print("\n🛡️  Starting Blueprint Guardian (v4.0 - Enhanced)...")
     

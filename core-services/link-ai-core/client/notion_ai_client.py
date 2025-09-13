@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Notion AI Client - AI Client for Notion MCP Server
-ไคลเอนต์ AI สำหรับเรียกใช้งาน Notion MCP Server
+Notion AI Client - AI Client for Notion MCP Server.
+This module provides an AI client for interacting with the Notion MCP Server.
 """
 
 import asyncio
@@ -26,28 +26,32 @@ logger = logging.getLogger(__name__)
 
 class NotionAIClient:
     """
-    AI Client for Notion MCP Server
-    ไคลเอนต์ AI สำหรับเรียกใช้งาน Notion MCP Server
+    An AI client for the Notion MCP Server.
+
+    Attributes:
+        server_url (str): The URL of the Notion MCP Server.
+        session (Optional[aiohttp.ClientSession]): The aiohttp client session.
+        token (Optional[str]): The Notion integration token.
     """
     
     def __init__(self, server_url: str = "http://localhost:8000"):
         """
-        Initialize Notion AI Client
+        Initializes the Notion AI Client.
         
         Args:
-            server_url: URL ของ Notion MCP Server
+            server_url (str): The URL of the Notion MCP Server.
         """
         self.server_url = server_url.rstrip('/')
         self.session: Optional[aiohttp.ClientSession] = None
         self.token: Optional[str] = None
         
     async def __aenter__(self):
-        """Async context manager entry"""
+        """Initializes the client session for async context management."""
         self.session = aiohttp.ClientSession()
         return self
         
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        """Async context manager exit"""
+        """Closes the client session for async context management."""
         if self.session:
             await self.session.close()
     
@@ -59,16 +63,16 @@ class NotionAIClient:
         params: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
-        Make HTTP request to Notion MCP Server
+        Makes an HTTP request to the Notion MCP Server.
         
         Args:
-            method: HTTP method (GET, POST, PUT, DELETE)
-            endpoint: API endpoint
-            data: Request data
-            params: Query parameters
+            method (str): The HTTP method (GET, POST, PUT, DELETE).
+            endpoint (str): The API endpoint.
+            data (Optional[Dict[str, Any]]): The request data.
+            params (Optional[Dict[str, Any]]): The query parameters.
             
         Returns:
-            Response data
+            Dict[str, Any]: The response data.
         """
         if not self.session:
             raise RuntimeError("Client session not initialized. Use async context manager.")
@@ -97,22 +101,22 @@ class NotionAIClient:
     
     async def health_check(self) -> Dict[str, Any]:
         """
-        Check server health
+        Checks the server health.
         
         Returns:
-            Server health status
+            Dict[str, Any]: The server health status.
         """
         return await self._make_request("GET", "/health")
     
     async def initialize_notion(self, token: str) -> Dict[str, Any]:
         """
-        Initialize Notion MCP Integration
+        Initializes the Notion MCP Integration.
         
         Args:
-            token: Notion Integration Token
+            token (str): The Notion Integration Token.
             
         Returns:
-            Initialization result
+            Dict[str, Any]: The initialization result.
         """
         self.token = token
         return await self._make_request(
@@ -128,15 +132,15 @@ class NotionAIClient:
         children: Optional[List[Dict[str, Any]]] = None
     ) -> Dict[str, Any]:
         """
-        Create a new Notion page
+        Creates a new Notion page.
         
         Args:
-            parent_id: Parent page ID
-            properties: Page properties
-            children: Page children blocks
+            parent_id (str): The ID of the parent page.
+            properties (Dict[str, Any]): The properties of the page.
+            children (Optional[List[Dict[str, Any]]]): The children blocks of the page.
             
         Returns:
-            Created page data
+            Dict[str, Any]: The created page data.
         """
         data = {
             "parent_id": parent_id,
@@ -158,15 +162,15 @@ class NotionAIClient:
         properties: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
-        Create a new Notion database
+        Creates a new Notion database.
         
         Args:
-            parent_id: Parent page ID
-            title: Database title
-            properties: Database properties
+            parent_id (str): The ID of the parent page.
+            title (str): The title of the database.
+            properties (Dict[str, Any]): The properties of the database.
             
         Returns:
-            Created database data
+            Dict[str, Any]: The created database data.
         """
         return await self._make_request(
             "POST",
@@ -185,15 +189,15 @@ class NotionAIClient:
         sorts: Optional[List[Dict[str, Any]]] = None
     ) -> Dict[str, Any]:
         """
-        Query a Notion database
+        Queries a Notion database.
         
         Args:
-            database_id: Database ID
-            filter: Query filter
-            sorts: Sort options
+            database_id (str): The ID of the database.
+            filter (Optional[Dict[str, Any]]): The query filter.
+            sorts (Optional[List[Dict[str, Any]]]): The sort options.
             
         Returns:
-            Query results
+            Dict[str, Any]: The query results.
         """
         data = {"database_id": database_id}
         if filter:
@@ -213,14 +217,14 @@ class NotionAIClient:
         filter: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
-        Search Notion pages
+        Searches Notion pages.
         
         Args:
-            query: Search query
-            filter: Search filter
+            query (str): The search query.
+            filter (Optional[Dict[str, Any]]): The search filter.
             
         Returns:
-            Search results
+            Dict[str, Any]: The search results.
         """
         data = {"query": query}
         if filter:
@@ -238,14 +242,14 @@ class NotionAIClient:
         parent_page_id: str
     ) -> Dict[str, Any]:
         """
-        Export file structure to Notion
+        Exports a file structure to Notion.
         
         Args:
-            file_structure: File structure data
-            parent_page_id: Parent page ID for export
+            file_structure (Dict[str, Any]): The file structure data.
+            parent_page_id (str): The ID of the parent page for the export.
             
         Returns:
-            Export result
+            Dict[str, Any]: The export result.
         """
         return await self._make_request(
             "POST",
@@ -261,13 +265,13 @@ class NotionAIClient:
         parent_page_id: str
     ) -> Dict[str, Any]:
         """
-        Create file analysis database
+        Creates a file analysis database.
         
         Args:
-            parent_page_id: Parent page ID
+            parent_page_id (str): The ID of the parent page.
             
         Returns:
-            Created database data
+            Dict[str, Any]: The created database data.
         """
         return await self._make_request(
             "POST",
@@ -280,14 +284,14 @@ class NotionAIClient:
         file_info: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
-        Add file information to database
+        Adds file information to a database.
         
         Args:
-            database_id: Database ID
-            file_info: File information
+            database_id (str): The ID of the database.
+            file_info (Dict[str, Any]): The file information.
             
         Returns:
-            Added file data
+            Dict[str, Any]: The added file data.
         """
         return await self._make_request(
             "POST",
@@ -300,31 +304,31 @@ class NotionAIClient:
     
     async def get_config(self) -> Dict[str, Any]:
         """
-        Get server configuration
+        Gets the server configuration.
         
         Returns:
-            Server configuration
+            Dict[str, Any]: The server configuration.
         """
         return await self._make_request("GET", "/api/v1/config")
     
     async def update_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Update server configuration
+        Updates the server configuration.
         
         Args:
-            config: New configuration
+            config (Dict[str, Any]): The new configuration.
             
         Returns:
-            Update result
+            Dict[str, Any]: The update result.
         """
         return await self._make_request("PUT", "/api/v1/config", data=config)
     
     async def stop_notion_server(self) -> Dict[str, Any]:
         """
-        Stop Notion MCP server
+        Stops the Notion MCP server.
         
         Returns:
-            Stop result
+            Dict[str, Any]: The stop result.
         """
         return await self._make_request("POST", "/api/v1/notion/stop")
     
@@ -334,14 +338,14 @@ class NotionAIClient:
         parent_page_id: str
     ) -> Dict[str, Any]:
         """
-        Batch export multiple files to Notion
+        Batch exports multiple files to Notion.
         
         Args:
-            files: List of file information
-            parent_page_id: Parent page ID
+            files (List[Dict[str, Any]]): A list of file information.
+            parent_page_id (str): The ID of the parent page.
             
         Returns:
-            Batch export result
+            Dict[str, Any]: The batch export result.
         """
         return await self._make_request(
             "POST",
@@ -352,23 +356,32 @@ class NotionAIClient:
 # Convenience functions for AI usage
 class NotionAIHelper:
     """
-    Helper class for AI to easily use Notion MCP Server
-    คลาสช่วยเหลือสำหรับ AI ในการใช้งาน Notion MCP Server อย่างง่าย
+    A helper class for AI to easily use the Notion MCP Server.
+
+    Attributes:
+        server_url (str): The URL of the Notion MCP Server.
+        client (Optional[NotionAIClient]): The Notion AI client.
     """
     
     def __init__(self, server_url: str = "http://localhost:8000"):
+        """
+        Initializes the NotionAIHelper.
+
+        Args:
+            server_url (str, optional): The URL of the Notion MCP Server. Defaults to "http://localhost:8000".
+        """
         self.server_url = server_url
         self.client: Optional[NotionAIClient] = None
     
     async def setup(self, token: str) -> bool:
         """
-        Setup Notion AI Client
+        Sets up the Notion AI Client.
         
         Args:
-            token: Notion Integration Token
+            token (str): The Notion Integration Token.
             
         Returns:
-            Setup success status
+            bool: The setup success status.
         """
         try:
             self.client = NotionAIClient(self.server_url)
@@ -392,7 +405,7 @@ class NotionAIHelper:
             return False
     
     async def cleanup(self):
-        """Cleanup resources"""
+        """Cleans up resources."""
         if self.client:
             await self.client.__aexit__(None, None, None)
     
@@ -403,15 +416,15 @@ class NotionAIHelper:
         database_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Export file analysis to Notion
+        Exports file analysis to Notion.
         
         Args:
-            file_path: Path to file
-            parent_page_id: Parent page ID
-            database_id: Database ID (optional)
+            file_path (str): The path to the file.
+            parent_page_id (str): The ID of the parent page.
+            database_id (Optional[str]): The ID of the database (optional).
             
         Returns:
-            Export result
+            Dict[str, Any]: The export result.
         """
         if not self.client:
             raise RuntimeError("Client not initialized. Call setup() first.")
@@ -463,14 +476,14 @@ class NotionAIHelper:
         parent_page_id: str
     ) -> Dict[str, Any]:
         """
-        Create project documentation in Notion
+        Creates project documentation in Notion.
         
         Args:
-            project_path: Project directory path
-            parent_page_id: Parent page ID
+            project_path (str): The path to the project directory.
+            parent_page_id (str): The ID of the parent page.
             
         Returns:
-            Documentation creation result
+            Dict[str, Any]: The documentation creation result.
         """
         if not self.client:
             raise RuntimeError("Client not initialized. Call setup() first.")
@@ -549,8 +562,7 @@ class NotionAIHelper:
 # Example usage for AI
 async def example_ai_usage():
     """
-    Example of how AI can use the Notion MCP Server
-    ตัวอย่างการใช้งาน Notion MCP Server โดย AI
+    An example of how an AI can use the Notion MCP Server.
     """
     # Initialize helper
     helper = NotionAIHelper()

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Ultimate Trailing Spaces Fixer
-แก้ไข trailing spaces ทั้งหมดในไฟล์ .md
+Ultimate Trailing Spaces Fixer.
+This script fixes all trailing spaces in .md files.
 """
 
 import os
@@ -11,28 +11,49 @@ from pathlib import Path
 from typing import List, Dict, Tuple
 
 def find_markdown_files() -> List[str]:
-    """ค้นหาไฟล์ .md ทั้งหมด"""
+    """
+    Finds all Markdown files in the current directory and its subdirectories.
+
+    Returns:
+        List[str]: A list of paths to the Markdown files.
+    """
     md_files = []
     for pattern in ["**/*.md", "**/*.mdc"]:
         md_files.extend(glob.glob(pattern, recursive=True))
     return md_files
 
 def fix_trailing_spaces(content: str) -> str:
-    """แก้ไข trailing spaces ทั้งหมด"""
-    # แก้ไข trailing spaces และ tabs ในทุกบรรทัด
+    """
+    Fixes all trailing spaces in the given content.
+
+    Args:
+        content (str): The content to fix.
+
+    Returns:
+        str: The content with all trailing spaces removed.
+    """
+    # Fix trailing spaces and tabs on all lines
     lines = content.split('\n')
     fixed_lines = []
     
     for line in lines:
-        # ลบ trailing spaces และ tabs
+        # Remove trailing spaces and tabs
         fixed_line = line.rstrip()
         fixed_lines.append(fixed_line)
     
-    # รวมบรรทัดกลับและเพิ่ม newline ตัวเดียวที่ท้ายไฟล์
+    # Join the lines back together and add a single newline at the end
     return '\n'.join(fixed_lines) + '\n'
 
 def fix_file(filepath: str) -> bool:
-    """แก้ไขไฟล์ Markdown เดียว"""
+    """
+    Fixes a single Markdown file.
+
+    Args:
+        filepath (str): The path to the Markdown file.
+
+    Returns:
+        bool: True if the file was fixed, False otherwise.
+    """
     try:
         with open(filepath, 'r', encoding='utf-8') as f:
             content = f.read()
@@ -54,7 +75,12 @@ def fix_file(filepath: str) -> bool:
         return False
 
 def main() -> None:
-    """Main function"""
+    """
+    The main function of the script.
+
+    This function finds all Markdown files in the project, fixes the
+    trailing spaces in them, and then prints a summary of the results.
+    """
     print("🧹 Ultimate Trailing Spaces Fixer...")
     print("=" * 50)
     

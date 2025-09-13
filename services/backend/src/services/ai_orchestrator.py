@@ -14,13 +14,12 @@ import os
 
 # Import AI providers
 try:
-    import openai
-    import anthropic
-    import google.generativeai as genai
-    import requests
+    # Unified client is the goal
+    from core-services.link-ai-core.utils.unified_ai_client import get_client
 except ImportError:
-    # Fallback imports
-    pass
+    # Fallback for environments where core-services is not in the path
+    # This allows the app to still run, albeit with missing functionality.
+    get_client = None
 
 class AIOrchestrator:
     """AI Orchestrator for managing multiple AI providers and integrations"""
@@ -34,6 +33,13 @@ class AIOrchestrator:
             self.cipher_suite = Fernet(self.encryption_key)
         except Exception as e:  # pragma: no cover - defensive
             raise ValueError("Invalid ENCRYPTION_KEY: must be a 32 urlsafe base64-encoded key") from e
+
+        if get_client:
+            self.ai_client = get_client()
+        else:
+            self.ai_client = None
+            print("Warning: UnifiedAIClient could not be imported. AI functionality will be limited.")
+
         self.providers = {}
         self.integrations = {}
         self.mcp_tools = {}
@@ -152,40 +158,30 @@ class AIOrchestrator:
             }
     
     def test_provider(self, user_id: str, provider: str) -> Dict[str, Any]:
-        """Test a provider connection"""
+        """Test a provider connection using the UnifiedAIClient."""
+        if not self.ai_client:
+            return {"success": False, "message": "AI Client not initialized."}
+
         try:
             user_providers = self._get_user_providers(user_id)
-            
             if provider not in user_providers:
-                return {
-                    "success": False,
-                    "message": f"Provider {provider} not configured"
-                }
+                return {"success": False, "message": f"Provider {provider} not configured."}
+
+            # Use a simple, low-cost prompt for testing
+            test_messages = [{"role": "user", "content": "Hello"}]
             
-            provider_config = user_providers[provider]
-            api_key = self._decrypt_api_key(provider_config["api_key"])
-            
-            # Test provider-specific connection
-            if provider == "openai":
-                return self._test_openai(api_key, provider_config)
-            elif provider == "anthropic":
-                return self._test_anthropic(api_key, provider_config)
-            elif provider == "google":
-                return self._test_google(api_key, provider_config)
-            elif provider == "ollama":
-                return self._test_ollama(provider_config)
+            # The unified client is initialized with config, so we just call it.
+            result = self.ai_client.generate_response(provider, test_messages, max_tokens=10)
+
+            if result and result.get('success'):
+                return {"success": True, "details": {"status": "connected", "response": result.get('content')}}
             else:
-                return {
-                    "success": False,
-                    "message": f"Provider {provider} not supported"
-                }
-                
+                error_message = result.get('error', 'Unknown error during test.')
+                return {"success": False, "message": f"Provider test failed: {error_message}"}
+
         except Exception as e:
-            return {
-                "success": False,
-                "message": f"Failed to test provider: {str(e)}"
-            }
-    
+            return {"success": False, "message": f"Failed to test provider: {str(e)}"}
+
     def create_completion(
         self,
         user_id: str,
@@ -196,59 +192,54 @@ class AIOrchestrator:
         stream: bool = False,
         config: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
-        """Create a completion using available providers"""
+        """Create a completion using the UnifiedAIClient."""
+        if not self.ai_client:
+            return {"success": False, "message": "AI Client not initialized."}
+
         try:
             user_providers = self._get_user_providers(user_id)
-            
             if not user_providers:
-                return {
-                    "success": False,
-                    "message": "No AI providers configured"
-                }
+                return {"success": False, "message": "No AI providers configured."}
+
+            # Convert prompt to messages format
+            messages = [{"role": "user", "content": prompt}]
             
-            # Try providers in order
-            for provider_name, provider_config in user_providers.items():
+            # Prepare kwargs for the unified client
+            kwargs = {
+                "max_tokens": max_tokens,
+                "temperature": temperature,
+                "stream": stream,
+                **(config or {})
+            }
+            if model:
+                kwargs["model"] = model
+
+            # Try providers in their configured order
+            for provider_name in user_providers.keys():
                 try:
-                    api_key = self._decrypt_api_key(provider_config["api_key"])
+                    # The unified client handles the authentication and provider logic
+                    result = self.ai_client.generate_response(provider_name, messages, **kwargs)
                     
-                    if provider_name == "openai":
-                        result = self._create_openai_completion(
-                            api_key, prompt, model, max_tokens, temperature, stream, config
-                        )
-                    elif provider_name == "anthropic":
-                        result = self._create_anthropic_completion(
-                            api_key, prompt, model, max_tokens, temperature, stream, config
-                        )
-                    elif provider_name == "google":
-                        result = self._create_google_completion(
-                            api_key, prompt, model, max_tokens, temperature, stream, config
-                        )
-                    elif provider_name == "ollama":
-                        result = self._create_ollama_completion(
-                            provider_config, prompt, model, max_tokens, temperature, stream, config
-                        )
-                    else:
-                        continue
-                    
-                    if result["success"]:
+                    if result and result.get('success'):
                         # Track usage
-                        self._track_usage(user_id, provider_name, result.get("usage", {}))
-                        return result
+                        self._track_usage(user_id, provider_name, result.get("metadata", {}).get("usage", {}))
                         
+                        # Adapt the unified client's response to the expected format
+                        return {
+                            "success": True,
+                            "provider": result.get('provider'),
+                            "model": result.get('metadata', {}).get('model'),
+                            "content": result.get('content'),
+                            "usage": result.get("metadata", {}).get("usage", {})
+                        }
                 except Exception as e:
                     print(f"Provider {provider_name} failed: {str(e)}")
-                    continue
+                    continue # Try the next provider
             
-            return {
-                "success": False,
-                "message": "All providers failed"
-            }
-            
+            return {"success": False, "message": "All configured providers failed to generate a response."}
+
         except Exception as e:
-            return {
-                "success": False,
-                "message": f"Failed to create completion: {str(e)}"
-            }
+            return {"success": False, "message": f"Failed to create completion: {str(e)}"}
     
     def analyze_content(
         self,
@@ -470,142 +461,10 @@ class AIOrchestrator:
                 "message": f"Failed to get cost analytics: {str(e)}"
             }
     
-    # Private methods for provider-specific operations
-    def _test_openai(self, api_key: str, config: Dict[str, Any]) -> Dict[str, Any]:
-        """Test OpenAI connection"""
-        try:
-            # TODO: Implement OpenAI test
-            return {
-                "success": True,
-                "details": {"status": "connected", "models": ["gpt-4", "gpt-3.5-turbo"]}
-            }
-        except Exception as e:
-            return {"success": False, "message": str(e)}
-    
-    def _test_anthropic(self, api_key: str, config: Dict[str, Any]) -> Dict[str, Any]:
-        """Test Anthropic connection"""
-        try:
-            # TODO: Implement Anthropic test
-            return {
-                "success": True,
-                "details": {"status": "connected", "models": ["claude-3-opus", "claude-3-sonnet"]}
-            }
-        except Exception as e:
-            return {"success": False, "message": str(e)}
-    
-    def _test_google(self, api_key: str, config: Dict[str, Any]) -> Dict[str, Any]:
-        """Test Google connection"""
-        try:
-            # TODO: Implement Google test
-            return {
-                "success": True,
-                "details": {"status": "connected", "models": ["gemini-pro", "gemini-flash"]}
-            }
-        except Exception as e:
-            return {"success": False, "message": str(e)}
-    
-    def _test_ollama(self, config: Dict[str, Any]) -> Dict[str, Any]:
-        """Test Ollama connection"""
-        try:
-            # TODO: Implement Ollama test
-            return {
-                "success": True,
-                "details": {"status": "connected", "models": ["llama2", "mistral"]}
-            }
-        except Exception as e:
-            return {"success": False, "message": str(e)}
-    
-    def _create_openai_completion(
-        self,
-        api_key: str,
-        prompt: str,
-        model: Optional[str],
-        max_tokens: int,
-        temperature: float,
-        stream: bool,
-        config: Optional[Dict[str, Any]]
-    ) -> Dict[str, Any]:
-        """Create OpenAI completion"""
-        try:
-            # TODO: Implement OpenAI completion
-            return {
-                "success": True,
-                "provider": "openai",
-                "model": model or "gpt-4",
-                "content": f"OpenAI response to: {prompt[:50]}...",
-                "usage": {"prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30}
-            }
-        except Exception as e:
-            return {"success": False, "message": str(e)}
-    
-    def _create_anthropic_completion(
-        self,
-        api_key: str,
-        prompt: str,
-        model: Optional[str],
-        max_tokens: int,
-        temperature: float,
-        stream: bool,
-        config: Optional[Dict[str, Any]]
-    ) -> Dict[str, Any]:
-        """Create Anthropic completion"""
-        try:
-            # TODO: Implement Anthropic completion
-            return {
-                "success": True,
-                "provider": "anthropic",
-                "model": model or "claude-3-sonnet",
-                "content": f"Anthropic response to: {prompt[:50]}...",
-                "usage": {"prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30}
-            }
-        except Exception as e:
-            return {"success": False, "message": str(e)}
-    
-    def _create_google_completion(
-        self,
-        api_key: str,
-        prompt: str,
-        model: Optional[str],
-        max_tokens: int,
-        temperature: float,
-        stream: bool,
-        config: Optional[Dict[str, Any]]
-    ) -> Dict[str, Any]:
-        """Create Google completion"""
-        try:
-            # TODO: Implement Google completion
-            return {
-                "success": True,
-                "provider": "google",
-                "model": model or "gemini-pro",
-                "content": f"Google response to: {prompt[:50]}...",
-                "usage": {"prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30}
-            }
-        except Exception as e:
-            return {"success": False, "message": str(e)}
-    
-    def _create_ollama_completion(
-        self,
-        config: Dict[str, Any],
-        prompt: str,
-        model: Optional[str],
-        max_tokens: int,
-        temperature: float,
-        stream: bool,
-        config_params: Optional[Dict[str, Any]]
-    ) -> Dict[str, Any]:
-        """Create Ollama completion"""
-        try:
-            # TODO: Implement Ollama completion
-            return {
-                "success": True,
-                "provider": "ollama",
-                "model": model or "llama2",
-                "content": f"Ollama response to: {prompt[:50]}...",
-                "usage": {"prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30}
-            }
-        except Exception as e:
-            return {"success": False, "message": str(e)}
+    # Private methods for provider-specific operations are now handled by UnifiedAIClient.
+    # The methods _test_openai, _test_anthropic, _test_google, _test_ollama,
+    # _create_openai_completion, _create_anthropic_completion, _create_google_completion,
+    # and _create_ollama_completion have been removed and replaced by calls to the unified client.
     
     def _track_usage(self, user_id: str, provider: str, usage: Dict[str, Any]):
         """Track usage for analytics"""

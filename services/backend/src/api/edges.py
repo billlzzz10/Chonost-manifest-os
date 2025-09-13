@@ -14,6 +14,7 @@ from models.edge import Edge, EdgeType
 router = APIRouter()
 
 class EdgeCreate(BaseModel):
+    """Request model for creating an edge."""
     source_id: str
     target_id: str
     type: EdgeType
@@ -23,11 +24,13 @@ class EdgeCreate(BaseModel):
     metadata: Optional[dict] = None
 
 class EdgeUpdate(BaseModel):
+    """Request model for updating an edge."""
     label: Optional[str] = None
     strength: Optional[float] = None
     metadata: Optional[dict] = None
 
 class EdgeResponse(BaseModel):
+    """Response model for an edge."""
     id: str
     source_id: str
     target_id: str
@@ -39,12 +42,14 @@ class EdgeResponse(BaseModel):
     created_at: str
     updated_at: Optional[str] = None
 
-@router.post("/", response_model=EdgeResponse)
+@router.post("/", response_model=EdgeResponse, summary="Create a new edge")
 async def create_edge(
     edge_data: EdgeCreate,
     db: AsyncSession = Depends(get_db)
 ):
-    """Create a new edge"""
+    """
+    Creates a new edge between two nodes.
+    """
     try:
         edge = Edge(
             source_id=edge_data.source_id,
@@ -63,7 +68,7 @@ async def create_edge(
         await db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.get("/", response_model=List[EdgeResponse])
+@router.get("/", response_model=List[EdgeResponse], summary="Get a list of edges")
 async def get_edges(
     source_id: Optional[str] = None,
     target_id: Optional[str] = None,
@@ -72,7 +77,9 @@ async def get_edges(
     offset: int = 0,
     db: AsyncSession = Depends(get_db)
 ):
-    """Get edges with optional filtering"""
+    """
+    Gets a list of edges with optional filtering.
+    """
     try:
         query = db.query(Edge)
         
@@ -90,12 +97,14 @@ async def get_edges(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.get("/{edge_id}", response_model=EdgeResponse)
+@router.get("/{edge_id}", response_model=EdgeResponse, summary="Get a specific edge")
 async def get_edge(
     edge_id: str,
     db: AsyncSession = Depends(get_db)
 ):
-    """Get a specific edge by ID"""
+    """
+    Gets a specific edge by its ID.
+    """
     try:
         edge = await db.get(Edge, edge_id)
         if not edge:
@@ -104,13 +113,15 @@ async def get_edge(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.put("/{edge_id}", response_model=EdgeResponse)
+@router.put("/{edge_id}", response_model=EdgeResponse, summary="Update an edge")
 async def update_edge(
     edge_id: str,
     edge_data: EdgeUpdate,
     db: AsyncSession = Depends(get_db)
 ):
-    """Update an edge"""
+    """
+    Updates an edge's attributes.
+    """
     try:
         edge = await db.get(Edge, edge_id)
         if not edge:
@@ -130,12 +141,14 @@ async def update_edge(
         await db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.delete("/{edge_id}")
+@router.delete("/{edge_id}", summary="Delete an edge")
 async def delete_edge(
     edge_id: str,
     db: AsyncSession = Depends(get_db)
 ):
-    """Delete an edge"""
+    """
+    Deletes an edge from the database.
+    """
     try:
         edge = await db.get(Edge, edge_id)
         if not edge:

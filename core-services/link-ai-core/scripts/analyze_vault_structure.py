@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-Analyze Vault Structure - วิเคราะห์โครงสร้าง Vault อย่างละเอียด
+Analyze Vault Structure.
+This script performs a detailed analysis of the structure of an Obsidian vault.
 """
 
 import os
@@ -9,10 +10,19 @@ from pathlib import Path
 from typing import Dict, List, Any
 
 def analyze_vault_structure():
-    """วิเคราะห์โครงสร้าง Vault อย่างละเอียด"""
+    """
+    Performs a detailed analysis of the vault structure.
+
+    This function analyzes the main folders of the vault, checks for the presence
+    of README, Dashboard, and Index files, and provides a summary of the findings.
+    It also analyzes the contents of the '08_Templates-Tools' directory.
+
+    Returns:
+        dict: A dictionary containing the analysis results.
+    """
     vault_path = r"F:\01_WRI\Obsidian\Vault"
     
-    print("🔍 วิเคราะห์โครงสร้าง Vault อย่างละเอียด")
+    print("🔍 Detailed Vault Structure Analysis")
     print("=" * 60)
     
     # 1. วิเคราะห์โฟลเดอร์หลัก

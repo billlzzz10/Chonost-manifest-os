@@ -8,7 +8,18 @@ import sys
 from pathlib import Path
 
 def setup_logging(name: str = "chonost") -> logging.Logger:
-    """Setup logging configuration"""
+    """
+    Sets up the logging configuration for the application.
+
+    This function creates a logger that outputs to both the console (INFO level)
+    and a file (`logs/chonost.log`, DEBUG level).
+
+    Args:
+        name (str, optional): The name of the logger. Defaults to "chonost".
+
+    Returns:
+        logging.Logger: The configured logger instance.
+    """
     
     # Create logger
     logger = logging.getLogger(name)

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-AI-Ready File System Analyzer
-สร้างข้อมูลที่ AI ใดๆ ก็สามารถเข้าใจโครงสร้างโฟลเดอร์ได้อย่างลึกซึ้ง
+AI-Ready File System Analyzer.
+
+This script generates data that helps any AI to deeply understand the folder structure.
 """
 
 import json
@@ -11,13 +12,42 @@ from collections import defaultdict
 from file_system_analyzer import FileSystemMCPTool
 
 class AIReadyAnalyzer:
+    """
+    Analyzes a file system to generate AI-ready data.
+
+    This class acts as a high-level analysis orchestrator. It uses the
+    `FileSystemMCPTool` to gather raw data about a directory and then processes
+    this data through a series of analytical steps. The goal is to produce a
+    structured JSON report (`ai_ready_analysis.json`) that can be consumed by
+    an AI agent to gain a deep, contextual understanding of a project without
+    having to read every file.
+
+    The process involves analyzing project context, file intelligence, content
+    relationships, usage patterns, and potential risks. Finally, it generates
+    actionable insights and recommendations.
+
+    Attributes:
+        tool (FileSystemMCPTool): An instance of the file system tool.
+        session_id (str): The session ID for the analysis.
+        analysis_data (dict): A dictionary to store the analysis results.
+    """
     def __init__(self, session_id):
+        """
+        Initializes the AIReadyAnalyzer.
+
+        Args:
+            session_id (str): The session ID for the analysis.
+        """
         self.tool = FileSystemMCPTool()
         self.session_id = session_id
         self.analysis_data = {}
         
     def generate_ai_ready_analysis(self):
-        """สร้างการวิเคราะห์ที่พร้อมสำหรับ AI"""
+        """
+        Generates the AI-ready analysis.
+
+        This is the main method that orchestrates the analysis process.
+        """
         print("🤖 AI-Ready File System Analysis")
         print("=" * 50)
         
@@ -43,7 +73,7 @@ class AIReadyAnalyzer:
         self._save_ai_ready_data()
         
     def _analyze_project_context(self):
-        """วิเคราะห์บริบทของโปรเจ็ค"""
+        """Analyzes the project context."""
         print("1. Analyzing Project Context...")
         
         # Detect project type and structure
@@ -59,7 +89,7 @@ class AIReadyAnalyzer:
         print(f"   Confidence: {project_info['project_type']['confidence']}%")
         
     def _analyze_file_intelligence(self):
-        """วิเคราะห์ความฉลาดของไฟล์"""
+        """Analyzes the file intelligence."""
         print("2. Analyzing File Intelligence...")
         
         file_intelligence = {
@@ -73,7 +103,7 @@ class AIReadyAnalyzer:
         print(f"   File Categories: {len(file_intelligence['file_categories'])} categories")
         
     def _analyze_content_relationships(self):
-        """วิเคราะห์ความสัมพันธ์ของเนื้อหา"""
+        """Analyzes the content relationships."""
         print("3. Analyzing Content Relationships...")
         
         content_analysis = {
@@ -87,7 +117,7 @@ class AIReadyAnalyzer:
         print(f"   Content Clusters: {len(content_analysis['content_clusters'])} clusters")
         
     def _analyze_usage_intelligence(self):
-        """วิเคราะห์ความฉลาดในการใช้งาน"""
+        """Analyzes the usage intelligence."""
         print("4. Analyzing Usage Intelligence...")
         
         usage_intelligence = {
@@ -101,7 +131,7 @@ class AIReadyAnalyzer:
         print(f"   Activity Patterns: {len(usage_intelligence['activity_patterns'])} patterns")
         
     def _analyze_risk_assessment(self):
-        """ประเมินความเสี่ยง"""
+        """Assesses the risks."""
         print("5. Analyzing Risk Assessment...")
         
         risk_assessment = {
@@ -115,7 +145,7 @@ class AIReadyAnalyzer:
         print(f"   Security Risks: {len(risk_assessment['security_risks'])} identified")
         
     def _generate_ai_insights(self):
-        """สร้างข้อมูลเชิงลึกสำหรับ AI"""
+        """Generates AI insights."""
         print("6. Generating AI Insights...")
         
         ai_insights = {
@@ -129,7 +159,7 @@ class AIReadyAnalyzer:
         print(f"   AI Insights: {len(ai_insights['actionable_recommendations'])} recommendations")
         
     def _save_ai_ready_data(self):
-        """บันทึกข้อมูลที่พร้อมสำหรับ AI"""
+        """Saves the AI-ready data."""
         print("7. Saving AI-Ready Data...")
         
         # Create comprehensive AI-ready report
@@ -155,7 +185,18 @@ class AIReadyAnalyzer:
         
     # Helper methods for analysis
     def _detect_project_type(self):
-        """ตรวจจับประเภทโปรเจ็ค"""
+        """
+        Detects the project type based on file extensions and paths.
+
+        Returns:
+            dict: A dictionary describing the project type.
+            Example:
+                {
+                    "type": "Obsidian Vault",
+                    "confidence": 95,
+                    "indicators": 3
+                }
+        """
         key_files = self._execute_sql("""
             SELECT file_name, file_path, file_extension 
             FROM files WHERE session_id = ? 
@@ -177,7 +218,21 @@ class AIReadyAnalyzer:
             return {"type": "General Project", "confidence": 60, "indicators": 0}
             
     def _get_folder_hierarchy(self):
-        """สร้างลำดับชั้นโฟลเดอร์"""
+        """
+        Gets the folder hierarchy and basic stats for each folder.
+
+        Returns:
+            dict: A dictionary representing the folder hierarchy.
+            Example:
+                {
+                    "src/core": {
+                        "depth": 2,
+                        "file_count": 10,
+                        "total_size": 102400,
+                        "size_mb": 0.1
+                    }
+                }
+        """
         folders = self._execute_sql("""
             SELECT parent_directory, COUNT(*) as file_count, 
                    SUM(file_size) as total_size
@@ -199,7 +254,21 @@ class AIReadyAnalyzer:
         return hierarchy
         
     def _get_file_distribution(self):
-        """วิเคราะห์การกระจายของไฟล์"""
+        """
+        Analyzes the file distribution by extension.
+
+        Returns:
+            dict: A dictionary representing the file distribution.
+            Example:
+                {
+                    ".md": {
+                        "count": 100,
+                        "total_size": 204800,
+                        "size_mb": 0.2,
+                        "percentage": 50.0
+                    }
+                }
+        """
         extensions = self._execute_sql("""
             SELECT file_extension, COUNT(*) as count, 
                    SUM(file_size) as total_size
@@ -221,7 +290,23 @@ class AIReadyAnalyzer:
         return distribution
         
     def _get_size_analysis(self):
-        """วิเคราะห์ขนาดไฟล์"""
+        """
+        Analyzes and returns overall size statistics for the project.
+
+        Returns:
+            dict: A dictionary containing statistics about file sizes.
+            Example:
+                {
+                    "total_files": 200,
+                    "total_size_bytes": 409600,
+                    "total_size_mb": 0.4,
+                    "average_size_bytes": 2048,
+                    "average_size_kb": 2.0,
+                    "smallest_file_bytes": 10,
+                    "largest_file_bytes": 51200,
+                    "largest_file_mb": 0.05
+                }
+        """
         size_stats = self._execute_sql("""
             SELECT 
                 COUNT(*) as total_files,
@@ -247,7 +332,22 @@ class AIReadyAnalyzer:
         return {}
         
     def _categorize_files(self):
-        """จัดหมวดหมู่ไฟล์"""
+        """
+        Categorizes files based on predefined extension groups.
+
+        Returns:
+            dict: A dictionary of categorized files.
+            Example:
+                {
+                    "code": {
+                        "count": 50,
+                        "total_size": 512000,
+                        "files": [
+                            {"name": "main.py", "path": "src/main.py", "size": 1024}
+                        ]
+                    }
+                }
+        """
         categories = {
             "documentation": ['.md', '.txt', '.pdf', '.doc', '.docx'],
             "code": ['.py', '.js', '.ts', '.java', '.cpp', '.c', '.html', '.css'],
@@ -271,7 +371,13 @@ class AIReadyAnalyzer:
         return categorized
         
     def _analyze_file_patterns(self):
-        """วิเคราะห์รูปแบบไฟล์"""
+        """
+        Aggregates various file pattern analyses.
+
+        Returns:
+            dict: A dictionary of analyzed file patterns, including duplicates,
+                  naming conventions, relationships, and temporal patterns.
+        """
         patterns = {
             "duplicate_names": self._find_duplicate_names(),
             "naming_conventions": self._analyze_naming_conventions(),
@@ -281,7 +387,22 @@ class AIReadyAnalyzer:
         return patterns
         
     def _find_content_clusters(self):
-        """ค้นหาคลัสเตอร์ของเนื้อหา"""
+        """
+        Finds content clusters by grouping files by directory and analyzing
+        their extensions and complexity.
+
+        Returns:
+            dict: A dictionary of content clusters.
+            Example:
+                {
+                    "docs/": {
+                        "file_count": 10,
+                        "extensions": [".md"],
+                        "content_type": "Documentation",
+                        "complexity_score": 0.5
+                    }
+                }
+        """
         # Group files by directory and analyze content patterns
         clusters = {}
         
@@ -304,7 +425,13 @@ class AIReadyAnalyzer:
         return clusters
         
     def _analyze_activity_patterns(self):
-        """วิเคราะห์รูปแบบการใช้งาน"""
+        """
+        Analyzes file modification activity patterns.
+
+        Returns:
+            dict: A dictionary of activity patterns, including recently
+                  modified files and activity trends.
+        """
         # Analyze file modification patterns
         recent_files = self._execute_sql("""
             SELECT file_name, file_path, modified_date, file_size
@@ -322,7 +449,22 @@ class AIReadyAnalyzer:
         return patterns
         
     def _assess_security_risks(self):
-        """ประเมินความเสี่ยงด้านความปลอดภัย"""
+        """
+        Assesses security risks by searching for sensitive and executable files.
+
+        Returns:
+            list: A list of identified security risks.
+            Example:
+                [
+                    {
+                        "type": "sensitive_data",
+                        "severity": "high",
+                        "description": "Files containing potentially sensitive information",
+                        "count": 1,
+                        "files": [{"name": "secrets.txt", ...}]
+                    }
+                ]
+        """
         risks = []
         
         # Check for sensitive files
@@ -350,7 +492,13 @@ class AIReadyAnalyzer:
         return risks
         
     def _generate_contextual_understanding(self):
-        """สร้างความเข้าใจเชิงบริบท"""
+        """
+        Aggregates analyses to generate a contextual understanding of the project.
+
+        Returns:
+            dict: A dictionary containing the contextual understanding,
+                  including purpose, workflow, and organization.
+        """
         context = {
             "project_purpose": self._infer_project_purpose(),
             "user_workflow": self._infer_user_workflow(),
@@ -360,7 +508,17 @@ class AIReadyAnalyzer:
         return context
         
     def _generate_actionable_recommendations(self):
-        """สร้างคำแนะนำที่ปฏิบัติได้"""
+        """
+        Generates actionable recommendations based on the project type.
+
+        Returns:
+            list: A list of actionable recommendation strings.
+            Example:
+                [
+                    "Consider creating a README.md in the root directory.",
+                    "Refactor duplicate files found in 'src/utils'."
+                ]
+        """
         recommendations = []
         
         # Analyze based on project type
@@ -374,7 +532,15 @@ class AIReadyAnalyzer:
         return recommendations
         
     def _generate_ai_instructions(self):
-        """สร้างคำแนะนำสำหรับ AI"""
+        """
+        Generates a set of high-level instructions for an AI agent.
+
+        These instructions guide the AI on how to approach the analysis of this
+        project.
+
+        Returns:
+            dict: A dictionary of AI instructions.
+        """
         return {
             "analysis_approach": "comprehensive_file_system_intelligence",
             "focus_areas": ["content_organization", "efficiency_optimization", "security_assessment"],
@@ -384,7 +550,16 @@ class AIReadyAnalyzer:
         
     # Utility methods
     def _execute_sql(self, sql, params):
-        """Execute SQL query"""
+        """
+        Executes an SQL query.
+
+        Args:
+            sql (str): The SQL query to execute.
+            params (list): The parameters for the SQL query.
+
+        Returns:
+            list: The result of the SQL query.
+        """
         params_dict = {
             'action': 'query_sql',
             'sql': sql,
@@ -395,7 +570,15 @@ class AIReadyAnalyzer:
         return json.loads(result)
         
     def _get_files_by_extensions(self, extensions):
-        """Get files by extensions"""
+        """
+        Gets files by their extensions.
+
+        Args:
+            extensions (list): A list of file extensions.
+
+        Returns:
+            list: A list of files with the specified extensions.
+        """
         ext_list = "', '".join(extensions)
         sql = f"""
         SELECT file_name, file_path, file_size 
@@ -405,7 +588,15 @@ class AIReadyAnalyzer:
         return self._execute_sql(sql, [self.session_id])
         
     def _find_files_by_patterns(self, patterns):
-        """Find files by name patterns"""
+        """
+        Finds files by name patterns.
+
+        Args:
+            patterns (list): A list of patterns to search for in file names.
+
+        Returns:
+            list: A list of files matching the patterns.
+        """
         pattern_conditions = " OR ".join([f"file_name LIKE '%{pattern}%'" for pattern in patterns])
         sql = f"""
         SELECT file_name, file_path, file_size 
@@ -415,7 +606,7 @@ class AIReadyAnalyzer:
         return self._execute_sql(sql, [self.session_id])
         
     def _save_human_readable_report(self):
-        """บันทึกรายงานที่อ่านได้สำหรับมนุษย์"""
+        """Saves a human-readable report in Markdown format."""
         report = f"""
 # AI-Ready File System Analysis Report
 
@@ -437,7 +628,12 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
             f.write(report)
             
     def _format_insights_for_humans(self):
-        """จัดรูปแบบข้อมูลเชิงลึกสำหรับมนุษย์"""
+        """
+        Formats the AI insights for human consumption.
+
+        Returns:
+            str: A formatted string of AI insights.
+        """
         insights = self.analysis_data.get('ai_insights', {})
         return f"""
 - **Content Organization**: {insights.get('contextual_understanding', {}).get('content_organization', 'Not analyzed')}
@@ -446,7 +642,12 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         """
         
     def _format_recommendations_for_humans(self):
-        """จัดรูปแบบคำแนะนำสำหรับมนุษย์"""
+        """
+        Formats the recommendations for human consumption.
+
+        Returns:
+            str: A formatted string of recommendations.
+        """
         recommendations = self.analysis_data.get('ai_insights', {}).get('actionable_recommendations', [])
         if not recommendations:
             return "No specific recommendations generated."
@@ -457,6 +658,9 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         return formatted
 
 def main():
+    """
+    Main function to run the AI-Ready File System Analyzer.
+    """
     session_id = 'scan_1755714528'  # Vault session
     analyzer = AIReadyAnalyzer(session_id)
     analyzer.generate_ai_ready_analysis()

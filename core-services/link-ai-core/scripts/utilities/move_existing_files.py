@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-Move Existing Files - ย้ายไฟล์ที่มีอยู่จริงไปยังโครงสร้างใหม่
+Move Existing Files.
+This script moves existing files to the new vault structure.
 """
 
 import os
@@ -8,10 +9,16 @@ import shutil
 from pathlib import Path
 
 def move_existing_files():
-    """ย้ายไฟล์ที่มีอยู่จริง"""
+    """
+    Moves existing files to their new locations in the vault.
+
+    This function moves files from the old `09_PROMPTS` and
+    `copilot-custom-prompts` directories to the new `08_Templates-Tools`
+    directory, and then removes the old, empty directories.
+    """
     vault_path = r"F:\01_WRI\Obsidian\Vault"
     
-    print("🎯 เริ่มย้ายไฟล์ที่มีอยู่จริง")
+    print("🎯 Starting to move existing files")
     print("=" * 50)
     
     # 1. ย้ายไฟล์จาก 09_PROMPTS ไปยัง 08_Templates-Tools/Prompts/General

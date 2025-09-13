@@ -1,6 +1,6 @@
 """
-Logging configuration สำหรับ MCP Orchestrator
-รองรับ structlog และ standard logging
+Logging configuration for the MCP Orchestrator.
+This module supports both structlog and standard logging.
 """
 
 import logging

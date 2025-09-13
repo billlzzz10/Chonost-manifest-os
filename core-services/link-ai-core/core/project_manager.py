@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Project Manager - เครื่องมือจัดการโปรเจ็คที่ชาญฉลาด
+Project Manager - An intelligent tool for managing projects.
 """
 
 import os
@@ -13,15 +13,27 @@ import asyncio
 import logging
 
 class ProjectManager:
-    """เครื่องมือจัดการโปรเจ็คที่ชาญฉลาด"""
+    """
+    An intelligent tool for managing projects.
+
+    Attributes:
+        project_path (Path): The path to the project.
+        config (Dict[str, Any]): The configuration for the project.
+    """
     
     def __init__(self, project_path: str = "."):
+        """
+        Initializes the ProjectManager.
+
+        Args:
+            project_path (str, optional): The path to the project. Defaults to ".".
+        """
         self.project_path = Path(project_path).resolve()
         self.config = self._load_config()
         self.setup_logging()
         
     def setup_logging(self):
-        """ตั้งค่า logging"""
+        """Sets up logging for the project manager."""
         log_dir = self.project_path / "logs"
         log_dir.mkdir(exist_ok=True)
         
@@ -35,7 +47,12 @@ class ProjectManager:
         )
     
     def _load_config(self) -> Dict[str, Any]:
-        """โหลดการตั้งค่า"""
+        """
+        Loads the configuration for the project.
+
+        Returns:
+            Dict[str, Any]: The project configuration.
+        """
         config_file = self.project_path / "project_config.json"
         
         default_config = {
@@ -76,8 +93,13 @@ class ProjectManager:
         return default_config
     
     async def analyze_project(self) -> Dict[str, Any]:
-        """วิเคราะห์โครงสร้างโปรเจ็ค"""
-        logging.info("🔍 วิเคราะห์โครงสร้างโปรเจ็ค...")
+        """
+        Analyzes the project structure.
+
+        Returns:
+            Dict[str, Any]: A dictionary containing the analysis results.
+        """
+        logging.info("🔍 Analyzing project structure...")
         
         analysis = {
             'timestamp': datetime.now().isoformat(),
@@ -88,7 +110,7 @@ class ProjectManager:
             'recommendations': []
         }
         
-        # วิเคราะห์โครงสร้างโฟลเดอร์
+        # Analyze folder structure
         for folder_name in self.config['structure']:
             folder_path = self.project_path / folder_name
             if folder_path.exists():
@@ -98,7 +120,7 @@ class ProjectManager:
                 analysis['issues'].append(f"Missing folder: {folder_name}")
                 analysis['recommendations'].append(f"Create folder: {folder_name}")
         
-        # วิเคราะห์ไฟล์ที่กระจาย
+        # Analyze scattered files
         scattered_files = await self._find_scattered_files()
         analysis['scattered_files'] = scattered_files
         
@@ -106,7 +128,7 @@ class ProjectManager:
             analysis['issues'].append(f"Found {len(scattered_files)} scattered files")
             analysis['recommendations'].append("Organize scattered files")
         
-        # ตรวจสอบไฟล์จัดการ
+        # Check management files
         management_files = await self._check_management_files()
         analysis['management_files'] = management_files
         
@@ -118,7 +140,15 @@ class ProjectManager:
         return analysis
     
     async def _analyze_folder(self, folder_path: Path) -> Dict[str, Any]:
-        """วิเคราะห์โฟลเดอร์เดียว"""
+        """
+        Analyzes a single folder.
+
+        Args:
+            folder_path (Path): The path to the folder to analyze.
+
+        Returns:
+            Dict[str, Any]: A dictionary containing the folder analysis.
+        """
         files = list(folder_path.rglob("*"))
         python_files = [f for f in files if f.is_file() and f.suffix == '.py']
         config_files = [f for f in files if f.is_file() and f.suffix in ['.json', '.yaml', '.yml', '.toml']]
@@ -136,10 +166,15 @@ class ProjectManager:
         }
     
     async def _find_scattered_files(self) -> List[Dict[str, Any]]:
-        """หาไฟล์ที่กระจายในโฟลเดอร์หลัก"""
+        """
+        Finds scattered files in the main project folder.
+
+        Returns:
+            List[Dict[str, Any]]: A list of scattered files.
+        """
         scattered = []
         
-        # ตรวจสอบไฟล์ในโฟลเดอร์หลัก
+        # Check files in the main folder
         for item in self.project_path.iterdir():
             if item.is_file() and item.name not in ['README.md', 'requirements.txt', 'setup.py', 'pyproject.toml']:
                 scattered.append({
@@ -151,7 +186,12 @@ class ProjectManager:
         return scattered
     
     async def _check_management_files(self) -> Dict[str, bool]:
-        """ตรวจสอบไฟล์จัดการ"""
+        """
+        Checks for the existence of management files.
+
+        Returns:
+            Dict[str, bool]: A dictionary indicating the existence of each management file.
+        """
         management_files = {
             'README.md': (self.project_path / 'README.md').exists(),
             'requirements.txt': (self.project_path / 'requirements.txt').exists(),
@@ -164,7 +204,15 @@ class ProjectManager:
         return management_files
     
     def _suggest_location(self, file_path: Path) -> str:
-        """แนะนำตำแหน่งที่เหมาะสมสำหรับไฟล์"""
+        """
+        Suggests a suitable location for a file.
+
+        Args:
+            file_path (Path): The path to the file.
+
+        Returns:
+            str: The suggested location for the file.
+        """
         file_name = file_path.name.lower()
         
         for category, keywords in self.config['organize_rules'].items():
@@ -172,7 +220,7 @@ class ProjectManager:
                 if keyword in file_name:
                     return f"src/{category}"
         
-        # ตรวจสอบนามสกุลไฟล์
+        # Check file extension
         if file_path.suffix == '.py':
             return 'src/core'
         elif file_path.suffix in ['.json', '.yaml', '.yml', '.toml']:
@@ -183,8 +231,13 @@ class ProjectManager:
         return 'src/utils'
     
     async def organize_project(self) -> Dict[str, Any]:
-        """จัดระเบียบโปรเจ็ค"""
-        logging.info("🏗️ เริ่มจัดระเบียบโปรเจ็ค...")
+        """
+        Organizes the project by creating folders, moving files, and creating management files.
+
+        Returns:
+            Dict[str, Any]: A dictionary containing the results of the organization.
+        """
+        logging.info("🏗️ Organizing project...")
         
         results = {
             'folders_created': [],
@@ -194,16 +247,16 @@ class ProjectManager:
         }
         
         try:
-            # 1. สร้างโครงสร้างโฟลเดอร์
+            # 1. Create folder structure
             await self._create_folder_structure(results)
             
-            # 2. ย้ายไฟล์ที่กระจาย
+            # 2. Move scattered files
             await self._move_scattered_files(results)
             
-            # 3. สร้างไฟล์จัดการ
+            # 3. Create management files
             await self._create_management_files(results)
             
-            # 4. สร้าง README สำหรับโฟลเดอร์
+            # 4. Create READMEs for folders
             await self._create_folder_readmes(results)
             
         except Exception as e:
@@ -213,24 +266,34 @@ class ProjectManager:
         return results
     
     async def _create_folder_structure(self, results: Dict[str, Any]):
-        """สร้างโครงสร้างโฟลเดอร์"""
+        """
+        Creates the folder structure for the project.
+
+        Args:
+            results (Dict[str, Any]): A dictionary to store the results.
+        """
         for folder_name, subfolders in self.config['structure'].items():
             folder_path = self.project_path / folder_name
             if not folder_path.exists():
                 folder_path.mkdir(parents=True, exist_ok=True)
                 results['folders_created'].append(folder_name)
-                logging.info(f"✅ สร้างโฟลเดอร์: {folder_name}")
+                logging.info(f"✅ Created folder: {folder_name}")
             
-            # สร้างโฟลเดอร์ย่อย
+            # Create subfolders
             for subfolder in subfolders:
                 subfolder_path = folder_path / subfolder
                 if not subfolder_path.exists():
                     subfolder_path.mkdir(parents=True, exist_ok=True)
                     results['folders_created'].append(f"{folder_name}/{subfolder}")
-                    logging.info(f"✅ สร้างโฟลเดอร์: {folder_name}/{subfolder}")
+                    logging.info(f"✅ Created folder: {folder_name}/{subfolder}")
     
     async def _move_scattered_files(self, results: Dict[str, Any]):
-        """ย้ายไฟล์ที่กระจาย"""
+        """
+        Moves scattered files to their suggested locations.
+
+        Args:
+            results (Dict[str, Any]): A dictionary to store the results.
+        """
         scattered_files = await self._find_scattered_files()
         
         for file_info in scattered_files:
@@ -239,19 +302,19 @@ class ProjectManager:
                 target_folder = file_info['suggested_location']
                 target_path = self.project_path / target_folder / source_path.name
                 
-                # สร้างโฟลเดอร์ปลายทาง
+                # Create target folder
                 target_path.parent.mkdir(parents=True, exist_ok=True)
                 
-                # ย้ายไฟล์
+                # Move file
                 if not target_path.exists():
                     shutil.move(str(source_path), str(target_path))
                     results['files_moved'].append({
                         'from': str(source_path),
                         'to': str(target_path)
                     })
-                    logging.info(f"📁 ย้ายไฟล์: {source_path.name} -> {target_folder}")
+                    logging.info(f"📁 Moved file: {source_path.name} -> {target_folder}")
                 else:
-                    # เปลี่ยนชื่อไฟล์ถ้าซ้ำ
+                    # Rename file if it already exists
                     counter = 1
                     while target_path.exists():
                         new_name = f"{source_path.stem}_{counter}{source_path.suffix}"
@@ -263,43 +326,53 @@ class ProjectManager:
                         'from': str(source_path),
                         'to': str(target_path)
                     })
-                    logging.info(f"📁 ย้ายไฟล์: {source_path.name} -> {target_path.name}")
+                    logging.info(f"📁 Moved file: {source_path.name} -> {target_path.name}")
                     
             except Exception as e:
                 results['errors'].append(f"Error moving {file_info['path']}: {e}")
     
     async def _create_management_files(self, results: Dict[str, Any]):
-        """สร้างไฟล์จัดการ"""
+        """
+        Creates management files if they don't exist.
+
+        Args:
+            results (Dict[str, Any]): A dictionary to store the results.
+        """
         management_files = await self._check_management_files()
         
-        # สร้าง README.md
+        # Create README.md
         if not management_files['README.md']:
             readme_content = self._generate_readme()
             readme_path = self.project_path / 'README.md'
             with open(readme_path, 'w', encoding='utf-8') as f:
                 f.write(readme_content)
             results['files_created'].append('README.md')
-            logging.info("📝 สร้าง README.md")
+            logging.info("📝 Created README.md")
         
-        # สร้าง .gitignore
+        # Create .gitignore
         if not management_files['.gitignore']:
             gitignore_content = self._generate_gitignore()
             gitignore_path = self.project_path / '.gitignore'
             with open(gitignore_path, 'w', encoding='utf-8') as f:
                 f.write(gitignore_content)
             results['files_created'].append('.gitignore')
-            logging.info("📝 สร้าง .gitignore")
+            logging.info("📝 Created .gitignore")
         
-        # สร้าง project_config.json
+        # Create project_config.json
         if not management_files['project_config.json']:
             config_path = self.project_path / 'project_config.json'
             with open(config_path, 'w', encoding='utf-8') as f:
                 json.dump(self.config, f, ensure_ascii=False, indent=2)
             results['files_created'].append('project_config.json')
-            logging.info("📝 สร้าง project_config.json")
+            logging.info("📝 Created project_config.json")
     
     async def _create_folder_readmes(self, results: Dict[str, Any]):
-        """สร้าง README สำหรับโฟลเดอร์"""
+        """
+        Creates README files for folders.
+
+        Args:
+            results (Dict[str, Any]): A dictionary to store the results.
+        """
         for folder_name in self.config['structure']:
             folder_path = self.project_path / folder_name
             if folder_path.exists():
@@ -309,70 +382,80 @@ class ProjectManager:
                     with open(readme_path, 'w', encoding='utf-8') as f:
                         f.write(readme_content)
                     results['files_created'].append(f'{folder_name}/README.md')
-                    logging.info(f"📝 สร้าง README: {folder_name}")
+                    logging.info(f"📝 Created README for: {folder_name}")
     
     def _generate_readme(self) -> str:
-        """สร้าง README.md"""
+        """
+        Generates the content for the main README.md file.
+
+        Returns:
+            str: The content of the README.md file.
+        """
         return f"""# {self.config['project_name']}
 
 {self.config['project_description']}
 
-## 📁 โครงสร้างโปรเจ็ค
+## 📁 Project Structure
 
 ```
 {self.project_path.name}/
-├── src/                    # โค้ดหลัก
-│   ├── core/              # ฟังก์ชันหลัก
-│   ├── services/          # บริการต่างๆ
-│   ├── tools/             # เครื่องมือ
-│   └── utils/             # ฟังก์ชันช่วยเหลือ
-├── docs/                  # เอกสาร
+├── src/                    # Main source code
+│   ├── core/              # Core functions
+│   ├── services/          # Various services
+│   ├── tools/             # Tools
+│   └── utils/             # Helper functions
+├── docs/                  # Documentation
 │   ├── api/               # API Documentation
-│   ├── guides/            # คู่มือการใช้งาน
-│   └── examples/          # ตัวอย่างการใช้งาน
-├── tests/                 # การทดสอบ
+│   ├── guides/            # User guides
+│   └── examples/          # Usage examples
+├── tests/                 # Tests
 │   ├── unit/              # Unit Tests
 │   ├── integration/       # Integration Tests
 │   └── e2e/               # End-to-End Tests
-├── scripts/               # สคริปต์
-│   ├── setup/             # สคริปต์ติดตั้ง
-│   ├── deploy/            # สคริปต์ deploy
-│   └── maintenance/       # สคริปต์บำรุงรักษา
-└── config/                # ไฟล์การตั้งค่า
-    ├── dev/               # การตั้งค่าสำหรับ Development
-    ├── prod/              # การตั้งค่าสำหรับ Production
-    └── test/              # การตั้งค่าสำหรับ Testing
+├── scripts/               # Scripts
+│   ├── setup/             # Setup scripts
+│   ├── deploy/            # Deployment scripts
+│   └── maintenance/       # Maintenance scripts
+└── config/                # Configuration files
+    ├── dev/               # Development configuration
+    ├── prod/              # Production configuration
+    └── test/              # Testing configuration
 ```
 
-## 🚀 การติดตั้ง
+## 🚀 Installation
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## 📖 การใช้งาน
+## 📖 Usage
 
-ดูเอกสารในโฟลเดอร์ `docs/`
+See the documentation in the `docs/` folder.
 
-## 🧪 การทดสอบ
+## 🧪 Testing
 
 ```bash
 python -m pytest tests/
 ```
 
-## 📝 การพัฒนา
+## 📝 Development
 
-1. สร้าง feature branch
-2. เขียนโค้ดและทดสอบ
-3. สร้าง Pull Request
-4. รีวิวและ merge
+1. Create a feature branch
+2. Write code and tests
+3. Create a Pull Request
+4. Review and merge
 
 ---
-*อัปเดตล่าสุด: {datetime.now().strftime('%Y-%m-%d')}*
+*Last updated: {datetime.now().strftime('%Y-%m-%d')}*
 """
     
     def _generate_gitignore(self) -> str:
-        """สร้าง .gitignore"""
+        """
+        Generates the content for the .gitignore file.
+
+        Returns:
+            str: The content of the .gitignore file.
+        """
         return """# Python
 __pycache__/
 *.py[cod]
@@ -429,37 +512,53 @@ project_config.json
 """
     
     def _generate_folder_readme(self, folder_name: str) -> str:
-        """สร้าง README สำหรับโฟลเดอร์"""
+        """
+        Generates the content for a folder's README.md file.
+
+        Args:
+            folder_name (str): The name of the folder.
+
+        Returns:
+            str: The content of the README.md file.
+        """
         folder_descriptions = {
-            'src': 'โค้ดหลักของโปรเจ็ค',
-            'docs': 'เอกสารและคู่มือการใช้งาน',
-            'tests': 'การทดสอบต่างๆ',
-            'scripts': 'สคริปต์สำหรับการจัดการโปรเจ็ค',
-            'config': 'ไฟล์การตั้งค่า'
+            'src': 'Main source code of the project',
+            'docs': 'Documentation and user guides',
+            'tests': 'Various tests',
+            'scripts': 'Scripts for project management',
+            'config': 'Configuration files'
         }
         
-        description = folder_descriptions.get(folder_name, f'โฟลเดอร์สำหรับ {folder_name}')
+        description = folder_descriptions.get(folder_name, f'Folder for {folder_name}')
         
         return f"""# 📁 {folder_name}
 
 {description}
 
-## 📋 สถานะ
-- [x] โฟลเดอร์พร้อมใช้งาน
+## 📋 Status
+- [x] Folder is ready for use
 
-## 📁 ไฟล์ในโฟลเดอร์
+## 📁 Files in Folder
 {self._generate_file_list(self.project_path / folder_name)}
 
 ---
-*อัปเดตล่าสุด: {datetime.now().strftime('%Y-%m-%d')}*
+*Last updated: {datetime.now().strftime('%Y-%m-%d')}*
 """
     
     def _generate_file_list(self, folder_path: Path) -> str:
-        """สร้างรายการไฟล์"""
+        """
+        Generates a list of files in a folder.
+
+        Args:
+            folder_path (Path): The path to the folder.
+
+        Returns:
+            str: A string containing the list of files.
+        """
         try:
             files = [f for f in folder_path.iterdir() if f.is_file() and f.name != 'README.md']
             if not files:
-                return "- ไม่มีไฟล์"
+                return "- No files"
             
             file_list = []
             for file in sorted(files):
@@ -469,89 +568,99 @@ project_config.json
             
         except Exception as e:
             logging.error(f"Error generating file list: {e}")
-            return "- ไม่สามารถแสดงรายการไฟล์"
+            return "- Could not list files"
     
     async def display_analysis(self, analysis: Dict[str, Any]):
-        """แสดงผลการวิเคราะห์"""
+        """
+        Displays the project analysis results.
+
+        Args:
+            analysis (Dict[str, Any]): The analysis results.
+        """
         print("\n" + "="*80)
-        print("📊 ผลการวิเคราะห์โปรเจ็ค")
+        print("📊 Project Analysis Results")
         print("="*80)
         
-        print(f"\n📁 ข้อมูลพื้นฐาน:")
+        print(f"\n📁 Basic Information:")
         print(f"   Path: {analysis['project_path']}")
         print(f"   Timestamp: {analysis['timestamp']}")
         
         if analysis['issues']:
-            print(f"\n❌ ปัญหาที่พบ:")
+            print(f"\n❌ Issues Found:")
             for issue in analysis['issues']:
                 print(f"   - {issue}")
         
         if analysis['recommendations']:
-            print(f"\n💡 คำแนะนำ:")
+            print(f"\n💡 Recommendations:")
             for rec in analysis['recommendations']:
                 print(f"   - {rec}")
         
         if analysis['scattered_files']:
-            print(f"\n📁 ไฟล์ที่กระจาย:")
+            print(f"\n📁 Scattered Files:")
             for file_info in analysis['scattered_files']:
                 print(f"   - {file_info['name']} -> {file_info['suggested_location']}")
         
-        print(f"\n📋 ไฟล์จัดการ:")
+        print(f"\n📋 Management Files:")
         for file_name, exists in analysis['management_files'].items():
             status = "✅" if exists else "❌"
             print(f"   {status} {file_name}")
     
     async def display_organization_results(self, results: Dict[str, Any]):
-        """แสดงผลการจัดระเบียบ"""
+        """
+        Displays the project organization results.
+
+        Args:
+            results (Dict[str, Any]): The organization results.
+        """
         print("\n" + "="*80)
-        print("🎉 ผลการจัดระเบียบโปรเจ็ค")
+        print("🎉 Project Organization Results")
         print("="*80)
         
         if results['folders_created']:
-            print(f"\n📁 โฟลเดอร์ที่สร้าง:")
+            print(f"\n📁 Folders Created:")
             for folder in results['folders_created']:
                 print(f"   ✅ {folder}")
         
         if results['files_moved']:
-            print(f"\n📁 ไฟล์ที่ย้าย:")
+            print(f"\n📁 Files Moved:")
             for move in results['files_moved']:
                 print(f"   📁 {Path(move['from']).name} -> {Path(move['to']).parent.name}")
         
         if results['files_created']:
-            print(f"\n📝 ไฟล์ที่สร้าง:")
+            print(f"\n📝 Files Created:")
             for file in results['files_created']:
                 print(f"   ✅ {file}")
         
         if results['errors']:
-            print(f"\n❌ ข้อผิดพลาด:")
+            print(f"\n❌ Errors:")
             for error in results['errors']:
                 print(f"   - {error}")
 
 async def main():
-    """ฟังก์ชันหลัก"""
+    """Main function."""
     try:
-        # สร้าง project manager
+        # Create project manager
         manager = ProjectManager()
         
-        # วิเคราะห์โปรเจ็ค
+        # Analyze project
         analysis = await manager.analyze_project()
         await manager.display_analysis(analysis)
         
-        # ถามผู้ใช้ว่าต้องการจัดระเบียบหรือไม่
+        # Ask the user if they want to organize the project
         print("\n" + "="*80)
-        response = input("❓ ต้องการจัดระเบียบโปรเจ็คหรือไม่? (y/N): ")
+        response = input("❓ Do you want to organize the project? (y/N): ")
         
         if response.lower() == 'y':
-            # จัดระเบียบโปรเจ็ค
+            # Organize project
             results = await manager.organize_project()
             await manager.display_organization_results(results)
             
-            print("\n🎉 การจัดระเบียบโปรเจ็คเสร็จสิ้น!")
+            print("\n🎉 Project organization complete!")
         else:
-            print("\n❌ ยกเลิกการจัดระเบียบ")
+            print("\n❌ Organization cancelled")
         
     except Exception as e:
-        print(f"❌ เกิดข้อผิดพลาด: {e}")
+        print(f"❌ An error occurred: {e}")
         return 1
     
     return 0

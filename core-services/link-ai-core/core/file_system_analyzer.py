@@ -1,3 +1,4 @@
+"""A file system analyzer that scans directories and stores metadata in a database."""
 import sqlite3
 import os
 import hashlib
@@ -14,7 +15,7 @@ import magic
 from contextlib import contextmanager
 import argparse
 
-# สำหรับ LangChain integration (ถ้าใช้)
+# For LangChain integration (if used)
 try:
     from langchain.tools import BaseTool
     LANGCHAIN_AVAILABLE = True
@@ -22,6 +23,7 @@ except ImportError:
     LANGCHAIN_AVAILABLE = False
     # Fallback class if langchain is not available
     class BaseTool:
+        """Fallback class for BaseTool if LangChain is not available."""
         def __init__(self):
             pass
 
@@ -35,12 +37,31 @@ except ImportError:
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class FileSystemDatabase:
+    """
+    Handles the database operations for the file system analyzer.
+
+    Attributes:
+        db_path (str): The path to the SQLite database file.
+    """
     def __init__(self, db_path: str = "file_system_analysis.db"):
+        """
+        Initializes the FileSystemDatabase.
+
+        Args:
+            db_path (str, optional): The path to the database file.
+                Defaults to "file_system_analysis.db".
+        """
         self.db_path = db_path
         self.init_database()
 
     @contextmanager
     def get_connection(self):
+        """
+        Provides a database connection using a context manager.
+
+        Yields:
+            sqlite3.Connection: The database connection.
+        """
         conn = None
         try:
             conn = sqlite3.connect(self.db_path)
@@ -50,6 +71,7 @@ class FileSystemDatabase:
                 conn.close()
 
     def init_database(self):
+        """Initializes the database by creating tables if they don't exist."""
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute('''
@@ -74,24 +96,70 @@ class FileSystemDatabase:
             conn.commit()
     
     def execute_query(self, query: str, params: tuple = ()) -> List[tuple]:
+        """
+        Executes a SQL query.
+
+        Args:
+            query (str): The SQL query to execute.
+            params (tuple, optional): The parameters for the query. Defaults to ().
+
+        Returns:
+            List[tuple]: The result of the query.
+        """
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute(query, params)
             return cursor.fetchall()
     
     def execute_many(self, query: str, data: List[tuple]):
+        """
+        Executes a SQL query for multiple sets of parameters.
+
+        Args:
+            query (str): The SQL query to execute.
+            data (List[tuple]): A list of parameter tuples.
+        """
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.executemany(query, data)
             conn.commit()
 
 class FileSystemAnalyzer:
+    """
+    Analyzes a directory and stores file metadata in a database.
+
+    Attributes:
+        db (FileSystemDatabase): The database handler.
+        max_workers (int): The maximum number of worker threads for scanning.
+        scan_errors (List[Dict]): A list of errors encountered during a scan.
+    """
     def __init__(self, db: FileSystemDatabase, max_workers: int = os.cpu_count() or 1):
+        """
+        Initializes the FileSystemAnalyzer.
+
+        Args:
+            db (FileSystemDatabase): The database handler.
+            max_workers (int, optional): The maximum number of worker threads.
+                Defaults to the number of CPU cores.
+        """
         self.db = db
         self.max_workers = max_workers
         self.scan_errors = []
 
     def analyze_directory(self, root_path: str, session_id: Optional[str] = None, config: Optional[Dict] = None) -> str:
+        """
+        Analyzes a directory and stores the file metadata in the database.
+
+        Args:
+            root_path (str): The path to the directory to analyze.
+            session_id (Optional[str], optional): The session ID for the scan.
+                If not provided, a new one is generated. Defaults to None.
+            config (Optional[Dict], optional): The configuration for the scan.
+                Defaults to None.
+
+        Returns:
+            str: A message indicating the completion of the scan and the session ID.
+        """
         session_id = session_id or f"scan_{int(time.time())}"
         config = config or {
             "max_depth": 50, "include_hidden": True, "calculate_hashes": True,
@@ -110,14 +178,30 @@ class FileSystemAnalyzer:
             self._update_scan_error(session_id, str(e))
             raise
 
-    def _create_scan_session(self, session_id, root_path, start_time, config):
+    def _create_scan_session(self, session_id: str, root_path: str, start_time: datetime, config: Dict):
+        """
+        Creates a new scan session in the database.
+
+        Args:
+            session_id (str): The session ID.
+            root_path (str): The root path of the scan.
+            start_time (datetime): The start time of the scan.
+            config (Dict): The configuration for the scan.
+        """
         with self.db.get_connection() as conn:
             cursor = conn.cursor()
             query = "INSERT INTO scan_sessions (session_id, root_path, scan_start_time, scan_config, scan_status) VALUES (?, ?, ?, ?, 'running')"
             cursor.execute(query, (session_id, root_path, start_time, json.dumps(config)))
             conn.commit()
 
-    def _update_scan_completion(self, session_id, end_time):
+    def _update_scan_completion(self, session_id: str, end_time: datetime):
+        """
+        Updates a scan session to mark it as completed.
+
+        Args:
+            session_id (str): The session ID.
+            end_time (datetime): The end time of the scan.
+        """
         with self.db.get_connection() as conn:
             cursor = conn.cursor()
             errors_json = json.dumps(self.scan_errors) if self.scan_errors else None
@@ -125,7 +209,14 @@ class FileSystemAnalyzer:
             cursor.execute(query, (end_time, errors_json, session_id))
             conn.commit()
 
-    def _update_scan_error(self, session_id, error_msg):
+    def _update_scan_error(self, session_id: str, error_msg: str):
+        """
+        Updates a scan session to mark it as failed.
+
+        Args:
+            session_id (str): The session ID.
+            error_msg (str): The error message.
+        """
         with self.db.get_connection() as conn:
             cursor = conn.cursor()
             query = "UPDATE scan_sessions SET scan_status = 'failed', scan_errors = ? WHERE session_id = ?"
@@ -133,6 +224,14 @@ class FileSystemAnalyzer:
             conn.commit()
 
     def _scan_filesystem(self, root_path: str, session_id: str, config: Dict):
+        """
+        Scans the file system and collects file metadata.
+
+        Args:
+            root_path (str): The root path to scan.
+            session_id (str): The session ID for the scan.
+            config (Dict): The configuration for the scan.
+        """
         files_to_process = []
         logging.info("Walking directory tree to collect paths...")
         for root, dirs, files in os.walk(root_path, topdown=True):
@@ -166,6 +265,18 @@ class FileSystemAnalyzer:
             self.db.execute_many(query, data_tuples)
 
     def _get_file_metadata(self, file_path: str, session_id: str, depth: int, config: Dict) -> Optional[Dict]:
+        """
+        Gets the metadata for a single file.
+
+        Args:
+            file_path (str): The path to the file.
+            session_id (str): The session ID for the scan.
+            depth (int): The depth of the file in the directory tree.
+            config (Dict): The configuration for the scan.
+
+        Returns:
+            Optional[Dict]: A dictionary of file metadata, or None if the file cannot be processed.
+        """
         try:
             stat = os.lstat(file_path)
             path_obj = Path(file_path)
@@ -232,6 +343,16 @@ class FileSystemAnalyzer:
             return None
 
     def _get_specific_metadata(self, file_path: str, mime_type: Optional[str]) -> Optional[Dict]:
+        """
+        Gets specific metadata for a file based on its MIME type.
+
+        Args:
+            file_path (str): The path to the file.
+            mime_type (Optional[str]): The MIME type of the file.
+
+        Returns:
+            Optional[Dict]: A dictionary of specific metadata, or None if not applicable.
+        """
         if mime_type and mime_type.startswith('image/') and PIL_AVAILABLE:
             try:
                 with Image.open(file_path) as img:
@@ -245,29 +366,98 @@ class FileSystemAnalyzer:
         return None
 
 class SQLDirectAccess:
-    def __init__(self, db: FileSystemDatabase): 
+    """Provides direct SQL access to the file system database."""
+    def __init__(self, db: FileSystemDatabase):
+        """
+        Initializes the SQLDirectAccess class.
+
+        Args:
+            db (FileSystemDatabase): The database handler.
+        """
         self.db = db
-    def execute_query(self, query: str, params: tuple = ()) -> List[tuple]: 
+    def execute_query(self, query: str, params: tuple = ()) -> List[tuple]:
+        """
+        Executes a SQL query.
+
+        Args:
+            query (str): The SQL query to execute.
+            params (tuple, optional): The parameters for the query. Defaults to ().
+
+        Returns:
+            List[tuple]: The result of the query.
+        """
         return self.db.execute_query(query, params)
 
 class FileSystemQueries:
-    def __init__(self, db: FileSystemDatabase): 
+    """Provides high-level queries for the file system data."""
+    def __init__(self, db: FileSystemDatabase):
+        """
+        Initializes the FileSystemQueries class.
+
+        Args:
+            db (FileSystemDatabase): The database handler.
+        """
         self.db = db
     def get_largest_files(self, session_id: str, limit: int = 10) -> List[Dict]:
+        """
+        Gets the largest files in a scan session.
+
+        Args:
+            session_id (str): The session ID of the scan.
+            limit (int, optional): The maximum number of files to return. Defaults to 10.
+
+        Returns:
+            List[Dict]: A list of the largest files.
+        """
         rows = self.db.execute_query("SELECT file_name, file_path, file_size FROM files WHERE session_id = ? ORDER BY file_size DESC LIMIT ?", (session_id, limit))
         return [{'name': r[0], 'path': r[1], 'size': r[2]} for r in rows]
     def find_files_by_extension(self, session_id: str, extension: str) -> List[Dict]:
+        """
+        Finds files by their extension.
+
+        Args:
+            session_id (str): The session ID of the scan.
+            extension (str): The file extension to search for.
+
+        Returns:
+            List[Dict]: A list of files with the specified extension.
+        """
         rows = self.db.execute_query("SELECT file_name, file_path, file_size FROM files WHERE session_id = ? AND file_extension = ? ORDER BY file_size DESC", (session_id, extension))
         return [{'name': r[0], 'path': r[1], 'size': r[2]} for r in rows]
     def get_duplicate_files(self, session_id: str) -> List[Dict]:
+        """
+        Gets duplicate files based on their hash.
+
+        Args:
+            session_id (str): The session ID of the scan.
+
+        Returns:
+            List[Dict]: A list of duplicate files.
+        """
         rows = self.db.execute_query("SELECT hash_md5, COUNT(*), GROUP_CONCAT(file_path, CHAR(10)) as paths, SUM(file_size) - MIN(file_size) as wasted_space FROM files WHERE session_id = ? AND hash_md5 IS NOT NULL GROUP BY hash_md5 HAVING COUNT(*) > 1 ORDER BY wasted_space DESC", (session_id,))
         return [{'hash': r[0], 'count': r[1], 'paths': r[2].split('\n'), 'wasted_space': r[3]} for r in rows]
     def get_directory_summary(self, session_id: str) -> Dict:
+        """
+        Gets a summary of the directory scan.
+
+        Args:
+            session_id (str): The session ID of the scan.
+
+        Returns:
+            Dict: A dictionary containing the directory summary.
+        """
         result = self.db.execute_query("SELECT COUNT(*), SUM(file_size), AVG(file_size) FROM files WHERE session_id = ?", (session_id,))[0]
         return {'file_count': result[0] or 0, 'total_size': result[1] or 0, 'average_size': result[2] or 0}
 
 class NaturalLanguageQuery:
+    """Processes natural language queries for file system data."""
     def __init__(self, queries: FileSystemQueries):
+        """
+        Initializes the NaturalLanguageQuery class.
+
+        Args:
+            queries (FileSystemQueries): The file system queries handler.
+        """
         self.queries = queries
         self.command_mapping = { 
             'large files': self.queries.get_largest_files, 
@@ -275,6 +465,16 @@ class NaturalLanguageQuery:
             'summary': self.queries.get_directory_summary 
         }
     def process_request(self, user_request: str, session_id: str) -> Dict:
+        """
+        Processes a natural language request.
+
+        Args:
+            user_request (str): The natural language request from the user.
+            session_id (str): The session ID of the scan.
+
+        Returns:
+            Dict: A dictionary containing the result of the request.
+        """
         request_lower = user_request.lower()
         for keyword, function in self.command_mapping.items():
             if keyword in request_lower:
@@ -287,6 +487,7 @@ class NaturalLanguageQuery:
         return {'success': False, 'error': 'Could not understand the request'}
 
 class FileSystemMCPTool(BaseTool):
+    """A tool for scanning, analyzing, and querying file system metadata."""
     name = "file_system_analyzer"
     description = "Tool to scan, analyze, and query file system metadata."
     db: FileSystemDatabase
@@ -296,6 +497,7 @@ class FileSystemMCPTool(BaseTool):
     nl_query: NaturalLanguageQuery
 
     def __init__(self):
+        """Initializes the FileSystemMCPTool."""
         super().__init__()
         self.db = FileSystemDatabase()
         self.analyzer = FileSystemAnalyzer(self.db)
@@ -304,6 +506,15 @@ class FileSystemMCPTool(BaseTool):
         self.nl_query = NaturalLanguageQuery(self.queries)
 
     def _run(self, action_input: str) -> str:
+        """
+        Runs the tool with the given input.
+
+        Args:
+            action_input (str): A JSON string representing the action and its parameters.
+
+        Returns:
+            str: A JSON string representing the result of the action.
+        """
         try:
             params = json.loads(action_input)
             action = params['action']

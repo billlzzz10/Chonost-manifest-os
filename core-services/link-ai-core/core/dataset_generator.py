@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-Dataset Generator สำหรับ AI Agent Multi-Action
-สร้างดาต้าเซ็ตจาก log และข้อมูลต่างๆ ในโปรเจ็ค
-ปรับปรุงเพื่อแก้ปัญหาที่พบจากบันทึกการทำงาน
+Dataset Generator for AI Agent Multi-Action.
+
+Creates datasets from logs and other data in the project.
+Improved to address issues found in the work log.
 """
 
 import json
@@ -20,7 +21,20 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class DatasetEntry:
-    """โครงสร้างข้อมูลสำหรับแต่ละ entry ในดาต้าเซ็ต"""
+    """
+    Data structure for each entry in the dataset.
+
+    Attributes:
+        id (str): The ID of the entry.
+        timestamp (str): The timestamp of the entry.
+        source (str): The source of the entry ('User', 'AI', 'System', 'Error', 'Solution').
+        type (str): The type of the entry ('Instruction', 'Response', 'Error', 'Code', 'Correction', 'Problem', 'Solution').
+        content (str): The content of the entry.
+        metadata (Optional[Dict[str, Any]]): Metadata for the entry.
+        relationships (Optional[Dict[str, str]]): Relationships with other entries.
+        problem_context (Optional[str]): The context of the problem.
+        solution_approach (Optional[str]): The approach to the solution.
+    """
     id: str
     timestamp: str
     source: str  # 'User', 'AI', 'System', 'Error', 'Solution'
@@ -32,14 +46,30 @@ class DatasetEntry:
     solution_approach: Optional[str] = None
 
 class DatasetGenerator:
-    """คลาสหลักสำหรับการสร้างดาต้าเซ็ต - ปรับปรุงเพื่อแก้ปัญหาที่พบ"""
+    """
+    Main class for creating datasets - improved to address found issues.
+
+    Attributes:
+        project_root (Path): The root of the project.
+        datasets_dir (Path): The directory for datasets.
+        ift_dir (Path): The directory for instruction fine-tuning datasets.
+        rag_dir (Path): The directory for RAG knowledge base datasets.
+        forecast_dir (Path): The directory for forecasting and prediction datasets.
+        problem_solution_dir (Path): The directory for problem-solution pattern datasets.
+    """
 
     def __init__(self, project_root: str = ".") -> None:
+        """
+        Initializes the DatasetGenerator.
+
+        Args:
+            project_root (str): The root of the project.
+        """
         self.project_root = Path(project_root)
         self.datasets_dir = self.project_root / "datasets"
         self.datasets_dir.mkdir(exist_ok=True)
 
-        # สร้างโฟลเดอร์สำหรับดาต้าเซ็ตแต่ละประเภท
+        # Create folders for each type of dataset
         self.ift_dir = self.datasets_dir / "instruction_fine_tuning"
         self.rag_dir = self.datasets_dir / "rag_knowledge_base"
         self.forecast_dir = self.datasets_dir / "forecasting_prediction"
@@ -49,29 +79,37 @@ class DatasetGenerator:
             dir_path.mkdir(exist_ok=True)
 
     def parse_log_file(self, log_file_path: str) -> List[DatasetEntry]:
-        """แปลง log file เป็น structured data - ปรับปรุงเพื่อจับคู่ปัญหา-วิธีแก้"""
+        """
+        Converts a log file to structured data - improved to match problems and solutions.
+
+        Args:
+            log_file_path (str): The path to the log file.
+
+        Returns:
+            List[DatasetEntry]: A list of dataset entries.
+        """
         entries: List[DatasetEntry] = []
 
         try:
             with open(log_file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
 
-            # แยกบล็อกตาม --- หรือ User/AI patterns
+            # Split into blocks by --- or User/AI patterns
             blocks = self._split_into_blocks(content)
 
             for i, block in enumerate(blocks):
                 if not block.strip():
                     continue
 
-                # ระบุประเภทของบล็อก
+                # Classify the block type
                 entry_type = self._classify_block(block)
                 source = self._extract_source(block)
 
-                # ทำความสะอาดเนื้อหา
+                # Clean the content
                 cleaned_content = self._clean_content(block)
 
                 if cleaned_content:
-                    # สกัดปัญหาและวิธีแก้
+                    # Extract problem and solution
                     problem_context = self._extract_problem_context(block)
                     solution_approach = self._extract_solution_approach(block)
 
@@ -96,24 +134,40 @@ class DatasetGenerator:
             return []
 
     def _split_into_blocks(self, content: str) -> List[str]:
-        """แยกเนื้อหาเป็นบล็อก - ปรับปรุงเพื่อจับคู่ User/AI patterns"""
+        """
+        Splits content into blocks - improved to match User/AI patterns.
+
+        Args:
+            content (str): The content to split.
+
+        Returns:
+            List[str]: A list of content blocks.
+        """
         blocks: List[str] = []
         
-        # แยกตาม ---
+        # Split by ---
         basic_blocks = content.split('---')
         
         for block in basic_blocks:
             if not block.strip():
                 continue
                 
-            # แยก User/AI patterns เพิ่มเติม
+            # Further split by User/AI patterns
             user_ai_blocks = self._split_user_ai_patterns(block)
             blocks.extend(user_ai_blocks)
         
         return blocks
 
     def _split_user_ai_patterns(self, block: str) -> List[str]:
-        """แยก User/AI patterns ในบล็อก"""
+        """
+        Splits User/AI patterns in a block.
+
+        Args:
+            block (str): The block to split.
+
+        Returns:
+            List[str]: A list of split blocks.
+        """
         patterns = [
             r'(User\s*\n.*?)(?=User\s*\n|AI\s*\n|$)',
             r'(AI\s*\n.*?)(?=User\s*\n|AI\s*\n|$)',
@@ -130,17 +184,25 @@ class DatasetGenerator:
                 if match.group(1).strip():
                     blocks.append(match.group(1).strip())
         
-        # ถ้าไม่มี pattern ให้ใช้บล็อกเดิม
+        # If no pattern matches, use the original block
         if not blocks and block.strip():
             blocks.append(block.strip())
         
         return blocks
 
     def _classify_block(self, block: str) -> str:
-        """ระบุประเภทของบล็อก - เพิ่มประเภทใหม่"""
+        """
+        Classifies the type of a block - new types added.
+
+        Args:
+            block (str): The block to classify.
+
+        Returns:
+            str: The classified block type.
+        """
         block_lower = block.lower()
 
-        # ตรวจสอบปัญหาและวิธีแก้
+        # Check for problems and solutions
         if any(keyword in block_lower for keyword in ['error', 'exception', 'failed', 'problem', 'issue']):
             return 'Problem'
         elif any(keyword in block_lower for keyword in ['fix', 'correct', 'แก้ไข', 'solution', 'resolve']):
@@ -159,7 +221,15 @@ class DatasetGenerator:
             return 'System'
 
     def _extract_source(self, block: str) -> str:
-        """สกัดแหล่งที่มาของข้อมูล"""
+        """
+        Extracts the source of the data.
+
+        Args:
+            block (str): The block to extract the source from.
+
+        Returns:
+            str: The source of the data.
+        """
         if 'user:' in block.lower() or 'user ' in block.lower():
             return 'User'
         elif 'cursor:' in block.lower() or 'ai:' in block.lower():
@@ -172,7 +242,15 @@ class DatasetGenerator:
             return 'System'
 
     def _extract_problem_context(self, block: str) -> Optional[str]:
-        """สกัดบริบทของปัญหา"""
+        """
+        Extracts the context of a problem.
+
+        Args:
+            block (str): The block to extract the problem context from.
+
+        Returns:
+            Optional[str]: The problem context, or None if not found.
+        """
         problem_patterns = [
             r'error[:\s]+(.*?)(?=\n|$)',
             r'exception[:\s]+(.*?)(?=\n|$)',
@@ -191,7 +269,15 @@ class DatasetGenerator:
         return None
 
     def _extract_solution_approach(self, block: str) -> Optional[str]:
-        """สกัดวิธีการแก้ปัญหา"""
+        """
+        Extracts the solution approach.
+
+        Args:
+            block (str): The block to extract the solution approach from.
+
+        Returns:
+            Optional[str]: The solution approach, or None if not found.
+        """
         solution_patterns = [
             r'fix[:\s]+(.*?)(?=\n|$)',
             r'solution[:\s]+(.*?)(?=\n|$)',
@@ -209,30 +295,46 @@ class DatasetGenerator:
         return None
 
     def _clean_content(self, block: str) -> str:
-        """ทำความสะอาดเนื้อหา"""
-        # ลบ request ID และข้อมูลที่ไม่เกี่ยวข้อง
+        """
+        Cleans the content.
+
+        Args:
+            block (str): The content to clean.
+
+        Returns:
+            str: The cleaned content.
+        """
+        # Remove request ID and irrelevant information
         cleaned = re.sub(r'Request ID: [a-f0-9-]+', '', block)
         cleaned = re.sub(r'Timestamp: \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z', '', cleaned)
 
-        # แก้ไขปัญหาอักขระที่ผิดเพี้ยน
-        cleaned = cleaned.replace('แ', 'แ')  # แก้ไขอักขระที่ผิดเพี้ยน
+        # Fix garbled characters
+        cleaned = cleaned.replace('แ', 'แ')  # Fix garbled characters
 
-        # ลบ whitespace ที่ไม่จำเป็น
+        # Remove unnecessary whitespace
         cleaned = re.sub(r'\n\s*\n', '\n\n', cleaned)
         cleaned = cleaned.strip()
 
         return cleaned
 
     def _extract_metadata(self, block: str) -> Dict[str, Any]:
-        """สกัด metadata จากบล็อก"""
+        """
+        Extracts metadata from a block.
+
+        Args:
+            block (str): The block to extract metadata from.
+
+        Returns:
+            Dict[str, Any]: The extracted metadata.
+        """
         metadata: Dict[str, Any] = {}
 
-        # สกัด file path ถ้ามี
+        # Extract file path if present
         file_match = re.search(r'File: ([^\n]+)', block)
         if file_match:
             metadata['file_path'] = file_match.group(1)
 
-        # สกัด language ถ้ามี
+        # Extract language if present
         if 'typescript' in block.lower() or '.ts' in block:
             metadata['language'] = 'TypeScript'
         elif 'python' in block.lower() or '.py' in block:
@@ -240,7 +342,7 @@ class DatasetGenerator:
         elif 'javascript' in block.lower() or '.js' in block:
             metadata['language'] = 'JavaScript'
 
-        # สกัดประเภทปัญหา
+        # Extract problem type
         if self._extract_problem_context(block):
             metadata['has_problem'] = True
         if self._extract_solution_approach(block):
@@ -249,23 +351,40 @@ class DatasetGenerator:
         return metadata
 
     def _extract_relationships(self, block: str, index: int) -> Dict[str, str]:
-        """สกัดความสัมพันธ์ระหว่าง entries"""
+        """
+        Extracts relationships between entries.
+
+        Args:
+            block (str): The block to extract relationships from.
+            index (int): The index of the block.
+
+        Returns:
+            Dict[str, str]: The extracted relationships.
+        """
         relationships: Dict[str, str] = {}
 
-        # ตรวจสอบว่าตอบกลับ entry ก่อนหน้าหรือไม่
+        # Check if it responds to the previous entry
         if index > 0:
             relationships['responds_to'] = f"log_entry_{index-1:03d}"
 
         return relationships
 
     def create_ift_dataset(self, entries: List[DatasetEntry]) -> str:
-        """สร้างดาต้าเซ็ตสำหรับ Instruction Fine-Tuning - ปรับปรุงเพื่อจับคู่ปัญหา-วิธีแก้"""
+        """
+        Creates a dataset for Instruction Fine-Tuning - improved to match problems and solutions.
+
+        Args:
+            entries (List[DatasetEntry]): A list of dataset entries.
+
+        Returns:
+            str: The path to the created dataset file.
+        """
         ift_entries: List[Dict[str, Any]] = []
 
-        # จับคู่ Instruction-Response ปกติ
+        # Match normal Instruction-Response
         for entry in entries:
             if entry.type in ['Instruction', 'Problem']:
-                # หา response ที่เกี่ยวข้อง
+                # Find the related response
                 response = self._find_related_response(entries, entry.id)
 
                 if response:
@@ -283,11 +402,11 @@ class DatasetGenerator:
                     }
                     ift_entries.append(ift_entry)
 
-        # จับคู่ปัญหา-วิธีแก้
+        # Match problems and solutions
         problem_solution_pairs = self._create_problem_solution_pairs(entries)
         ift_entries.extend(problem_solution_pairs)
 
-        # บันทึกเป็น JSONL
+        # Save as JSONL
         output_file = self.ift_dir / "instruction_fine_tuning_dataset.jsonl"
         with open(output_file, 'w', encoding='utf-8') as f:
             for entry in ift_entries:
@@ -297,17 +416,25 @@ class DatasetGenerator:
         return str(output_file)
 
     def _create_problem_solution_pairs(self, entries: List[DatasetEntry]) -> List[Dict[str, Any]]:
-        """สร้างคู่ปัญหา-วิธีแก้"""
+        """
+        Creates problem-solution pairs.
+
+        Args:
+            entries (List[DatasetEntry]): A list of dataset entries.
+
+        Returns:
+            List[Dict[str, Any]]: A list of problem-solution pairs.
+        """
         pairs: List[Dict[str, Any]] = []
         
         for i, entry in enumerate(entries):
             if entry.type == 'Problem' and entry.problem_context:
-                # หาวิธีแก้ที่เกี่ยวข้อง
+                # Find the related solution
                 solution = self._find_related_solution(entries, i)
                 
                 if solution:
                     pair = {
-                        "instruction": f"แก้ไขปัญหา: {entry.problem_context}",
+                        "instruction": f"Fix the problem: {entry.problem_context}",
                         "context": entry.content,
                         "response": solution.content,
                         "metadata": {
@@ -323,8 +450,17 @@ class DatasetGenerator:
         return pairs
 
     def _find_related_solution(self, entries: List[DatasetEntry], problem_index: int) -> Optional[DatasetEntry]:
-        """หา solution ที่เกี่ยวข้องกับปัญหา"""
-        # ค้นหา solution ใน entries ถัดไป
+        """
+        Finds a solution related to a problem.
+
+        Args:
+            entries (List[DatasetEntry]): A list of dataset entries.
+            problem_index (int): The index of the problem entry.
+
+        Returns:
+            Optional[DatasetEntry]: The related solution entry, or None if not found.
+        """
+        # Search for a solution in the next few entries
         for i in range(problem_index + 1, min(problem_index + 5, len(entries))):
             if entries[i].type == 'Solution' or entries[i].solution_approach:
                 return entries[i]
@@ -332,7 +468,15 @@ class DatasetGenerator:
         return None
 
     def _classify_problem_type(self, problem_context: str) -> str:
-        """จำแนกประเภทของปัญหา"""
+        """
+        Classifies the type of a problem.
+
+        Args:
+            problem_context (str): The context of the problem.
+
+        Returns:
+            str: The classified problem type.
+        """
         problem_lower = problem_context.lower()
         
         if any(keyword in problem_lower for keyword in ['import', 'module', 'no module']):
@@ -349,7 +493,16 @@ class DatasetGenerator:
             return 'GeneralError'
 
     def _find_related_response(self, entries: List[DatasetEntry], entry_id: str) -> Optional[DatasetEntry]:
-        """หา response ที่เกี่ยวข้องกับ entry"""
+        """
+        Finds a response related to an entry.
+
+        Args:
+            entries (List[DatasetEntry]): A list of dataset entries.
+            entry_id (str): The ID of the entry to find a response for.
+
+        Returns:
+            Optional[DatasetEntry]: The related response entry, or None if not found.
+        """
         for entry in entries:
             if (entry.relationships and
                 entry.relationships.get('responds_to') == entry_id and
@@ -358,24 +511,41 @@ class DatasetGenerator:
         return None
 
     def _extract_context(self, entries: List[DatasetEntry], entry_id: str) -> str:
-        """สกัด context จาก entries ก่อนหน้า"""
+        """
+        Extracts context from previous entries.
+
+        Args:
+            entries (List[DatasetEntry]): A list of dataset entries.
+            entry_id (str): The ID of the current entry.
+
+        Returns:
+            str: The extracted context.
+        """
         context_parts: List[str] = []
 
         for entry in entries:
             if entry.id == entry_id:
                 break
             if entry.type in ['Error', 'System', 'Problem']:
-                context_parts.append(entry.content[:200])  # จำกัดความยาว
+                context_parts.append(entry.content[:200])  # Limit length
 
-        return "\n".join(context_parts[-3:])  # เอาแค่ 3 entries ล่าสุด
+        return "\n".join(context_parts[-3:])  # Take only the last 3 entries
 
     def create_rag_dataset(self, entries: List[DatasetEntry]) -> str:
-        """สร้างดาต้าเซ็ตสำหรับ RAG Knowledge Base"""
+        """
+        Creates a dataset for the RAG Knowledge Base.
+
+        Args:
+            entries (List[DatasetEntry]): A list of dataset entries.
+
+        Returns:
+            str: The path to the created dataset file.
+        """
         rag_entries: List[Dict[str, Any]] = []
 
         for entry in entries:
             if entry.type in ['Code', 'System', 'Configuration', 'Testing']:
-                # แบ่งเป็น chunks
+                # Split into chunks
                 chunks = self._create_chunks(entry.content)
 
                 for i, chunk in enumerate(chunks):
@@ -395,7 +565,7 @@ class DatasetGenerator:
                     }
                     rag_entries.append(rag_entry)
 
-        # บันทึกเป็น JSON
+        # Save as JSON
         output_file = self.rag_dir / "rag_knowledge_base.json"
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump({
@@ -410,7 +580,15 @@ class DatasetGenerator:
         return str(output_file)
 
     def create_forecast_dataset(self, entries: List[DatasetEntry]) -> str:
-        """สร้างดาต้าเซ็ตสำหรับ Forecasting & Prediction - เพิ่มการคาดการณ์ปัญหา"""
+        """
+        Creates a dataset for Forecasting & Prediction - adds problem prediction.
+
+        Args:
+            entries (List[DatasetEntry]): A list of dataset entries.
+
+        Returns:
+            str: The path to the created dataset file.
+        """
         forecast_entries: List[Dict[str, Any]] = []
 
         for i, entry in enumerate(entries):
@@ -432,7 +610,7 @@ class DatasetGenerator:
                 }
                 forecast_entries.append(forecast_entry)
 
-        # บันทึกเป็น JSON
+        # Save as JSON
         output_file = self.forecast_dir / "forecasting_dataset.json"
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump({
@@ -447,7 +625,15 @@ class DatasetGenerator:
         return str(output_file)
 
     def create_problem_solution_dataset(self, entries: List[DatasetEntry]) -> str:
-        """สร้างดาต้าเซ็ตเฉพาะสำหรับปัญหา-วิธีแก้"""
+        """
+        Creates a dataset specifically for problems and solutions.
+
+        Args:
+            entries (List[DatasetEntry]): A list of dataset entries.
+
+        Returns:
+            str: The path to the created dataset file.
+        """
         problem_solution_entries: List[Dict[str, Any]] = []
 
         for entry in entries:
@@ -477,7 +663,7 @@ class DatasetGenerator:
                     }
                     problem_solution_entries.append(ps_entry)
 
-        # บันทึกเป็น JSON
+        # Save as JSON
         output_file = self.problem_solution_dir / "problem_solution_patterns.json"
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump({
@@ -492,7 +678,15 @@ class DatasetGenerator:
         return str(output_file)
 
     def create_planning_workflow_dataset(self, entries: List[DatasetEntry]) -> str:
-        """สร้างดาต้าเซ็ตสำหรับการวางแผนและ workflow"""
+        """
+        Creates a dataset for planning and workflow.
+
+        Args:
+            entries (List[DatasetEntry]): A list of dataset entries.
+
+        Returns:
+            str: The path to the created dataset file.
+        """
         planning_entries: List[Dict[str, Any]] = []
 
         for entry in entries:
@@ -514,7 +708,7 @@ class DatasetGenerator:
                 }
                 planning_entries.append(planning_entry)
 
-        # บันทึกเป็น JSON
+        # Save as JSON
         output_file = self.problem_solution_dir / "planning_workflow_dataset.json"
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump({
@@ -529,7 +723,15 @@ class DatasetGenerator:
         return str(output_file)
 
     def create_tool_selection_dataset(self, entries: List[DatasetEntry]) -> str:
-        """สร้างดาต้าเซ็ตสำหรับการเลือกเครื่องมือ"""
+        """
+        Creates a dataset for tool selection.
+
+        Args:
+            entries (List[DatasetEntry]): A list of dataset entries.
+
+        Returns:
+            str: The path to the created dataset file.
+        """
         tool_entries: List[Dict[str, Any]] = []
 
         for entry in entries:
@@ -551,7 +753,7 @@ class DatasetGenerator:
                 }
                 tool_entries.append(tool_entry)
 
-        # บันทึกเป็น JSON
+        # Save as JSON
         output_file = self.problem_solution_dir / "tool_selection_dataset.json"
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump({
@@ -566,8 +768,17 @@ class DatasetGenerator:
         return str(output_file)
 
     def _estimate_success_rate(self, problem: DatasetEntry, solution: DatasetEntry) -> float:
-        """ประมาณอัตราความสำเร็จของการแก้ปัญหา"""
-        # ใช้ heuristics ง่ายๆ
+        """
+        Estimates the success rate of a solution.
+
+        Args:
+            problem (DatasetEntry): The problem entry.
+            solution (DatasetEntry): The solution entry.
+
+        Returns:
+            float: The estimated success rate.
+        """
+        # Use simple heuristics
         success_indicators = [
             'success', 'fixed', 'resolved', 'working', 'correct',
             'สำเร็จ', 'แก้ไขแล้ว', 'ทำงานได้', 'ถูกต้อง'
@@ -591,7 +802,16 @@ class DatasetGenerator:
             return 0.5
 
     def _create_chunks(self, content: str, max_chunk_size: int = 1000) -> List[str]:
-        """แบ่งเนื้อหาเป็น chunks"""
+        """
+        Splits content into chunks.
+
+        Args:
+            content (str): The content to split.
+            max_chunk_size (int): The maximum size of each chunk.
+
+        Returns:
+            List[str]: A list of content chunks.
+        """
         chunks: List[str] = []
         lines = content.split('\n')
         current_chunk: List[str] = []
@@ -612,7 +832,15 @@ class DatasetGenerator:
         return chunks
 
     def _extract_action(self, entry: DatasetEntry) -> str:
-        """สกัด action จาก entry"""
+        """
+        Extracts an action from an entry.
+
+        Args:
+            entry (DatasetEntry): The entry to extract the action from.
+
+        Returns:
+            str: The extracted action.
+        """
         if entry.type == 'Instruction':
             return entry.content
         elif entry.type == 'Problem':
@@ -623,7 +851,16 @@ class DatasetGenerator:
             return "System action"
 
     def _classify_outcome(self, current_entry: DatasetEntry, next_entry: DatasetEntry) -> str:
-        """จำแนกผลลัพธ์"""
+        """
+        Classifies the outcome of an action.
+
+        Args:
+            current_entry (DatasetEntry): The current entry.
+            next_entry (DatasetEntry): The next entry.
+
+        Returns:
+            str: The classified outcome.
+        """
         if next_entry.type == 'Error' or next_entry.type == 'Problem':
             return 'error'
         elif next_entry.type == 'Solution' or next_entry.type == 'Correction':
@@ -634,7 +871,15 @@ class DatasetGenerator:
             return 'neutral'
 
     def generate_all_datasets(self, log_file_path: str) -> Dict[str, str]:
-        """สร้างดาต้าเซ็ตทั้งหมด - เพิ่ม planning และ tool selection datasets"""
+        """
+        Generates all datasets - adds planning and tool selection datasets.
+
+        Args:
+            log_file_path (str): The path to the log file.
+
+        Returns:
+            Dict[str, str]: A dictionary of the created dataset file paths.
+        """
         logger.info("Starting enhanced dataset generation with planning and tool selection...")
 
         # Parse log file
@@ -644,7 +889,7 @@ class DatasetGenerator:
             logger.error("No entries found in log file")
             return {}
 
-        # สร้างดาต้าเซ็ตแต่ละประเภท
+        # Create each type of dataset
         results: Dict[str, str] = {}
 
         try:
@@ -663,7 +908,15 @@ class DatasetGenerator:
         return results
 
     def create_dataset_summary(self, results: Dict[str, str]) -> str:
-        """สร้างรายงานสรุปดาต้าเซ็ต"""
+        """
+        Creates a summary report of the datasets.
+
+        Args:
+            results (Dict[str, str]): A dictionary of the created dataset file paths.
+
+        Returns:
+            str: The path to the summary file.
+        """
         summary = {
             "generation_date": datetime.now().isoformat(),
             "datasets_created": len(results),
@@ -684,7 +937,15 @@ class DatasetGenerator:
         return str(summary_file)
 
     def _calculate_statistics(self, results: Dict[str, str]) -> Dict[str, Any]:
-        """คำนวณสถิติของดาต้าเซ็ต"""
+        """
+        Calculates statistics for the datasets.
+
+        Args:
+            results (Dict[str, str]): A dictionary of the created dataset file paths.
+
+        Returns:
+            Dict[str, Any]: A dictionary of dataset statistics.
+        """
         stats: Dict[str, Any] = {}
 
         for dataset_type, file_path in results.items():
@@ -711,7 +972,15 @@ class DatasetGenerator:
         return stats
 
     def _extract_tool_reasoning(self, content: str) -> str:
-        """สกัดเหตุผลในการเลือกเครื่องมือ"""
+        """
+        Extracts the reasoning for tool selection.
+
+        Args:
+            content (str): The content to extract the reasoning from.
+
+        Returns:
+            str: The extracted reasoning.
+        """
         reasoning_patterns = [
             r'เพราะ(.*?)(?=\n|$)',
             r'เนื่องจาก(.*?)(?=\n|$)',
@@ -727,7 +996,15 @@ class DatasetGenerator:
         return "No explicit reasoning provided"
 
     def _estimate_tool_success_rate(self, content: str) -> float:
-        """ประมาณอัตราความสำเร็จของการใช้เครื่องมือ"""
+        """
+        Estimates the success rate of a tool.
+
+        Args:
+            content (str): The content to estimate the success rate from.
+
+        Returns:
+            float: The estimated success rate.
+        """
         success_indicators = [
             'success', 'worked', 'completed', 'finished', 'done',
             'สำเร็จ', 'ทำงานได้', 'เสร็จแล้ว', 'เรียบร้อย'
@@ -751,11 +1028,11 @@ class DatasetGenerator:
             return 0.5
 
 def main() -> None:
-    """ฟังก์ชันหลักสำหรับการรัน"""
+    """Main function for running the script."""
     generator = DatasetGenerator()
 
-    # ตัวอย่างการใช้งาน
-    log_file = "example_log.txt"  # เปลี่ยนเป็น path ของ log file จริง
+    # Example usage
+    log_file = "example_log.txt"  # Change to the actual log file path
 
     if os.path.exists(log_file):
         results = generator.generate_all_datasets(log_file)

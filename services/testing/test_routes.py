@@ -1,16 +1,31 @@
 import pytest
-from src.main import create_app
+from fastapi.testclient import TestClient
+import sys
+import os
 
-@pytest.fixture
-def client():
-    app = create_app()
-    app.config["TESTING"] = True
-    with app.test_client() as client:
-        yield client
+# Add the project root to the path to allow imports from src
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'services', 'backend')))
 
-def test_home_page(client):
+from src.main import app
+
+client = TestClient(app)
+
+def test_root():
+    """
+    Tests the root endpoint.
+    """
     response = client.get("/")
     assert response.status_code == 200
-    assert b"Chat Integration App" in response.data
+    json_response = response.json()
+    assert json_response["message"] == "Chonost Manuscript OS API"
+    assert "version" in json_response
 
-
+def test_health_check():
+    """
+    Tests the health check endpoint.
+    """
+    response = client.get("/health")
+    assert response.status_code == 200
+    json_response = response.json()
+    assert json_response["status"] == "healthy"
+    assert json_response["service"] == "chonost-api"

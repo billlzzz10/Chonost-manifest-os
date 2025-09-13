@@ -14,11 +14,13 @@ from core.mongodb import get_mongodb
 router = APIRouter()
 
 class DocumentCreate(BaseModel):
+    """Request model for creating a document in MongoDB."""
     title: str
     content: str
     metadata: Dict[str, Any] = {}
 
 class DocumentResponse(BaseModel):
+    """Response model for a document from MongoDB."""
     id: str
     title: str
     content: str
@@ -26,12 +28,14 @@ class DocumentResponse(BaseModel):
     created_at: str
     updated_at: str
 
-@router.post("/documents", response_model=DocumentResponse)
+@router.post("/documents", response_model=DocumentResponse, summary="Create a new document in MongoDB")
 async def create_document(
     document: DocumentCreate,
     db: AsyncIOMotorDatabase = Depends(get_mongodb)
 ):
-    """Create a new document in MongoDB"""
+    """
+    Creates a new document in the MongoDB collection.
+    """
     try:
         collection = db.documents
         result = await collection.insert_one({
@@ -56,13 +60,15 @@ async def create_document(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/documents", response_model=List[DocumentResponse])
+@router.get("/documents", response_model=List[DocumentResponse], summary="Get documents from MongoDB")
 async def get_documents(
     limit: int = 100,
     skip: int = 0,
     db: AsyncIOMotorDatabase = Depends(get_mongodb)
 ):
-    """Get documents from MongoDB"""
+    """
+    Gets a list of documents from MongoDB with optional pagination.
+    """
     try:
         collection = db.documents
         cursor = collection.find().skip(skip).limit(limit)
@@ -82,12 +88,14 @@ async def get_documents(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/documents/{document_id}", response_model=DocumentResponse)
+@router.get("/documents/{document_id}", response_model=DocumentResponse, summary="Get a specific document by ID")
 async def get_document(
     document_id: str,
     db: AsyncIOMotorDatabase = Depends(get_mongodb)
 ):
-    """Get a specific document by ID"""
+    """
+    Gets a specific document from MongoDB by its ID.
+    """
     try:
         collection = db.documents
         document = await collection.find_one({"_id": ObjectId(document_id)})
@@ -106,13 +114,15 @@ async def get_document(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.put("/documents/{document_id}", response_model=DocumentResponse)
+@router.put("/documents/{document_id}", response_model=DocumentResponse, summary="Update a document in MongoDB")
 async def update_document(
     document_id: str,
     document: DocumentCreate,
     db: AsyncIOMotorDatabase = Depends(get_mongodb)
 ):
-    """Update a document"""
+    """
+    Updates a document in MongoDB.
+    """
     try:
         collection = db.documents
         result = await collection.update_one(
@@ -144,12 +154,14 @@ async def update_document(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.delete("/documents/{document_id}")
+@router.delete("/documents/{document_id}", summary="Delete a document from MongoDB")
 async def delete_document(
     document_id: str,
     db: AsyncIOMotorDatabase = Depends(get_mongodb)
 ):
-    """Delete a document"""
+    """
+    Deletes a document from MongoDB.
+    """
     try:
         collection = db.documents
         result = await collection.delete_one({"_id": ObjectId(document_id)})

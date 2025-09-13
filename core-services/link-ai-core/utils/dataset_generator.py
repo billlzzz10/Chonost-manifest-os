@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-Dataset Generator for File System MCP Tool Training
-เครื่องกำเนิดชุดข้อมูลสำหรับฝึก AI Agent ให้เข้าใจวิธีการใช้เครื่องมือจัดการไฟล์
+Dataset Generator for File System MCP Tool Training.
+This script generates a dataset for training an AI agent to understand how
+to use the file system management tools.
 """
 
 import json
@@ -13,45 +14,63 @@ from pathlib import Path
 import os
 
 class FileSystemDatasetGenerator:
-    """เครื่องกำเนิดชุดข้อมูลสำหรับฝึก AI Agent"""
+    """
+    A dataset generator for training an AI agent.
+
+    This class provides methods for generating a dataset for training an AI
+    agent to understand how to use the file system management tools.
+    """
     
     def __init__(self, db_path: str = "file_system_analysis.db"):
+        """
+        Initializes the FileSystemDatasetGenerator.
+
+        Args:
+            db_path (str, optional): The path to the database. Defaults to
+                                     "file_system_analysis.db".
+        """
         self.db_path = db_path
         self.dataset = []
         
     def generate_training_dataset(self, output_file: str = "file_system_training_dataset.json"):
-        """สร้างชุดข้อมูลสำหรับฝึก AI Agent"""
-        print("🚀 เริ่มสร้างชุดข้อมูลสำหรับฝึก AI Agent...")
+        """
+        Generates a training dataset for the AI agent.
+
+        Args:
+            output_file (str, optional): The path to the output file.
+                                      Defaults to "file_system_training_dataset.json".
+        """
+        print("🚀 Starting to generate the training dataset for the AI agent...")
         
-        # 1. สร้างชุดข้อมูลพื้นฐาน
+        # 1. Generate basic queries
         self._generate_basic_queries()
         
-        # 2. สร้างชุดข้อมูลการค้นหาไฟล์
+        # 2. Generate file search queries
         self._generate_file_search_queries()
         
-        # 3. สร้างชุดข้อมูลการวิเคราะห์
+        # 3. Generate analysis queries
         self._generate_analysis_queries()
         
-        # 4. สร้างชุดข้อมูล SQL queries
+        # 4. Generate SQL queries
         self._generate_sql_queries()
         
-        # 5. สร้างชุดข้อมูลการจัดการไฟล์
+        # 5. Generate file management queries
         self._generate_file_management_queries()
         
-        # 6. สร้างชุดข้อมูลการรายงาน
+        # 6. Generate reporting queries
         self._generate_reporting_queries()
         
-        # 7. บันทึกชุดข้อมูล
+        # 7. Save the dataset
         self._save_dataset(output_file)
         
-        print(f"✅ สร้างชุดข้อมูลสำเร็จ: {len(self.dataset)} รายการ")
-        print(f"📁 บันทึกไปยัง: {output_file}")
+        print(f"✅ Successfully generated the dataset: {len(self.dataset)} items")
+        print(f"📁 Saved to: {output_file}")
         
     def _generate_basic_queries(self):
-        """สร้างชุดข้อมูลพื้นฐาน"""
+        """Generates a set of basic queries."""
         basic_queries = [
             {
-                "instruction": "สรุปข้อมูลโฟลเดอร์นี้ให้ที",
+                "instruction": "Summarize this folder for me.",
                 "correct_action": {
                     "action": "query_function",
                     "function": "get_directory_summary",
@@ -59,30 +78,30 @@ class FileSystemDatasetGenerator:
                     "args": []
                 },
                 "category": "basic",
-                "description": "ขอสรุปข้อมูลพื้นฐานของโฟลเดอร์"
+                "description": "Request a basic summary of the folder."
             },
             {
-                "instruction": "มีไฟล์ทั้งหมดกี่ไฟล์ในโฟลเดอร์นี้",
+                "instruction": "How many files are in this folder in total?",
                 "correct_action": {
                     "action": "query_sql",
                     "sql": "SELECT COUNT(*) as total_files FROM files WHERE session_id = ?",
                     "params": ["scan_xxx"]
                 },
                 "category": "basic",
-                "description": "นับจำนวนไฟล์ทั้งหมด"
+                "description": "Count the total number of files."
             },
             {
-                "instruction": "ขนาดรวมของโฟลเดอร์เท่าไหร่",
+                "instruction": "What is the total size of the folder?",
                 "correct_action": {
                     "action": "query_sql",
                     "sql": "SELECT SUM(file_size) as total_size FROM files WHERE session_id = ?",
                     "params": ["scan_xxx"]
                 },
                 "category": "basic",
-                "description": "คำนวณขนาดรวมของโฟลเดอร์"
+                "description": "Calculate the total size of the folder."
             },
             {
-                "instruction": "แสดงไฟล์ที่ใหญ่ที่สุด 10 ไฟล์",
+                "instruction": "Show the 10 largest files.",
                 "correct_action": {
                     "action": "query_function",
                     "function": "get_largest_files",
@@ -90,10 +109,10 @@ class FileSystemDatasetGenerator:
                     "args": [10]
                 },
                 "category": "basic",
-                "description": "แสดงไฟล์ขนาดใหญ่ที่สุด"
+                "description": "Show the largest files."
             },
             {
-                "instruction": "มีไฟล์ซ้ำกันไหม",
+                "instruction": "Are there any duplicate files?",
                 "correct_action": {
                     "action": "query_function",
                     "function": "get_duplicate_files",
@@ -101,67 +120,67 @@ class FileSystemDatasetGenerator:
                     "args": []
                 },
                 "category": "basic",
-                "description": "ตรวจสอบไฟล์ซ้ำ"
+                "description": "Check for duplicate files."
             }
         ]
         
         self.dataset.extend(basic_queries)
         
     def _generate_file_search_queries(self):
-        """สร้างชุดข้อมูลการค้นหาไฟล์"""
+        """Generates a set of file search queries."""
         file_search_queries = [
             {
-                "instruction": "หาไฟล์เอกสาร Word ที่ใหญ่ที่สุด 5 ไฟล์ให้หน่อย",
+                "instruction": "Find the 5 largest Word document files.",
                 "correct_action": {
                     "action": "query_sql",
                     "sql": "SELECT file_name, file_path, file_size FROM files WHERE session_id = ? AND file_extension = '.docx' ORDER BY file_size DESC LIMIT 5",
                     "params": ["scan_xxx"]
                 },
                 "category": "file_search",
-                "description": "ค้นหาไฟล์ Word ขนาดใหญ่"
+                "description": "Find large Word files."
             },
             {
-                "instruction": "แสดงไฟล์รูปภาพทั้งหมด",
+                "instruction": "Show all image files.",
                 "correct_action": {
                     "action": "query_sql",
                     "sql": "SELECT file_name, file_path, file_size FROM files WHERE session_id = ? AND mime_type LIKE 'image/%'",
                     "params": ["scan_xxx"]
                 },
                 "category": "file_search",
-                "description": "ค้นหาไฟล์รูปภาพ"
+                "description": "Find image files."
             },
             {
-                "instruction": "มีไฟล์ PDF กี่ไฟล์ในระบบ",
+                "instruction": "How many PDF files are in the system?",
                 "correct_action": {
                     "action": "query_sql",
                     "sql": "SELECT COUNT(*) as pdf_count FROM files WHERE session_id = ? AND file_extension = '.pdf'",
                     "params": ["scan_xxx"]
                 },
                 "category": "file_search",
-                "description": "นับไฟล์ PDF"
+                "description": "Count PDF files."
             },
             {
-                "instruction": "แสดงไฟล์ทั้งหมดที่ชื่อมีคำว่า 'report' และเป็นไฟล์ PDF",
+                "instruction": "Show all files with 'report' in the name that are PDFs.",
                 "correct_action": {
                     "action": "query_sql",
                     "sql": "SELECT file_path FROM files WHERE session_id = ? AND file_name LIKE '%report%' AND file_extension = '.pdf'",
                     "params": ["scan_xxx"]
                 },
                 "category": "file_search",
-                "description": "ค้นหาไฟล์ PDF ที่มีคำว่า report"
+                "description": "Find PDF files with 'report' in the name."
             },
             {
-                "instruction": "หาไฟล์โค้ด Python ที่ใหญ่ที่สุด",
+                "instruction": "Find the largest Python code file.",
                 "correct_action": {
                     "action": "query_sql",
                     "sql": "SELECT file_name, file_path, file_size FROM files WHERE session_id = ? AND file_extension = '.py' ORDER BY file_size DESC LIMIT 1",
                     "params": ["scan_xxx"]
                 },
                 "category": "file_search",
-                "description": "ค้นหาไฟล์ Python ขนาดใหญ่ที่สุด"
+                "description": "Find the largest Python file."
             },
             {
-                "instruction": "แสดงไฟล์ JavaScript ทั้งหมด",
+                "instruction": "Show all JavaScript files.",
                 "correct_action": {
                     "action": "query_function",
                     "function": "find_files_by_extension",
@@ -169,10 +188,10 @@ class FileSystemDatasetGenerator:
                     "args": [".js"]
                 },
                 "category": "file_search",
-                "description": "ค้นหาไฟล์ JavaScript"
+                "description": "Find JavaScript files."
             },
             {
-                "instruction": "ไฟล์ไหนที่ซ้ำกันแล้วเปลืองเนื้อที่มากที่สุด",
+                "instruction": "Which duplicate files are taking up the most space?",
                 "correct_action": {
                     "action": "query_function",
                     "function": "get_duplicate_files",
@@ -180,178 +199,178 @@ class FileSystemDatasetGenerator:
                     "args": []
                 },
                 "category": "file_search",
-                "description": "ตรวจสอบไฟล์ซ้ำที่เปลืองพื้นที่"
+                "description": "Check for duplicate files that are taking up the most space."
             }
         ]
         
         self.dataset.extend(file_search_queries)
         
     def _generate_analysis_queries(self):
-        """สร้างชุดข้อมูลการวิเคราะห์"""
+        """Generates a set of analysis queries."""
         analysis_queries = [
             {
-                "instruction": "วิเคราะห์ประเภทไฟล์ที่พบในโฟลเดอร์",
+                "instruction": "Analyze the file types found in the folder.",
                 "correct_action": {
                     "action": "query_sql",
                     "sql": "SELECT file_extension, COUNT(*) as count, SUM(file_size) as total_size FROM files WHERE session_id = ? GROUP BY file_extension ORDER BY count DESC",
                     "params": ["scan_xxx"]
                 },
                 "category": "analysis",
-                "description": "วิเคราะห์ประเภทไฟล์"
+                "description": "Analyze file types."
             },
             {
-                "instruction": "ไฟล์ประเภทไหนที่ใช้พื้นที่มากที่สุด",
+                "instruction": "Which file types use the most space?",
                 "correct_action": {
                     "action": "query_sql",
                     "sql": "SELECT file_extension, SUM(file_size) as total_size FROM files WHERE session_id = ? GROUP BY file_extension ORDER BY total_size DESC LIMIT 5",
                     "params": ["scan_xxx"]
                 },
                 "category": "analysis",
-                "description": "วิเคราะห์ไฟล์ที่ใช้พื้นที่มาก"
+                "description": "Analyze which files use the most space."
             },
             {
-                "instruction": "มีไฟล์ที่ซ่อนอยู่กี่ไฟล์",
+                "instruction": "How many hidden files are there?",
                 "correct_action": {
                     "action": "query_sql",
                     "sql": "SELECT COUNT(*) as hidden_count FROM files WHERE session_id = ? AND is_hidden = 1",
                     "params": ["scan_xxx"]
                 },
                 "category": "analysis",
-                "description": "นับไฟล์ซ่อน"
+                "description": "Count hidden files."
             },
             {
-                "instruction": "ไฟล์ไหนที่เก่าที่สุด",
+                "instruction": "Which are the oldest files?",
                 "correct_action": {
                     "action": "query_sql",
                     "sql": "SELECT file_name, file_path, created_date FROM files WHERE session_id = ? ORDER BY created_date ASC LIMIT 10",
                     "params": ["scan_xxx"]
                 },
                 "category": "analysis",
-                "description": "หาไฟล์เก่าที่สุด"
+                "description": "Find the oldest files."
             },
             {
-                "instruction": "ไฟล์ไหนที่แก้ไขล่าสุด",
+                "instruction": "Which files were modified most recently?",
                 "correct_action": {
                     "action": "query_sql",
                     "sql": "SELECT file_name, file_path, modified_date FROM files WHERE session_id = ? ORDER BY modified_date DESC LIMIT 10",
                     "params": ["scan_xxx"]
                 },
                 "category": "analysis",
-                "description": "หาไฟล์ที่แก้ไขล่าสุด"
+                "description": "Find the most recently modified files."
             }
         ]
         
         self.dataset.extend(analysis_queries)
         
     def _generate_sql_queries(self):
-        """สร้างชุดข้อมูล SQL queries"""
+        """Generates a set of SQL queries."""
         sql_queries = [
             {
-                "instruction": "แสดงไฟล์ที่มีขนาดมากกว่า 100MB",
+                "instruction": "Show files larger than 100MB.",
                 "correct_action": {
                     "action": "query_sql",
                     "sql": "SELECT file_name, file_path, file_size FROM files WHERE session_id = ? AND file_size > 104857600 ORDER BY file_size DESC",
                     "params": ["scan_xxx"]
                 },
                 "category": "sql",
-                "description": "ค้นหาไฟล์ขนาดใหญ่"
+                "description": "Find large files."
             },
             {
-                "instruction": "ไฟล์รูปภาพที่มีขนาดมากกว่า 10MB มีอะไรบ้าง",
+                "instruction": "What are the image files larger than 10MB?",
                 "correct_action": {
                     "action": "query_sql",
                     "sql": "SELECT file_name, file_path, file_size FROM files WHERE session_id = ? AND mime_type LIKE 'image/%' AND file_size > 10485760",
                     "params": ["scan_xxx"]
                 },
                 "category": "sql",
-                "description": "ค้นหารูปภาพขนาดใหญ่"
+                "description": "Find large image files."
             },
             {
-                "instruction": "แสดงไฟล์ที่สร้างในเดือนนี้",
+                "instruction": "Show files created this month.",
                 "correct_action": {
                     "action": "query_sql",
                     "sql": "SELECT file_name, file_path, created_date FROM files WHERE session_id = ? AND created_date >= date('now', 'start of month')",
                     "params": ["scan_xxx"]
                 },
                 "category": "sql",
-                "description": "หาไฟล์ที่สร้างในเดือนปัจจุบัน"
+                "description": "Find files created this month."
             },
             {
-                "instruction": "ไฟล์ที่แก้ไขในสัปดาห์นี้มีอะไรบ้าง",
+                "instruction": "What files were modified this week?",
                 "correct_action": {
                     "action": "query_sql",
                     "sql": "SELECT file_name, file_path, modified_date FROM files WHERE session_id = ? AND modified_date >= date('now', '-7 days')",
                     "params": ["scan_xxx"]
                 },
                 "category": "sql",
-                "description": "หาไฟล์ที่แก้ไขในสัปดาห์นี้"
+                "description": "Find files modified this week."
             },
             {
-                "instruction": "แสดงไฟล์ที่ไม่มีนามสกุล",
+                "instruction": "Show files with no extension.",
                 "correct_action": {
                     "action": "query_sql",
                     "sql": "SELECT file_name, file_path FROM files WHERE session_id = ? AND (file_extension = '' OR file_extension IS NULL)",
                     "params": ["scan_xxx"]
                 },
                 "category": "sql",
-                "description": "หาไฟล์ที่ไม่มีนามสกุล"
+                "description": "Find files with no extension."
             }
         ]
         
         self.dataset.extend(sql_queries)
         
     def _generate_file_management_queries(self):
-        """สร้างชุดข้อมูลการจัดการไฟล์"""
+        """Generates a set of file management queries."""
         management_queries = [
             {
-                "instruction": "ไฟล์ไหนที่ควรลบเพื่อประหยัดพื้นที่",
+                "instruction": "Which files should be deleted to save space?",
                 "correct_action": {
                     "action": "query_sql",
                     "sql": "SELECT file_name, file_path, file_size FROM files WHERE session_id = ? AND file_size > 52428800 ORDER BY file_size DESC LIMIT 20",
                     "params": ["scan_xxx"]
                 },
                 "category": "management",
-                "description": "หาไฟล์ที่ควรลบ"
+                "description": "Find files that should be deleted."
             },
             {
-                "instruction": "มีไฟล์ชั่วคราวอะไรบ้าง",
+                "instruction": "What temporary files are there?",
                 "correct_action": {
                     "action": "query_sql",
                     "sql": "SELECT file_name, file_path FROM files WHERE session_id = ? AND (file_name LIKE '%.tmp' OR file_name LIKE 'temp%' OR file_name LIKE '%cache%')",
                     "params": ["scan_xxx"]
                 },
                 "category": "management",
-                "description": "หาไฟล์ชั่วคราว"
+                "description": "Find temporary files."
             },
             {
-                "instruction": "ไฟล์ไหนที่เข้าถึงล่าสุด",
+                "instruction": "Which files were accessed most recently?",
                 "correct_action": {
                     "action": "query_sql",
                     "sql": "SELECT file_name, file_path, accessed_date FROM files WHERE session_id = ? ORDER BY accessed_date DESC LIMIT 10",
                     "params": ["scan_xxx"]
                 },
                 "category": "management",
-                "description": "หาไฟล์ที่เข้าถึงล่าสุด"
+                "description": "Find the most recently accessed files."
             },
             {
-                "instruction": "แสดงไฟล์ที่อาจเป็นไวรัส",
+                "instruction": "Show files that might be viruses.",
                 "correct_action": {
                     "action": "query_sql",
                     "sql": "SELECT file_name, file_path FROM files WHERE session_id = ? AND file_extension IN ('.exe', '.bat', '.cmd', '.scr', '.pif')",
                     "params": ["scan_xxx"]
                 },
                 "category": "management",
-                "description": "หาไฟล์ที่อาจเป็นไวรัส"
+                "description": "Find files that might be viruses."
             }
         ]
         
         self.dataset.extend(management_queries)
         
     def _generate_reporting_queries(self):
-        """สร้างชุดข้อมูลการรายงาน"""
+        """Generates a set of reporting queries."""
         reporting_queries = [
             {
-                "instruction": "สร้างรายงานสรุปโฟลเดอร์",
+                "instruction": "Create a summary report of the folder.",
                 "correct_action": {
                     "action": "query_function",
                     "function": "get_directory_summary",
@@ -359,10 +378,10 @@ class FileSystemDatasetGenerator:
                     "args": []
                 },
                 "category": "reporting",
-                "description": "สร้างรายงานสรุป"
+                "description": "Create a summary report."
             },
             {
-                "instruction": "รายงานไฟล์ที่ใหญ่ที่สุด 20 ไฟล์",
+                "instruction": "Report the 20 largest files.",
                 "correct_action": {
                     "action": "query_function",
                     "function": "get_largest_files",
@@ -370,10 +389,10 @@ class FileSystemDatasetGenerator:
                     "args": [20]
                 },
                 "category": "reporting",
-                "description": "รายงานไฟล์ขนาดใหญ่"
+                "description": "Report large files."
             },
             {
-                "instruction": "รายงานไฟล์ซ้ำทั้งหมด",
+                "instruction": "Report all duplicate files.",
                 "correct_action": {
                     "action": "query_function",
                     "function": "get_duplicate_files",
@@ -381,30 +400,35 @@ class FileSystemDatasetGenerator:
                     "args": []
                 },
                 "category": "reporting",
-                "description": "รายงานไฟล์ซ้ำ"
+                "description": "Report duplicate files."
             },
             {
-                "instruction": "สถิติประเภทไฟล์",
+                "instruction": "File type statistics.",
                 "correct_action": {
                     "action": "query_sql",
                     "sql": "SELECT file_extension, COUNT(*) as count, AVG(file_size) as avg_size FROM files WHERE session_id = ? GROUP BY file_extension ORDER BY count DESC",
                     "params": ["scan_xxx"]
                 },
                 "category": "reporting",
-                "description": "สถิติประเภทไฟล์"
+                "description": "File type statistics."
             }
         ]
         
         self.dataset.extend(reporting_queries)
         
     def _save_dataset(self, output_file: str):
-        """บันทึกชุดข้อมูล"""
+        """
+        Saves the dataset to a file.
+
+        Args:
+            output_file (str): The path to the output file.
+        """
         dataset_info = {
             "metadata": {
                 "generated_at": datetime.now().isoformat(),
                 "total_samples": len(self.dataset),
                 "categories": list(set(item["category"] for item in self.dataset)),
-                "description": "Dataset สำหรับฝึก AI Agent ให้เข้าใจการใช้ File System MCP Tool"
+                "description": "Dataset for training an AI agent to understand how to use the File System MCP Tool."
             },
             "dataset": self.dataset
         }
@@ -413,26 +437,34 @@ class FileSystemDatasetGenerator:
             json.dump(dataset_info, f, ensure_ascii=False, indent=2)
             
     def generate_variations(self, base_dataset_file: str, output_file: str = "expanded_dataset.json"):
-        """สร้างชุดข้อมูลที่มีความหลากหลายมากขึ้น"""
-        print("🔄 สร้างชุดข้อมูลที่มีความหลากหลาย...")
+        """
+        Generates a more diverse dataset by creating variations of the
+        instructions in the base dataset.
+
+        Args:
+            base_dataset_file (str): The path to the base dataset file.
+            output_file (str, optional): The path to the output file.
+                                      Defaults to "expanded_dataset.json".
+        """
+        print("🔄 Generating a more diverse dataset...")
         
         with open(base_dataset_file, 'r', encoding='utf-8') as f:
             base_data = json.load(f)
             
         expanded_dataset = base_data["dataset"].copy()
         
-        # สร้างความหลากหลายของคำสั่ง
+        # Create a variety of commands
         variations = [
-            ("แสดงไฟล์ขนาดใหญ่", ["แสดงไฟล์ที่ใหญ่ที่สุด", "ไฟล์ไหนใหญ่ที่สุด", "ไฟล์ขนาดใหญ่มีอะไรบ้าง"]),
-            ("หาไฟล์ซ้ำ", ["มีไฟล์ซ้ำไหม", "ไฟล์ไหนซ้ำกัน", "ตรวจสอบไฟล์ซ้ำ"]),
-            ("สรุปข้อมูล", ["สรุปโฟลเดอร์", "ข้อมูลสรุป", "รายงานสรุป"]),
-            ("ไฟล์รูปภาพ", ["รูปภาพทั้งหมด", "ไฟล์รูป", "รูปมีอะไรบ้าง"]),
-            ("ไฟล์เอกสาร", ["ไฟล์ Word", "เอกสารทั้งหมด", "ไฟล์ .docx"])
+            ("Show large files", ["Show the largest files", "Which files are the largest", "What are the large files"]),
+            ("Find duplicate files", ["Are there duplicate files", "Which files are duplicates", "Check for duplicate files"]),
+            ("Summarize data", ["Summarize the folder", "Summary data", "Summary report"]),
+            ("Image files", ["All image files", "Image file", "What are the images"]),
+            ("Document files", ["Word files", "All documents", ".docx files"])
         ]
         
         for original, variations_list in variations:
             for variation in variations_list:
-                # หา entry ที่ตรงกับ original
+                # Find the entry that matches the original
                 for entry in base_data["dataset"]:
                     if original in entry["instruction"]:
                         new_entry = entry.copy()
@@ -440,7 +472,7 @@ class FileSystemDatasetGenerator:
                         new_entry["category"] = "variation"
                         expanded_dataset.append(new_entry)
                         
-        # บันทึกชุดข้อมูลที่ขยายแล้ว
+        # Save the expanded dataset
         expanded_info = {
             "metadata": {
                 "generated_at": datetime.now().isoformat(),
@@ -455,16 +487,23 @@ class FileSystemDatasetGenerator:
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(expanded_info, f, ensure_ascii=False, indent=2)
             
-        print(f"✅ สร้างชุดข้อมูลขยายสำเร็จ: {len(expanded_dataset)} รายการ")
+        print(f"✅ Successfully generated the expanded dataset: {len(expanded_dataset)} items")
         
     def generate_test_dataset(self, training_dataset_file: str, output_file: str = "test_dataset.json"):
-        """สร้างชุดข้อมูลสำหรับทดสอบ"""
-        print("🧪 สร้างชุดข้อมูลสำหรับทดสอบ...")
+        """
+        Generates a test dataset from the training dataset.
+
+        Args:
+            training_dataset_file (str): The path to the training dataset file.
+            output_file (str, optional): The path to the output file.
+                                      Defaults to "test_dataset.json".
+        """
+        print("🧪 Generating a test dataset...")
         
         with open(training_dataset_file, 'r', encoding='utf-8') as f:
             training_data = json.load(f)
             
-        # สุ่มเลือก 20% สำหรับทดสอบ
+        # Randomly select 20% for testing
         test_samples = random.sample(training_data["dataset"], 
                                    min(len(training_data["dataset"]) // 5, 50))
         
@@ -481,18 +520,23 @@ class FileSystemDatasetGenerator:
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(test_info, f, ensure_ascii=False, indent=2)
             
-        print(f"✅ สร้างชุดข้อมูลทดสอบสำเร็จ: {len(test_samples)} รายการ")
+        print(f"✅ Successfully generated the test dataset: {len(test_samples)} items")
         
     def analyze_dataset(self, dataset_file: str):
-        """วิเคราะห์ชุดข้อมูล"""
-        print(f"📊 วิเคราะห์ชุดข้อมูล: {dataset_file}")
+        """
+        Analyzes a dataset.
+
+        Args:
+            dataset_file (str): The path to the dataset file.
+        """
+        print(f"📊 Analyzing dataset: {dataset_file}")
         
         with open(dataset_file, 'r', encoding='utf-8') as f:
             data = json.load(f)
             
         dataset = data["dataset"]
         
-        # วิเคราะห์ตามหมวดหมู่
+        # Analyze by category
         categories = {}
         for item in dataset:
             cat = item["category"]
@@ -500,16 +544,16 @@ class FileSystemDatasetGenerator:
                 categories[cat] = 0
             categories[cat] += 1
             
-        print("\n📈 สถิติชุดข้อมูล:")
-        print(f"• จำนวนตัวอย่างทั้งหมด: {len(dataset)}")
-        print(f"• จำนวนหมวดหมู่: {len(categories)}")
+        print("\n📈 Dataset statistics:")
+        print(f"• Total number of samples: {len(dataset)}")
+        print(f"• Number of categories: {len(categories)}")
         
-        print("\n📋 หมวดหมู่:")
+        print("\n📋 Categories:")
         for cat, count in sorted(categories.items()):
             percentage = (count / len(dataset)) * 100
             print(f"  • {cat}: {count} ({percentage:.1f}%)")
             
-        # วิเคราะห์ actions
+        # Analyze actions
         actions = {}
         for item in dataset:
             action = item["correct_action"]["action"]
@@ -517,28 +561,28 @@ class FileSystemDatasetGenerator:
                 actions[action] = 0
             actions[action] += 1
             
-        print("\n🔧 Actions ที่ใช้:")
+        print("\n🔧 Actions used:")
         for action, count in sorted(actions.items()):
             percentage = (count / len(dataset)) * 100
             print(f"  • {action}: {count} ({percentage:.1f}%)")
 
 def main():
-    """ฟังก์ชันหลัก"""
+    """The main function of the script."""
     print("🚀 File System MCP Dataset Generator")
     print("=" * 50)
     
     generator = FileSystemDatasetGenerator()
     
-    # สร้างชุดข้อมูลพื้นฐาน
+    # Generate the base dataset
     generator.generate_training_dataset("file_system_training_dataset.json")
     
-    # สร้างชุดข้อมูลขยาย
+    # Generate the expanded dataset
     generator.generate_variations("file_system_training_dataset.json", "expanded_dataset.json")
     
-    # สร้างชุดข้อมูลทดสอบ
+    # Generate the test dataset
     generator.generate_test_dataset("file_system_training_dataset.json", "test_dataset.json")
     
-    # วิเคราะห์ชุดข้อมูล
+    # Analyze the datasets
     print("\n" + "=" * 50)
     generator.analyze_dataset("file_system_training_dataset.json")
     
@@ -548,11 +592,11 @@ def main():
     print("\n" + "=" * 50)
     generator.analyze_dataset("test_dataset.json")
     
-    print("\n🎉 สร้างชุดข้อมูลเสร็จสิ้น!")
-    print("\n📁 ไฟล์ที่สร้าง:")
-    print("  • file_system_training_dataset.json - ชุดข้อมูลพื้นฐาน")
-    print("  • expanded_dataset.json - ชุดข้อมูลขยาย")
-    print("  • test_dataset.json - ชุดข้อมูลทดสอบ")
+    print("\n🎉 Dataset generation complete!")
+    print("\n📁 Files created:")
+    print("  • file_system_training_dataset.json - Base dataset")
+    print("  • expanded_dataset.json - Expanded dataset")
+    print("  • test_dataset.json - Test dataset")
 
 if __name__ == "__main__":
     main()

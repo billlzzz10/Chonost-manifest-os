@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 🎯 Master Quality Control System
-ระบบควบคุมคุณภาพขั้นสูงที่รวมทุกอย่างเข้าด้วยกัน
+An advanced, all-in-one quality control system.
 """
 
 import json
@@ -13,15 +13,35 @@ from datetime import datetime
 import time
 
 class MasterQualityControl:
-    """Master Quality Control System"""
+    """
+    An advanced, all-in-one quality control system.
+
+    This class provides a comprehensive solution for managing the quality of
+    machine learning models, including quality assessment, results analysis,
+    enhanced dataset generation, and retraining.
+    """
     
     def __init__(self):
+        """Initializes the MasterQualityControl system."""
         self.project_root = Path(__file__).parent.resolve()
         self.master_path = self.project_root / "master_quality_control"
         self.master_path.mkdir(parents=True, exist_ok=True)
         
     def run_complete_quality_cycle(self, model_path: str = "models/chonost-compact-local") -> Dict[str, Any]:
-        """รัน complete quality cycle"""
+        """
+        Runs a complete quality cycle.
+
+        This method executes the entire quality control process, including
+        assessment, analysis, dataset generation, and retraining.
+
+        Args:
+            model_path (str, optional): The path to the model to be evaluated.
+                                      Defaults to "models/chonost-compact-local".
+
+        Returns:
+            Dict[str, Any]: A dictionary containing the results of the quality
+                            cycle.
+        """
         print("🎯 Starting Master Quality Control Cycle...")
         
         cycle_results = {
@@ -114,7 +134,16 @@ class MasterQualityControl:
         return cycle_results
     
     def run_quality_assessment(self, model_path: str) -> Dict[str, Any]:
-        """รัน quality assessment"""
+        """
+        Runs a quality assessment on the specified model.
+
+        Args:
+            model_path (str): The path to the model to be evaluated.
+
+        Returns:
+            Dict[str, Any]: A dictionary containing the results of the quality
+                            assessment.
+        """
         try:
             # Import quality assessment framework
             from quality_assessment import QualityAssessmentFramework
@@ -146,7 +175,17 @@ class MasterQualityControl:
             }
     
     def analyze_quality_results(self, quality_result: Dict[str, Any]) -> Dict[str, Any]:
-        """วิเคราะห์ผลลัพธ์คุณภาพ"""
+        """
+        Analyzes the results of a quality assessment.
+
+        Args:
+            quality_result (Dict[str, Any]): The results of the quality
+                                            assessment.
+
+        Returns:
+            Dict[str, Any]: A dictionary containing the analysis of the
+                            quality results.
+        """
         if not quality_result["success"]:
             return {
                 "success": False,
@@ -165,7 +204,7 @@ class MasterQualityControl:
             "critical_issues": []
         }
         
-        # วิเคราะห์แต่ละหมวดหมู่
+        # Analyze each category
         for category, scores in results["category_scores"].items():
             percentage = scores["percentage"]
             analysis["category_analysis"][category] = {
@@ -183,7 +222,19 @@ class MasterQualityControl:
         return analysis
     
     def generate_enhanced_dataset(self, quality_result: Dict[str, Any], analysis_result: Dict[str, Any]) -> Dict[str, Any]:
-        """สร้าง enhanced dataset"""
+        """
+        Generates an enhanced dataset based on the quality assessment results.
+
+        Args:
+            quality_result (Dict[str, Any]): The results of the quality
+                                            assessment.
+            analysis_result (Dict[str, Any]): The analysis of the quality
+                                             results.
+
+        Returns:
+            Dict[str, Any]: A dictionary containing the results of the dataset
+                            generation.
+        """
         if not quality_result["success"] or not analysis_result["success"]:
             return {
                 "success": False,
@@ -221,7 +272,18 @@ class MasterQualityControl:
             }
     
     def make_retraining_decision(self, quality_result: Dict[str, Any], analysis_result: Dict[str, Any]) -> Dict[str, Any]:
-        """ตัดสินใจว่าจะเทรนซ้ำหรือไม่"""
+        """
+        Makes a decision about whether to retrain the model.
+
+        Args:
+            quality_result (Dict[str, Any]): The results of the quality
+                                            assessment.
+            analysis_result (Dict[str, Any]): The analysis of the quality
+                                             results.
+
+        Returns:
+            Dict[str, Any]: A dictionary containing the retraining decision.
+        """
         decision = {
             "should_retrain": False,
             "reason": "",
@@ -262,7 +324,17 @@ class MasterQualityControl:
         return decision
     
     def execute_retraining(self, model_path: str, enhanced_dataset_path: str) -> Dict[str, Any]:
-        """เทรนซ้ำโมเดล"""
+        """
+        Executes the model retraining process.
+
+        Args:
+            model_path (str): The path to the model to be retrained.
+            enhanced_dataset_path (str): The path to the enhanced dataset.
+
+        Returns:
+            Dict[str, Any]: A dictionary containing the results of the
+                            retraining process.
+        """
         try:
             # Import retraining system
             from advanced_retraining import AdvancedRetrainingSystem
@@ -297,7 +369,19 @@ class MasterQualityControl:
             }
     
     def analyze_improvement(self, initial_result: Dict[str, Any], final_result: Dict[str, Any]) -> Dict[str, Any]:
-        """วิเคราะห์การปรับปรุง"""
+        """
+        Analyzes the improvement between two quality assessments.
+
+        Args:
+            initial_result (Dict[str, Any]): The initial quality assessment
+                                             results.
+            final_result (Dict[str, Any]): The final quality assessment
+                                           results.
+
+        Returns:
+            Dict[str, Any]: A dictionary containing the analysis of the
+                            improvement.
+        """
         if not initial_result["success"] or not final_result["success"]:
             return {
                 "success": False,
@@ -320,7 +404,17 @@ class MasterQualityControl:
         return improvement
     
     def compare_grades(self, initial_grade: str, final_grade: str) -> str:
-        """เปรียบเทียบเกรด"""
+        """
+        Compares two grades.
+
+        Args:
+            initial_grade (str): The initial grade.
+            final_grade (str): The final grade.
+
+        Returns:
+            str: A string indicating whether the grade has improved, worsened,
+                 or stayed the same.
+        """
         grade_order = ["F", "C", "C+", "B", "B+", "A", "A+"]
         
         try:
@@ -337,7 +431,18 @@ class MasterQualityControl:
             return "unknown"
     
     def calculate_improvement(self, initial_result: Dict[str, Any], final_result: Dict[str, Any]) -> Dict[str, Any]:
-        """คำนวณการปรับปรุง"""
+        """
+        Calculates the improvement between two quality assessments.
+
+        Args:
+            initial_result (Dict[str, Any]): The initial quality assessment
+                                             results.
+            final_result (Dict[str, Any]): The final quality assessment
+                                           results.
+
+        Returns:
+            Dict[str, Any]: A dictionary containing the calculated improvement.
+        """
         if not initial_result["success"] or not final_result["success"]:
             return {"success": False}
         
@@ -348,7 +453,15 @@ class MasterQualityControl:
         }
     
     def generate_final_recommendations(self, cycle_results: Dict[str, Any]) -> List[str]:
-        """สร้างคำแนะนำสุดท้าย"""
+        """
+        Generates final recommendations based on the quality cycle results.
+
+        Args:
+            cycle_results (Dict[str, Any]): The results of the quality cycle.
+
+        Returns:
+            List[str]: A list of recommendations.
+        """
         recommendations = []
         
         final_quality = cycle_results["final_results"]["final_quality"]
@@ -395,7 +508,15 @@ class MasterQualityControl:
         return recommendations
     
     def save_cycle_results(self, cycle_results: Dict[str, Any]):
-        """บันทึกผลลัพธ์ cycle"""
+        """
+        Saves the results of a quality cycle to a JSON file.
+
+        Args:
+            cycle_results (Dict[str, Any]): The results of the quality cycle.
+
+        Returns:
+            The path to the saved results file.
+        """
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         results_file = self.master_path / f"quality_cycle_results_{timestamp}.json"
         
@@ -406,7 +527,15 @@ class MasterQualityControl:
         return results_file
     
     def generate_summary_report(self, cycle_results: Dict[str, Any]) -> str:
-        """สร้างรายงานสรุป"""
+        """
+        Generates a summary report from the results of a quality cycle.
+
+        Args:
+            cycle_results (Dict[str, Any]): The results of the quality cycle.
+
+        Returns:
+            str: A string containing the summary report.
+        """
         summary = f"""
 # 🎯 Master Quality Control Report
 
@@ -441,7 +570,13 @@ class MasterQualityControl:
         return summary
 
 def main():
-    """Main function"""
+    """
+    The main function of the script.
+
+    This function provides a command-line interface for the Master Quality
+    Control system, allowing the user to run a quality cycle, generate a
+    summary report, or view previous results.
+    """
     master_control = MasterQualityControl()
     
     print("🎯 Master Quality Control System")
@@ -449,7 +584,7 @@ def main():
     print("2. Generate Summary Report")
     print("3. View Previous Results")
     
-    choice = input("\nเลือกตัวเลือก (1-3): ").strip()
+    choice = input("\nSelect an option (1-3): ").strip()
     
     try:
         if choice == "1":

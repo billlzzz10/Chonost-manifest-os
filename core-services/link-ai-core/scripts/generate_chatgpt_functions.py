@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-Generate ChatGPT Function Definitions from tools.schema.json
-แปลง tools.schema.json เป็น function definitions สำหรับ ChatGPT
+Generate ChatGPT Function Definitions from tools.schema.json.
+This script converts a `tools.schema.json` file into a list of function
+definitions that are compatible with the ChatGPT API.
 """
 
 import json
@@ -11,7 +12,15 @@ from typing import Dict, Any, List
 
 
 def load_schema(schema_path: str) -> Dict[str, Any]:
-    """Load tools schema from JSON file"""
+    """
+    Loads the tools schema from a JSON file.
+
+    Args:
+        schema_path (str): The path to the schema file.
+
+    Returns:
+        Dict[str, Any]: The loaded schema.
+    """
     try:
         with open(schema_path, "r", encoding="utf-8") as f:
             return json.load(f)
@@ -23,7 +32,16 @@ def load_schema(schema_path: str) -> Dict[str, Any]:
 def generate_function_definition(
     tool_id: str, schema: Dict[str, Any]
 ) -> Dict[str, Any]:
-    """Generate ChatGPT function definition for a tool"""
+    """
+    Generates a ChatGPT function definition for a single tool.
+
+    Args:
+        tool_id (str): The ID of the tool.
+        schema (Dict[str, Any]): The tools schema.
+
+    Returns:
+        Dict[str, Any]: The ChatGPT function definition.
+    """
 
     # Get tool schema from $defs
     tool_schema = schema.get("$defs", {}).get(tool_id)
@@ -88,7 +106,15 @@ def generate_function_definition(
 
 
 def generate_all_functions(schema: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """Generate all function definitions"""
+    """
+    Generates all function definitions from the tools schema.
+
+    Args:
+        schema (Dict[str, Any]): The tools schema.
+
+    Returns:
+        List[Dict[str, Any]]: A list of ChatGPT function definitions.
+    """
     functions = []
 
     # Get all tool definitions from $defs
@@ -106,7 +132,12 @@ def generate_all_functions(schema: Dict[str, Any]) -> List[Dict[str, Any]]:
 
 
 def main():
-    """Main function"""
+    """
+    The main function of the script.
+
+    This function loads the schema, generates the function definitions,
+    and then saves the definitions to both a JSON file and a Python file.
+    """
     schema_path = "tools.schema.json"
 
     if not Path(schema_path).exists():

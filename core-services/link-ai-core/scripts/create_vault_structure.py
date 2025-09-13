@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """
-Create Vault Structure - สร้างโครงสร้าง Vault อย่างสมบูรณ์
+Create Vault Structure.
+This script creates a complete structure for an Obsidian vault, including
+folders and README files.
 """
 
 import os
@@ -10,21 +12,31 @@ from typing import Dict, List, Any
 from datetime import datetime
 
 def create_readme_content(folder_name: str, folder_type: str) -> str:
-    """สร้างเนื้อหา README สำหรับแต่ละโฟลเดอร์"""
+    """
+    Creates the content for a README file for a given folder.
+
+    Args:
+        folder_name (str): The name of the folder.
+        folder_type (str): The type of the folder, which is used to determine
+                           the template for the README file.
+
+    Returns:
+        str: The content of the README file.
+    """
     
     templates = {
         "00_DASHBOARD": """# 📊 Dashboard
 
-## 🎯 วัตถุประสงค์
-Dashboard หลักสำหรับการจัดการและติดตามโครงการทั้งหมด
+## 🎯 Purpose
+The main dashboard for managing and tracking all projects.
 
-## 📁 โครงสร้าง
-- **Overview** - ภาพรวมโครงการ
-- **Progress** - ความคืบหน้า
-- **Statistics** - สถิติต่างๆ
-- **Quick Actions** - การดำเนินการด่วน
+## 📁 Structure
+- **Overview** - Project overview
+- **Progress** - Progress
+- **Statistics** - Various statistics
+- **Quick Actions** - Quick actions
 
-## 🔗 ลิงก์สำคัญ
+## 🔗 Important Links
 - [[01_MANUSCRIPT/README|📝 Manuscript]]
 - [[02_CHARACTERS/README|👥 Characters]]
 - [[03_WORLDBUILDING/README|🌍 Worldbuilding]]
@@ -33,158 +45,163 @@ Dashboard หลักสำหรับการจัดการและต�
 - [[06_NOTE/README|📝 Notes]]
 
 ---
-*อัปเดตล่าสุด: {date}*
+*Last updated: {date}*
 """,
         
         "01_MANUSCRIPT": """# 📝 Manuscript
 
-## 🎯 วัตถุประสงค์
-เก็บต้นฉบับและเนื้อหาหลักของเรื่อง
+## 🎯 Purpose
+To store the manuscript and main content of the story.
 
-## 📁 โครงสร้าง
-- **Chapters** - บทต่างๆ
-- **Scenes** - ฉากต่างๆ
-- **Drafts** - ร่างต่างๆ
-- **Final** - ฉบับสมบูรณ์
+## 📁 Structure
+- **Chapters** - Various chapters
+- **Scenes** - Various scenes
+- **Drafts** - Various drafts
+- **Final** - Final version
 
-## 📋 สถานะ
-- [ ] บทที่ 1
-- [ ] บทที่ 2
-- [ ] บทที่ 3
+## 📋 Status
+- [ ] Chapter 1
+- [ ] Chapter 2
+- [ ] Chapter 3
 
 ---
-*อัปเดตล่าสุด: {date}*
+*Last updated: {date}*
 """,
         
         "02_CHARACTERS": """# 👥 Characters
 
-## 🎯 วัตถุประสงค์
-จัดการข้อมูลตัวละครทั้งหมด
+## 🎯 Purpose
+To manage all character information.
 
-## 📁 โครงสร้าง
-- **Main Characters** - ตัวละครหลัก
-- **Supporting Characters** - ตัวละครรอง
-- **Antagonists** - ตัวละครฝ่ายตรงข้าม
-- **Character Development** - การพัฒนาตัวละคร
+## 📁 Structure
+- **Main Characters** - Main characters
+- **Supporting Characters** - Supporting characters
+- **Antagonists** - Antagonists
+- **Character Development** - Character development
 
-## 👤 ตัวละครหลัก
-- [ ] ตัวละคร 1
-- [ ] ตัวละคร 2
-- [ ] ตัวละคร 3
+## 👤 Main Characters
+- [ ] Character 1
+- [ ] Character 2
+- [ ] Character 3
 
 ---
-*อัปเดตล่าสุด: {date}*
+*Last updated: {date}*
 """,
         
         "03_WORLDBUILDING": """# 🌍 Worldbuilding
 
-## 🎯 วัตถุประสงค์
-สร้างและจัดการโลกในเรื่อง
+## 🎯 Purpose
+To create and manage the world in the story.
 
-## 📁 โครงสร้าง
-- **Locations** - สถานที่ต่างๆ
-- **Cultures** - วัฒนธรรม
-- **History** - ประวัติศาสตร์
-- **Geography** - ภูมิศาสตร์
-- **Politics** - การเมือง
+## 📁 Structure
+- **Locations** - Various locations
+- **Cultures** - Cultures
+- **History** - History
+- **Geography** - Geography
+- **Politics** - Politics
 
-## 🗺️ สถานที่สำคัญ
-- [ ] สถานที่ 1
-- [ ] สถานที่ 2
-- [ ] สถานที่ 3
+## 🗺️ Important Locations
+- [ ] Location 1
+- [ ] Location 2
+- [ ] Location 3
 
 ---
-*อัปเดตล่าสุด: {date}*
+*Last updated: {date}*
 """,
         
         "04_PLOT-TIMELINE": """# 📅 Plot & Timeline
 
-## 🎯 วัตถุประสงค์
-จัดการโครงเรื่องและไทม์ไลน์
+## 🎯 Purpose
+To manage the plot and timeline.
 
-## 📁 โครงสร้าง
-- **Plot Outline** - โครงเรื่อง
-- **Timeline** - ไทม์ไลน์
-- **Story Arcs** - ส่วนโค้งของเรื่อง
-- **Plot Points** - จุดสำคัญในเรื่อง
+## 📁 Structure
+- **Plot Outline** - Plot outline
+- **Timeline** - Timeline
+- **Story Arcs** - Story arcs
+- **Plot Points** - Plot points
 
-## 📈 โครงเรื่อง
+## 📈 Plot
 - [ ] Act 1
 - [ ] Act 2
 - [ ] Act 3
 
 ---
-*อัปเดตล่าสุด: {date}*
+*Last updated: {date}*
 """,
         
         "05_SYSTEMS-LORE": """# ⚡ Systems & Lore
 
-## 🎯 วัตถุประสงค์
-จัดการระบบและตำนานในเรื่อง
+## 🎯 Purpose
+To manage the systems and lore in the story.
 
-## 📁 โครงสร้าง
-- **Magic System** - ระบบเวทมนตร์
-- **Technology** - เทคโนโลยี
-- **Lore** - ตำนาน
-- **Rules** - กฎต่างๆ
+## 📁 Structure
+- **Magic System** - Magic system
+- **Technology** - Technology
+- **Lore** - Lore
+- **Rules** - Various rules
 
-## 🔮 ระบบหลัก
-- [ ] ระบบ 1
-- [ ] ระบบ 2
-- [ ] ระบบ 3
+## 🔮 Main Systems
+- [ ] System 1
+- [ ] System 2
+- [ ] System 3
 
 ---
-*อัปเดตล่าสุด: {date}*
+*Last updated: {date}*
 """,
         
         "06_NOTE": """# 📝 Notes
 
-## 🎯 วัตถุประสงค์
-เก็บบันทึกและความคิดต่างๆ
+## 🎯 Purpose
+To store notes and ideas.
 
-## 📁 โครงสร้าง
-- **Ideas** - ไอเดียต่างๆ
-- **Research** - การวิจัย
-- **References** - อ้างอิง
-- **Misc** - อื่นๆ
+## 📁 Structure
+- **Ideas** - Various ideas
+- **Research** - Research
+- **References** - References
+- **Misc** - Miscellaneous
 
-## 💡 ไอเดียล่าสุด
-- [ ] ไอเดีย 1
-- [ ] ไอเดีย 2
-- [ ] ไอเดีย 3
+## 💡 Latest Ideas
+- [ ] Idea 1
+- [ ] Idea 2
+- [ ] Idea 3
 
 ---
-*อัปเดตล่าสุด: {date}*
+*Last updated: {date}*
 """
     }
     
     date = datetime.now().strftime("%Y-%m-%d")
-    return templates.get(folder_name, f"# {folder_name}\n\n## 🎯 วัตถุประสงค์\n\n## 📁 โครงสร้าง\n\n---\n*อัปเดตล่าสุด: {date}*").format(date=date)
+    return templates.get(folder_name, f"# {folder_name}\n\n## 🎯 Purpose\n\n## 📁 Structure\n\n---\n*Last updated: {date}*").format(date=date)
 
 def create_dashboard_content() -> str:
-    """สร้างเนื้อหา Dashboard หลัก"""
+    """
+    Creates the content for the main dashboard file.
+
+    Returns:
+        str: The content of the main dashboard file.
+    """
     date = datetime.now().strftime("%Y-%m-%d")
     
     return f"""# 🎯 Project Dashboard
 
-## 📊 สถานะโครงการ
-- **สถานะ**: กำลังพัฒนา
-- **ความคืบหน้า**: 0%
-- **อัปเดตล่าสุด**: {date}
+## 📊 Project Status
+- **Status**: In development
+- **Progress**: 0%
+- **Last updated**: {date}
 
-## 🎯 เป้าหมาย
-- [ ] สร้างโครงสร้างพื้นฐาน
-- [ ] พัฒนาตัวละครหลัก
-- [ ] สร้างโลกในเรื่อง
-- [ ] เขียนบทที่ 1
+## 🎯 Goals
+- [ ] Create basic structure
+- [ ] Develop main characters
+- [ ] Create the world of the story
+- [ ] Write Chapter 1
 
-## 📈 สถิติ
-- **ไฟล์ทั้งหมด**: 0
-- **ตัวละคร**: 0
-- **ฉาก**: 0
-- **บท**: 0
+## 📈 Statistics
+- **Total files**: 0
+- **Characters**: 0
+- **Scenes**: 0
+- **Chapters**: 0
 
-## 🔗 ลิงก์ด่วน
+## 🔗 Quick Links
 - [[01_MANUSCRIPT/README|📝 Manuscript]]
 - [[02_CHARACTERS/README|👥 Characters]]
 - [[03_WORLDBUILDING/README|🌍 Worldbuilding]]
@@ -192,62 +209,72 @@ def create_dashboard_content() -> str:
 - [[05_SYSTEMS-LORE/README|⚡ Systems & Lore]]
 - [[06_NOTE/README|📝 Notes]]
 
-## 🛠️ เครื่องมือ
+## 🛠️ Tools
 - [[08_Templates-Tools/README|🔧 Templates & Tools]]
 
 ---
-*อัปเดตล่าสุด: {date}*
+*Last updated: {date}*
 """
 
 def create_templates_readme() -> str:
-    """สร้าง README สำหรับ 08_Templates-Tools"""
+    """
+    Creates the content for the README file in the '08_Templates-Tools' directory.
+
+    Returns:
+        str: The content of the README file.
+    """
     date = datetime.now().strftime("%Y-%m-%d")
     
     return f"""# 🔧 Templates & Tools
 
-## 🎯 วัตถุประสงค์
-เก็บเทมเพลตและเครื่องมือสำหรับการเขียน
+## 🎯 Purpose
+To store templates and tools for writing.
 
-## 📁 โครงสร้าง
+## 📁 Structure
 
 ### 📝 Prompts
-- **General**: Prompts ทั่วไปสำหรับ AI
-- **Default_Prompts**: Prompts สำหรับ Copilot
-- **Smart_Connections**: Prompts สำหรับ Smart Connections
+- **General**: General prompts for AI
+- **Default_Prompts**: Prompts for Copilot
+- **Smart_Connections**: Prompts for Smart Connections
 
 ### 📄 Document_Templates
-เทมเพลตสำหรับเอกสารต่างๆ
+Templates for various documents.
 
 ### 🛠️ Tools_and_Utilities
-เครื่องมือและสคริปต์ต่างๆ
+Various tools and scripts.
 
 ### 🗄️ Databases
-ฐานข้อมูลและข้อมูลอ้างอิง
+Databases and reference data.
 
-## 📊 สถิติ
-- **Prompts**: 20 ไฟล์
-- **Templates**: 0 ไฟล์
-- **Tools**: 0 ไฟล์
-- **Databases**: 0 ไฟล์
+## 📊 Statistics
+- **Prompts**: 20 files
+- **Templates**: 0 files
+- **Tools**: 0 files
+- **Databases**: 0 files
 
 ---
-*อัปเดตล่าสุด: {date}*
+*Last updated: {date}*
 """
 
 def create_vault_structure():
-    """สร้างโครงสร้าง Vault อย่างสมบูรณ์"""
+    """
+    Creates the complete vault structure.
+
+    This function creates the main folders, README files for each folder,
+    the main dashboard, and README files for the templates and prompts directories.
+    """
     vault_path = r"F:\01_WRI\Obsidian\Vault"
     
-    print("🎯 เริ่มสร้างโครงสร้าง Vault อย่างสมบูรณ์")
+    print("🎯 Starting to create the complete vault structure")
     print("=" * 60)
     
-    # 1. สร้าง README สำหรับโฟลเดอร์หลัก
+    # 1. Create README for main folders
     main_folders = [
         '00_DASHBOARD', '01_MANUSCRIPT', '02_CHARACTERS', 
         '03_WORLDBUILDING', '04_PLOT-TIMELINE', '05_SYSTEMS-LORE', '06_NOTE'
     ]
     
-    print("\n📝 สร้าง README สำหรับโฟลเดอร์หลัก...")
+    print("\n📝 Creating READMEs for main folders...")
     for folder in main_folders:
         folder_path = os.path.join(vault_path, folder)
         readme_path = os.path.join(folder_path, "README.md")
@@ -256,34 +283,34 @@ def create_vault_structure():
             content = create_readme_content(folder, folder)
             with open(readme_path, 'w', encoding='utf-8') as f:
                 f.write(content)
-            print(f"✅ สร้าง README: {folder}")
+            print(f"✅ Created README: {folder}")
     
-    # 2. สร้าง Dashboard หลัก
-    print("\n📊 สร้าง Dashboard หลัก...")
+    # 2. Create main dashboard
+    print("\n📊 Creating main dashboard...")
     dashboard_path = os.path.join(vault_path, "00_DASHBOARD", "Dashboard.md")
     if not os.path.exists(dashboard_path):
         content = create_dashboard_content()
         with open(dashboard_path, 'w', encoding='utf-8') as f:
             f.write(content)
-        print("✅ สร้าง Dashboard หลัก")
+        print("✅ Created main dashboard")
     
-    # 3. สร้าง README สำหรับ 08_Templates-Tools
-    print("\n🔧 สร้าง README สำหรับ Templates & Tools...")
+    # 3. Create README for 08_Templates-Tools
+    print("\n🔧 Creating README for Templates & Tools...")
     templates_readme_path = os.path.join(vault_path, "08_Templates-Tools", "README.md")
     if not os.path.exists(templates_readme_path):
         content = create_templates_readme()
         with open(templates_readme_path, 'w', encoding='utf-8') as f:
             f.write(content)
-        print("✅ สร้าง README สำหรับ Templates & Tools")
+        print("✅ Created README for Templates & Tools")
     
-    # 4. สร้าง README สำหรับ subfolders ของ Prompts
-    print("\n📝 สร้าง README สำหรับ Prompts...")
+    # 4. Create README for subfolders of Prompts
+    print("\n📝 Creating READMEs for Prompts...")
     prompts_path = os.path.join(vault_path, "08_Templates-Tools", "Prompts")
     
     prompt_types = {
-        "General": "Prompts ทั่วไปสำหรับ AI",
-        "Default_Prompts": "Prompts สำหรับ Copilot และการใช้งานทั่วไป",
-        "Smart_Connections": "Prompts สำหรับ Smart Connections"
+        "General": "General prompts for AI",
+        "Default_Prompts": "Prompts for Copilot and general use",
+        "Smart_Connections": "Prompts for Smart Connections"
     }
     
     for prompt_type, description in prompt_types.items():
@@ -294,25 +321,25 @@ def create_vault_structure():
             date = datetime.now().strftime("%Y-%m-%d")
             content = f"""# 📝 {prompt_type}
 
-## 🎯 วัตถุประสงค์
+## 🎯 Purpose
 {description}
 
-## 📁 ไฟล์ในโฟลเดอร์นี้
+## 📁 Files in this folder
 """
             
-            # เพิ่มรายการไฟล์ที่มีอยู่
+            # Add a list of existing files
             if os.path.exists(prompt_folder_path):
                 files = [f for f in os.listdir(prompt_folder_path) if f.endswith('.md') and f != 'README.md']
                 for file in sorted(files):
                     content += f"- [[{file}|{file.replace('.md', '')}]]\n"
             
-            content += f"\n---\n*อัปเดตล่าสุด: {date}*"
+            content += f"\n---\n*Last updated: {date}*"
             
             with open(readme_path, 'w', encoding='utf-8') as f:
                 f.write(content)
-            print(f"✅ สร้าง README: Prompts/{prompt_type}")
+            print(f"✅ Created README: Prompts/{prompt_type}")
     
-    print("\n🎉 การสร้างโครงสร้างเสร็จสิ้น!")
+    print("\n🎉 Structure creation complete!")
 
 if __name__ == "__main__":
     create_vault_structure()

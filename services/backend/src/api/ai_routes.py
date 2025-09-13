@@ -31,6 +31,7 @@ JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 
 # Pydantic models
 class ProviderConfig(BaseModel):
+    """Configuration for an AI provider."""
     provider: str = Field(..., description="AI provider name")
     api_key: str = Field(..., description="API key for the provider")
     base_url: Optional[str] = Field(None, description="Base URL for the provider")
@@ -38,6 +39,7 @@ class ProviderConfig(BaseModel):
     config: Optional[Dict[str, Any]] = Field({}, description="Additional configuration")
 
 class CompletionRequest(BaseModel):
+    """Request model for AI completion."""
     prompt: str = Field(..., description="Input prompt")
     model: Optional[str] = Field(None, description="Model to use")
     max_tokens: Optional[int] = Field(1000, description="Maximum tokens")
@@ -46,6 +48,7 @@ class CompletionRequest(BaseModel):
     config: Optional[Dict[str, Any]] = Field({}, description="Additional configuration")
 
 class CompletionResponse(BaseModel):
+    """Response model for AI completion."""
     id: str
     provider: str
     model: str
@@ -54,15 +57,18 @@ class CompletionResponse(BaseModel):
     created_at: datetime
 
 class ContentAnalysisRequest(BaseModel):
+    """Request model for content analysis."""
     content: str = Field(..., description="Content to analyze")
     analysis_type: str = Field(..., description="Type of analysis")
     config: Optional[Dict[str, Any]] = Field({}, description="Analysis configuration")
 
 class IntegrationConfig(BaseModel):
+    """Configuration for an external integration."""
     service: str = Field(..., description="Integration service name")
     config: Dict[str, Any] = Field(..., description="Integration configuration")
 
 class MCPToolRequest(BaseModel):
+    """Request model for executing an MCP tool."""
     tool_name: str = Field(..., description="MCP tool name")
     parameters: Dict[str, Any] = Field(..., description="Tool parameters")
 
@@ -71,6 +77,18 @@ router = APIRouter(prefix="/ai", tags=["ai"])
 
 # Dependency for authentication
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """
+    Validates the JWT token and returns the current user.
+
+    Args:
+        credentials (HTTPAuthorizationCredentials): The authorization credentials.
+
+    Raises:
+        HTTPException: If the token is invalid or the payload is malformed.
+
+    Returns:
+        dict: A dictionary containing the user ID.
+    """
     token = credentials.credentials
     try:
         payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
@@ -88,12 +106,14 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
 ai_orchestrator = AIOrchestrator()
 
 # Provider Management
-@router.post("/providers")
+@router.post("/providers", summary="Configure an AI provider")
 async def configure_provider(
     config: ProviderConfig,
     current_user: dict = Depends(get_current_user)
 ):
-    """Configure an AI provider"""
+    """
+    Configures a new AI provider for the current user.
+    """
     try:
         result = ai_orchestrator.configure_provider(
             user_id=current_user["id"],
@@ -115,12 +135,14 @@ async def configure_provider(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"เกิดข้อผิดพลาด: {str(e)}"
+            detail=f"An error occurred: {str(e)}"
         )
 
-@router.get("/providers")
+@router.get("/providers", summary="List configured AI providers")
 async def list_providers(current_user: dict = Depends(get_current_user)):
-    """List configured AI providers"""
+    """
+    Lists all configured AI providers for the current user.
+    """
     try:
         result = ai_orchestrator.list_providers(user_id=current_user["id"])
         
@@ -135,15 +157,17 @@ async def list_providers(current_user: dict = Depends(get_current_user)):
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"เกิดข้อผิดพลาด: {str(e)}"
+            detail=f"An error occurred: {str(e)}"
         )
 
-@router.delete("/providers/{provider}")
+@router.delete("/providers/{provider}", summary="Remove an AI provider")
 async def remove_provider(
     provider: str,
     current_user: dict = Depends(get_current_user)
 ):
-    """Remove an AI provider"""
+    """
+    Removes a configured AI provider for the current user.
+    """
     try:
         result = ai_orchestrator.remove_provider(
             user_id=current_user["id"],
@@ -161,15 +185,17 @@ async def remove_provider(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"เกิดข้อผิดพลาด: {str(e)}"
+            detail=f"An error occurred: {str(e)}"
         )
 
-@router.post("/providers/{provider}/test")
+@router.post("/providers/{provider}/test", summary="Test AI provider connection")
 async def test_provider(
     provider: str,
     current_user: dict = Depends(get_current_user)
 ):
-    """Test AI provider connection"""
+    """
+    Tests the connection to a configured AI provider.
+    """
     try:
         result = ai_orchestrator.test_provider(
             user_id=current_user["id"],
@@ -187,16 +213,18 @@ async def test_provider(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"เกิดข้อผิดพลาด: {str(e)}"
+            detail=f"An error occurred: {str(e)}"
         )
 
 # Completions
-@router.post("/completions", response_model=CompletionResponse)
+@router.post("/completions", response_model=CompletionResponse, summary="Create a completion")
 async def create_completion(
     request: CompletionRequest,
     current_user: dict = Depends(get_current_user)
 ):
-    """Create a completion using AI providers"""
+    """
+    Creates a completion using the configured AI providers.
+    """
     try:
         result = ai_orchestrator.create_completion(
             user_id=current_user["id"],
@@ -226,15 +254,17 @@ async def create_completion(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"เกิดข้อผิดพลาด: {str(e)}"
+            detail=f"An error occurred: {str(e)}"
         )
 
-@router.post("/completions/stream")
+@router.post("/completions/stream", summary="Create a streaming completion")
 async def create_streaming_completion(
     request: CompletionRequest,
     current_user: dict = Depends(get_current_user)
 ):
-    """Create a streaming completion"""
+    """
+    Creates a streaming completion. The response will be a stream of events.
+    """
     try:
         # Set stream to True
         request.stream = True
@@ -260,16 +290,18 @@ async def create_streaming_completion(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"เกิดข้อผิดพลาด: {str(e)}"
+            detail=f"An error occurred: {str(e)}"
         )
 
 # Content Analysis
-@router.post("/analyze")
+@router.post("/analyze", summary="Analyze content using AI")
 async def analyze_content(
     request: ContentAnalysisRequest,
     current_user: dict = Depends(get_current_user)
 ):
-    """Analyze content using AI"""
+    """
+    Analyzes a given piece of content using AI.
+    """
     try:
         result = ai_orchestrator.analyze_content(
             user_id=current_user["id"],
@@ -289,16 +321,18 @@ async def analyze_content(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"เกิดข้อผิดพลาด: {str(e)}"
+            detail=f"An error occurred: {str(e)}"
         )
 
 # Integrations
-@router.post("/integrations")
+@router.post("/integrations", summary="Configure external integration")
 async def configure_integration(
     config: IntegrationConfig,
     current_user: dict = Depends(get_current_user)
 ):
-    """Configure external integration"""
+    """
+    Configures an integration with an external service.
+    """
     try:
         result = ai_orchestrator.configure_integration(
             user_id=current_user["id"],
@@ -317,12 +351,14 @@ async def configure_integration(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"เกิดข้อผิดพลาด: {str(e)}"
+            detail=f"An error occurred: {str(e)}"
         )
 
-@router.get("/integrations")
+@router.get("/integrations", summary="List configured integrations")
 async def list_integrations(current_user: dict = Depends(get_current_user)):
-    """List configured integrations"""
+    """
+    Lists all configured integrations for the current user.
+    """
     try:
         result = ai_orchestrator.list_integrations(user_id=current_user["id"])
         
@@ -337,13 +373,15 @@ async def list_integrations(current_user: dict = Depends(get_current_user)):
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"เกิดข้อผิดพลาด: {str(e)}"
+            detail=f"An error occurred: {str(e)}"
         )
 
 # MCP Tools
-@router.get("/mcp/tools")
+@router.get("/mcp/tools", summary="List available MCP tools")
 async def list_mcp_tools(current_user: dict = Depends(get_current_user)):
-    """List available MCP tools"""
+    """
+    Lists all available MCP (Modular Component Protocol) tools.
+    """
     try:
         result = ai_orchestrator.list_mcp_tools(user_id=current_user["id"])
         
@@ -358,15 +396,17 @@ async def list_mcp_tools(current_user: dict = Depends(get_current_user)):
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"เกิดข้อผิดพลาด: {str(e)}"
+            detail=f"An error occurred: {str(e)}"
         )
 
-@router.post("/mcp/tools/execute")
+@router.post("/mcp/tools/execute", summary="Execute an MCP tool")
 async def execute_mcp_tool(
     request: MCPToolRequest,
     current_user: dict = Depends(get_current_user)
 ):
-    """Execute an MCP tool"""
+    """
+    Executes a specified MCP tool with the given parameters.
+    """
     try:
         result = ai_orchestrator.execute_mcp_tool(
             user_id=current_user["id"],
@@ -385,13 +425,15 @@ async def execute_mcp_tool(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"เกิดข้อผิดพลาด: {str(e)}"
+            detail=f"An error occurred: {str(e)}"
         )
 
 # Analytics
-@router.get("/analytics/usage")
+@router.get("/analytics/usage", summary="Get usage analytics")
 async def get_usage_analytics(current_user: dict = Depends(get_current_user)):
-    """Get usage analytics"""
+    """
+    Retrieves usage analytics for the current user.
+    """
     try:
         result = ai_orchestrator.get_usage_analytics(user_id=current_user["id"])
         
@@ -406,12 +448,14 @@ async def get_usage_analytics(current_user: dict = Depends(get_current_user)):
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"เกิดข้อผิดพลาด: {str(e)}"
+            detail=f"An error occurred: {str(e)}"
         )
 
-@router.get("/analytics/costs")
+@router.get("/analytics/costs", summary="Get cost analytics")
 async def get_cost_analytics(current_user: dict = Depends(get_current_user)):
-    """Get cost analytics"""
+    """
+    Retrieves cost analytics for the current user.
+    """
     try:
         result = ai_orchestrator.get_cost_analytics(user_id=current_user["id"])
         
@@ -426,5 +470,5 @@ async def get_cost_analytics(current_user: dict = Depends(get_current_user)):
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"เกิดข้อผิดพลาด: {str(e)}"
+            detail=f"An error occurred: {str(e)}"
         )

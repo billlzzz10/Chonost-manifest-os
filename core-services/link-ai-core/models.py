@@ -1,6 +1,6 @@
 """
-Pydantic models สำหรับ MCP Orchestrator
-รองรับ Transport หลายแบบ: stdio, python, npx, docker, http
+Pydantic models for the MCP Orchestrator.
+This module supports multiple transport types: stdio, python, npx, docker, and http.
 """
 
 from typing import Any, Dict, List, Literal, Optional, Union
@@ -10,7 +10,28 @@ from datetime import datetime
 TransportKind = Literal["stdio", "python", "npx", "docker", "http"]
 
 class MCPServer(BaseModel):
-    """MCP Server configuration รองรับ transport หลายแบบ"""
+    """
+    An MCP Server configuration that supports multiple transport types.
+
+    Attributes:
+        name (str): The server name/identifier.
+        kind (TransportKind): The transport type.
+        env (Optional[Dict[str, str]]): Environment variables for the server.
+        cwd (Optional[str]): The working directory for the server.
+        description (Optional[str]): A description of the server.
+        version (Optional[str]): The server version.
+        cmd (Optional[List[str]]): Command line arguments for stdio/npx/docker.
+        module (Optional[str]): The Python module for `python -m <module>`.
+        image (Optional[str]): The Docker image name.
+        entrypoint (Optional[List[str]]): A Docker entrypoint override.
+        args (Optional[List[str]]): Extra arguments for the process/docker.
+        url (Optional[str]): The HTTP/HTTPS endpoint URL.
+        headers (Optional[Dict[str, str]]): HTTP headers.
+        bearer_token (Optional[str]): A bearer token for authentication.
+        verify_tls (Optional[bool]): A flag indicating whether to verify the
+                                      TLS certificate.
+        timeout_s (Optional[float]): The request timeout in seconds.
+    """
     
     name: str = Field(..., description="Server name/identifier")
     kind: TransportKind = Field(..., description="Transport type")
@@ -108,7 +129,15 @@ class MCPServer(BaseModel):
         return v
 
 class MCPTool(BaseModel):
-    """MCP Tool definition"""
+    """
+    An MCP Tool definition.
+
+    Attributes:
+        name (str): The name of the tool.
+        description (str): A description of the tool.
+        inputSchema (Optional[Dict[str, Any]]): A JSON schema for the tool's
+                                                 input.
+    """
 
     name: str = Field(..., description="Tool name")
     description: str = Field(..., description="Tool description")
@@ -118,19 +147,38 @@ class MCPTool(BaseModel):
     )
 
 class MCPListToolsReq(BaseModel):
-    """Request to list tools from an MCP server"""
+    """
+    A request to list tools from an MCP server.
+
+    Attributes:
+        server (str): The name of the server to query.
+    """
 
     server: str = Field(..., description="Server name to query")
 
 class MCPListToolsResp(BaseModel):
-    """Response containing tools from an MCP server"""
+    """
+    A response containing tools from an MCP server.
+
+    Attributes:
+        tools (List[MCPTool]): A list of available tools.
+        server (str): The name of the server.
+        timestamp (datetime): The timestamp of the response.
+    """
 
     tools: List[MCPTool] = Field(..., description="List of available tools")
     server: str = Field(..., description="Server name")
     timestamp: datetime = Field(default_factory=datetime.now)
 
 class MCPCallReq(BaseModel):
-    """Request to call a tool on an MCP server"""
+    """
+    A request to call a tool on an MCP server.
+
+    Attributes:
+        server (str): The name of the server.
+        tool (str): The name of the tool to call.
+        arguments (Dict[str, Any]): The arguments for the tool.
+    """
 
     server: str = Field(..., description="Server name")
     tool: str = Field(..., description="Tool name to call")
@@ -140,7 +188,17 @@ class MCPCallReq(BaseModel):
     )
 
 class MCPCallResp(BaseModel):
-    """Response from tool call"""
+    """
+    A response from a tool call.
+
+    Attributes:
+        result (Any): The result of the tool execution.
+        server (str): The name of the server.
+        tool (str): The name of the tool.
+        timestamp (datetime): The timestamp of the response.
+        execution_time_ms (Optional[float]): The execution time of the tool in
+                                             milliseconds.
+    """
 
     result: Any = Field(..., description="Tool execution result")
     server: str = Field(..., description="Server name")
@@ -152,12 +210,25 @@ class MCPCallResp(BaseModel):
     )
 
 class MCPServersResp(BaseModel):
-    """Response containing available MCP servers"""
+    """
+    A response containing the available MCP servers.
+
+    Attributes:
+        servers (List[str]): A list of server names.
+    """
 
     servers: List[str] = Field(..., description="List of server names")
 
 class MCPError(BaseModel):
-    """MCP Error response"""
+    """
+    An MCP Error response.
+
+    Attributes:
+        code (int): The error code.
+        message (str): The error message.
+        details (Optional[Dict[str, Any]]): Additional error details.
+        timestamp (datetime): The timestamp of the error.
+    """
 
     code: int = Field(..., description="Error code")
     message: str = Field(..., description="Error message")
@@ -168,7 +239,16 @@ class MCPError(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.now)
 
 class HealthCheck(BaseModel):
-    """Health check response"""
+    """
+    A health check response.
+
+    Attributes:
+        status (str): The status of the service.
+        timestamp (datetime): The timestamp of the health check.
+        version (str): The version of the service.
+        uptime_seconds (Optional[float]): The uptime of the service in seconds.
+        mcp_servers (List[str]): A list of available MCP servers.
+    """
 
     status: str = Field(..., description="Service status")
     timestamp: datetime = Field(default_factory=datetime.now)
@@ -183,7 +263,17 @@ class HealthCheck(BaseModel):
     )
 
 class ServerStatus(BaseModel):
-    """MCP Server status"""
+    """
+    The status of an MCP Server.
+
+    Attributes:
+        name (str): The name of the server.
+        status (str): The status of the server (running, stopped, error).
+        uptime_seconds (Optional[float]): The uptime of the server in seconds.
+        last_used (Optional[datetime]): The last time the server was used.
+        error_count (int): The number of errors encountered.
+        last_error (Optional[str]): The last error message.
+    """
 
     name: str = Field(..., description="Server name")
     status: str = Field(..., description="Server status (running, stopped, error)")

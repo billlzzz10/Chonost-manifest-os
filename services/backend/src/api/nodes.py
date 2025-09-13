@@ -14,6 +14,7 @@ from models.node import Node, NodeType
 router = APIRouter()
 
 class NodeCreate(BaseModel):
+    """Request model for creating a node."""
     title: str
     content: Optional[str] = None
     type: NodeType
@@ -21,11 +22,13 @@ class NodeCreate(BaseModel):
     metadata: Optional[dict] = None
 
 class NodeUpdate(BaseModel):
+    """Request model for updating a node."""
     title: Optional[str] = None
     content: Optional[str] = None
     metadata: Optional[dict] = None
 
 class NodeResponse(BaseModel):
+    """Response model for a node."""
     id: str
     title: str
     content: Optional[str] = None
@@ -35,12 +38,14 @@ class NodeResponse(BaseModel):
     updated_at: Optional[str] = None
     document_id: Optional[str] = None
 
-@router.post("/", response_model=NodeResponse)
+@router.post("/", response_model=NodeResponse, summary="Create a new node")
 async def create_node(
     node_data: NodeCreate,
     db: AsyncSession = Depends(get_db)
 ):
-    """Create a new node"""
+    """
+    Creates a new node in the database.
+    """
     try:
         node = Node(
             title=node_data.title,
@@ -57,7 +62,7 @@ async def create_node(
         await db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.get("/", response_model=List[NodeResponse])
+@router.get("/", response_model=List[NodeResponse], summary="Get a list of nodes")
 async def get_nodes(
     type: Optional[NodeType] = None,
     document_id: Optional[str] = None,
@@ -65,7 +70,9 @@ async def get_nodes(
     offset: int = 0,
     db: AsyncSession = Depends(get_db)
 ):
-    """Get nodes with optional filtering"""
+    """
+    Gets a list of nodes with optional filtering.
+    """
     try:
         query = db.query(Node)
         
@@ -81,12 +88,14 @@ async def get_nodes(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.get("/{node_id}", response_model=NodeResponse)
+@router.get("/{node_id}", response_model=NodeResponse, summary="Get a specific node")
 async def get_node(
     node_id: str,
     db: AsyncSession = Depends(get_db)
 ):
-    """Get a specific node by ID"""
+    """
+    Gets a specific node by its ID.
+    """
     try:
         node = await db.get(Node, node_id)
         if not node:
@@ -95,13 +104,15 @@ async def get_node(
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.put("/{node_id}", response_model=NodeResponse)
+@router.put("/{node_id}", response_model=NodeResponse, summary="Update a node")
 async def update_node(
     node_id: str,
     node_data: NodeUpdate,
     db: AsyncSession = Depends(get_db)
 ):
-    """Update a node"""
+    """
+    Updates a node's attributes.
+    """
     try:
         node = await db.get(Node, node_id)
         if not node:
@@ -121,12 +132,14 @@ async def update_node(
         await db.rollback()
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.delete("/{node_id}")
+@router.delete("/{node_id}", summary="Delete a node")
 async def delete_node(
     node_id: str,
     db: AsyncSession = Depends(get_db)
 ):
-    """Delete a node"""
+    """
+    Deletes a node from the database.
+    """
     try:
         node = await db.get(Node, node_id)
         if not node:

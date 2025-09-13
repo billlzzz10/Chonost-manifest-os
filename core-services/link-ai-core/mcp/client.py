@@ -1,6 +1,7 @@
 """
-MCP Client Implementation
-รองรับ Transport หลายแบบ: stdio, python, npx, docker, http
+MCP Client Implementation.
+This module provides a client for the MCP (Modular Component Protocol),
+which supports multiple transport layers such as stdio, Python, npx, Docker, and HTTP.
 """
 
 import asyncio
@@ -27,15 +28,41 @@ else:
 
 # Unified MCP Client class for easier usage
 class MCPClient:
-    """Unified MCP Client for orchestrator usage"""
+    """
+    A unified MCP client for orchestrator usage.
+
+    This class provides a single entry point for calling tools on various MCP servers.
+    It manages multiple MCPClient instances, one for each server, and dynamically
+    creates them as needed.
+    """
 
     def __init__(self):
-        """Initialize unified MCP client"""
+        """
+        Initializes the unified MCP client.
+        """
         self.clients = {}  # server_name -> MCPClient instance
         self.pool = None
 
     async def call_tool(self, tool_name: str, parameters: dict = None):
-        """Call MCP tool by name"""
+        """
+        Calls an MCP tool by its name.
+
+        The tool name should be in the format "server_name.tool_short_name".
+        This method will look up the server, create a client for it if one doesn't
+        already exist, and then call the tool.
+
+        Note:
+            The current implementation includes a mock response for the
+            "filesystem" server for testing purposes. The actual client
+            initialization and tool calling logic is yet to be implemented.
+
+        Args:
+            tool_name (str): The name of the tool to call.
+            parameters (dict, optional): The parameters for the tool. Defaults to None.
+
+        Returns:
+            A dictionary containing the result of the tool call.
+        """
         if parameters is None:
             parameters = {}
 
@@ -121,20 +148,56 @@ class MCPClient:
 
 # Keep the original MCPClientInstance class for backward compatibility
 class MCPClientInstance:
-    """Placeholder for original MCPClientInstance"""
+    """A placeholder for the original MCPClientInstance class for backward compatibility."""
     pass
 
 class BaseTransport:
-    """Base transport class"""
-    async def start(self): ...
-    async def stop(self): ...
-    async def send(self, payload: Dict[str, Any]) -> Dict[str, Any]: ...
+    """
+    A base class for all transport implementations.
+
+    This class defines the interface that all transport classes must implement.
+    """
+    async def start(self):
+        """Starts the transport layer."""
+        ...
+    async def stop(self):
+        """Stops the transport layer."""
+        ...
+    async def send(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Sends a payload through the transport layer.
+
+        Args:
+            payload (Dict[str, Any]): The payload to send.
+
+        Returns:
+            Dict[str, Any]: The response from the server.
+        """
+        ...
 
 # ---------- STDIO-like process (stdio / python / npx / docker) ----------
 class ProcessTransport(BaseTransport):
-    """Process-based transport for stdio, python, npx, docker"""
+    """
+    A process-based transport for stdio, Python, npx, and Docker.
+
+    This class manages a subprocess and communicates with it over stdin and stdout.
+
+    Usage:
+        transport = ProcessTransport(argv=["python", "my_script.py"])
+        await transport.start()
+        response = await transport.send({"jsonrpc": "2.0", ...})
+        await transport.stop()
+    """
     
     def __init__(self, argv: List[str], env: Optional[Dict[str, str]] = None, cwd: Optional[str] = None):
+        """
+        Initializes the process transport.
+
+        Args:
+            argv (List[str]): The command and arguments to execute.
+            env (Optional[Dict[str, str]], optional): Environment variables for the process. Defaults to None.
+            cwd (Optional[str], optional): The working directory for the process. Defaults to None.
+        """
         self.argv = argv
         self.env = {**os.environ, **(env or {})}
         self.cwd = cwd
@@ -145,7 +208,7 @@ class ProcessTransport(BaseTransport):
         self._listen_task: Optional[asyncio.Task] = None
 
     async def start(self):
-        """Start the process"""
+        """Starts the process and sets up communication streams."""
         logger.info(f"Starting process: {' '.join(self.argv)}")
         
         self.proc = await asyncio.create_subprocess_exec(
@@ -161,7 +224,7 @@ class ProcessTransport(BaseTransport):
         self._listen_task = asyncio.create_task(self._listen())
 
     async def _listen(self):
-        """Listen for responses from the process"""
+        """Listens for responses from the process and fulfills pending futures."""
         assert self.reader
         try:
             while True:
@@ -188,7 +251,15 @@ class ProcessTransport(BaseTransport):
             logger.info("Process listener stopped")
 
     async def send(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-        """Send a message to the process"""
+        """
+        Sends a message to the process.
+
+        Args:
+            payload (Dict[str, Any]): The payload to send.
+
+        Returns:
+            Dict[str, Any]: The response from the server.
+        """
         assert self.writer
         _id = str(payload.get("id"))
         if not _id:
@@ -206,7 +277,7 @@ class ProcessTransport(BaseTransport):
             raise e
 
     async def stop(self):
-        """Stop the process"""
+        """Stops the process and cleans up resources."""
         logger.info("Stopping process transport")
         
         if self.writer:
@@ -233,10 +304,30 @@ class ProcessTransport(BaseTransport):
 
 # ---------- HTTP/HTTPS ----------
 class HTTPTransport(BaseTransport):
-    """HTTP/HTTPS transport"""
+    """
+    An HTTP/HTTPS transport layer.
+
+    This class uses the `httpx` library to send and receive MCP messages over HTTP.
+
+    Usage:
+        transport = HTTPTransport(base_url="http://localhost:8000/mcp")
+        await transport.start()
+        response = await transport.send({"jsonrpc": "2.0", ...})
+        await transport.stop()
+    """
     
     def __init__(self, base_url: str, headers: Optional[Dict[str, str]] = None, 
                  bearer_token: Optional[str] = None, verify: bool = True, timeout: float = 60.0):
+        """
+        Initializes the HTTP transport.
+
+        Args:
+            base_url (str): The base URL of the MCP server.
+            headers (Optional[Dict[str, str]], optional): Custom headers to include in requests. Defaults to None.
+            bearer_token (Optional[str], optional): A bearer token for authentication. Defaults to None.
+            verify (bool, optional): Whether to verify the server's TLS certificate. Defaults to True.
+            timeout (float, optional): The request timeout in seconds. Defaults to 60.0.
+        """
         self.url = base_url.rstrip("/")
         self.headers = headers or {}
         if bearer_token:
@@ -246,7 +337,7 @@ class HTTPTransport(BaseTransport):
         self.client: Optional[Any] = None
 
     async def start(self):
-        """Start HTTP client"""
+        """Initializes the `httpx` client."""
         try:
             import httpx
             self.client = httpx.AsyncClient(
@@ -259,7 +350,15 @@ class HTTPTransport(BaseTransport):
             raise ImportError("httpx is required for HTTP transport")
 
     async def send(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-        """Send HTTP request"""
+        """
+        Sends an HTTP POST request to the server.
+
+        Args:
+            payload (Dict[str, Any]): The payload to send.
+
+        Returns:
+            Dict[str, Any]: The JSON response from the server.
+        """
         assert self.client
         try:
             r = await self.client.post(self.url, json=payload)
@@ -273,16 +372,27 @@ class HTTPTransport(BaseTransport):
             raise
 
     async def stop(self):
-        """Stop HTTP client"""
+        """Closes the `httpx` client."""
         if self.client:
             await self.client.aclose()
             logger.info("HTTP client stopped")
 
 # ---------- Client ----------
 class MCPClientOriginal:
-    """MCP Client ที่รองรับ transport หลายแบบ (Original)"""
+    """
+    The original MCP client, which supports multiple transport types.
+
+    This class is responsible for starting, stopping, and communicating with an MCP server
+    using the appropriate transport layer based on the server's configuration.
+    """
     
     def __init__(self, server: MCPServer):
+        """
+        Initializes the MCP client.
+
+        Args:
+            server (MCPServer): The server to connect to.
+        """
         self.server = server
         self.transport: Optional[BaseTransport] = None
         self.initialized = False
@@ -291,7 +401,15 @@ class MCPClientOriginal:
         self.last_error = None
 
     async def start(self) -> Dict[str, Any]:
-        """Start the MCP client with appropriate transport"""
+        """
+        Starts the MCP client with the appropriate transport.
+
+        This method determines the transport type from the server configuration,
+        initializes the transport, and then sends an `initialize` RPC to the server.
+
+        Returns:
+            Dict[str, Any]: The result of the `initialize` RPC.
+        """
         try:
             kind = self.server.kind
             
@@ -364,7 +482,16 @@ class MCPClientOriginal:
             raise
 
     async def _rpc(self, method: str, params: Optional[Dict[str, Any]] = None) -> Any:
-        """Send RPC request"""
+        """
+        Sends an RPC request to the server.
+
+        Args:
+            method (str): The name of the RPC method to call.
+            params (Optional[Dict[str, Any]], optional): The parameters for the RPC method. Defaults to None.
+
+        Returns:
+            Any: The result of the RPC call.
+        """
         assert self.transport
         payload = {"jsonrpc": "2.0", "id": str(uuid.uuid4()), "method": method}
         if params is not None:
@@ -372,7 +499,12 @@ class MCPClientOriginal:
         return await self.transport.send(payload)
 
     async def tools_list(self) -> List[Dict[str, Any]]:
-        """List available tools"""
+        """
+        Lists the available tools on the server.
+
+        Returns:
+            List[Dict[str, Any]]: A list of available tools.
+        """
         try:
             result = await self._rpc("tools/list", {})
             return result.get("tools", [])
@@ -381,7 +513,16 @@ class MCPClientOriginal:
             return []
 
     async def tools_call(self, name: str, arguments: Dict[str, Any]) -> Any:
-        """Call a tool"""
+        """
+        Calls a tool on the server.
+
+        Args:
+            name (str): The name of the tool to call.
+            arguments (Dict[str, Any]): The arguments for the tool.
+
+        Returns:
+            Any: The result of the tool call.
+        """
         start_time = time.time()
         try:
             result = await self._rpc("tools/call", {
@@ -397,7 +538,7 @@ class MCPClientOriginal:
             raise
 
     async def stop(self) -> None:
-        """Stop the client"""
+        """Stops the client and the transport layer."""
         try:
             if self.transport:
                 await self.transport.stop()
@@ -408,7 +549,12 @@ class MCPClientOriginal:
             logger.error(f"Error stopping MCP client {self.server.name}: {e}")
 
     def get_status(self) -> Dict[str, Any]:
-        """Get client status"""
+        """
+        Gets the current status of the client.
+
+        Returns:
+            Dict[str, Any]: A dictionary containing the client's status.
+        """
         uptime = None
         if self.start_time:
             uptime = time.time() - self.start_time

@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """
-Mock Filesystem MCP Server for testing
-Implements basic MCP protocol for filesystem operations
+Mock Filesystem MCP Server for Testing.
+This module implements a mock MCP (Modular Component Protocol) server for
+filesystem operations, designed for testing purposes. It simulates the behavior
+of a real filesystem MCP server by implementing the basic MCP protocol.
 """
 
 import asyncio
@@ -10,9 +12,15 @@ import sys
 import os
 
 class MockFilesystemServer:
-    """Mock MCP server for filesystem operations"""
+    """
+    A mock MCP server for filesystem operations.
+
+    This class simulates the behavior of a real filesystem MCP server by providing
+    mock implementations for various tool calls such as semantic search and pattern extraction.
+    """
 
     def __init__(self):
+        """Initializes the mock filesystem server."""
         self.tools = [
             {
                 "name": "semantic_search",
@@ -41,7 +49,18 @@ class MockFilesystemServer:
         ]
 
     async def handle_message(self, message):
-        """Handle incoming MCP messages"""
+        """
+        Handles incoming MCP messages.
+
+        This method parses the incoming message, determines the requested method,
+        and calls the appropriate handler.
+
+        Args:
+            message (dict): The incoming MCP message.
+
+        Returns:
+            dict: The response to the MCP message.
+        """
         try:
             method = message.get("method")
             params = message.get("params", {})
@@ -85,7 +104,16 @@ class MockFilesystemServer:
             return {"error": str(e)}
 
     def _mock_semantic_search(self, query, limit):
-        """Mock semantic search implementation"""
+        """
+        A mock implementation of the semantic search tool.
+
+        Args:
+            query (str): The search query.
+            limit (int): The maximum number of results to return.
+
+        Returns:
+            dict: A dictionary of mock search results.
+        """
         # Return mock results
         mock_results = [
             {
@@ -107,7 +135,16 @@ class MockFilesystemServer:
         }
 
     def _mock_pattern_extract(self, pattern, file_path):
-        """Mock pattern extraction implementation"""
+        """
+        A mock implementation of the pattern extraction tool.
+
+        Args:
+            pattern (str): The pattern to extract.
+            file_path (str): The path to the file to analyze.
+
+        Returns:
+            dict: A dictionary of mock pattern extraction results.
+        """
         return {
             "patterns": [
                 {
@@ -125,7 +162,13 @@ class MockFilesystemServer:
 
 
 async def main():
-    """Main entry point for the mock server"""
+    """
+    The main entry point for the mock server.
+
+    This function creates an instance of the `MockFilesystemServer` and listens
+    for incoming messages on stdin. It then processes the messages and prints
+    the responses to stdout.
+    """
     server = MockFilesystemServer()
 
     # Simple stdin/stdout MCP server

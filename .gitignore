@@ -701,3 +701,8 @@ desktop.ini
 
 #Ignore vscode AI rules
 .github\instructions\codacy.instructions.md
+
+*.cursor
+*.continue
+*.kilo
+manus-rag-test.md

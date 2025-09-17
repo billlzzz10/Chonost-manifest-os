@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useLocation, useParams } from 'react-router-dom'
 import { Button } from '../../shared/ui/button'
 import { ScrollArea } from '../../shared/ui/scroll-area'
 import { 
@@ -22,24 +21,20 @@ import {
   DropdownMenuTrigger,
 } from '../../shared/ui/dropdown-menu'
 
-export function Sidebar() {
-  const navigate = useNavigate()
-  const location = useLocation()
-  const { sessionId } = useParams()
+export function Sidebar({ currentView, setCurrentView, selectedChatId, setSelectedChatId }) {
   const [chatSessions, setChatSessions] = useState([])
   const [loading, setLoading] = useState(false)
 
   const menuItems = [
-    { id: 'chat', label: 'แชต', icon: MessageSquare, path: '/chat' },
-    { id: 'files', label: 'ไฟล์', icon: Files, path: '/files' },
-    { id: 'agents', label: 'Agent Builder', icon: Brain, path: '/agents' },
-    { id: 'connections', label: 'การเชื่อมต่อ', icon: Link, path: '/connections' },
-    { id: 'automations', label: 'อัตโนมัติ', icon: Zap, path: '/automations' },
-    { id: 'templates', label: 'เทมเพลต', icon: Template, path: '/templates' },
-    { id: 'settings', label: 'ตั้งค่า', icon: Settings, path: '/settings' },
+    { id: 'chat', label: 'แชต', icon: MessageSquare },
+    { id: 'editor', label: 'เอดิเตอร์', icon: Template },
+    { id: 'whiteboard', label: 'ไวท์บอร์ด', icon: Files },
+    { id: 'connections', label: 'การเชื่อมต่อ', icon: Link },
+    { id: 'automations', label: 'อัตโนมัติ', icon: Zap },
+    { id: 'agents', label: 'Agent Builder', icon: Brain },
+    { id: 'templates', label: 'เทมเพลต', icon: Template },
+    { id: 'settings', label: 'ตั้งค่า', icon: Settings },
   ]
-
-  const currentView = location.pathname.split('/')[1] || 'chat'
 
   useEffect(() => {
     if (currentView === 'chat') {
@@ -77,7 +72,8 @@ export function Sidebar() {
       const data = await response.json()
       if (data.success) {
         setChatSessions(prev => [data.data, ...prev])
-        navigate(`/chat/${data.data.id}`)
+        setSelectedChatId(data.data.id)
+        setCurrentView('chat')
       }
     } catch (error) {
       console.error('Error creating new chat:', error)
@@ -92,8 +88,9 @@ export function Sidebar() {
       const data = await response.json()
       if (data.success) {
         setChatSessions(prev => prev.filter(chat => chat.id !== chatId))
-        if (sessionId === chatId) {
-          navigate('/chat')
+        if (selectedChatId === chatId) {
+          setSelectedChatId(null)
+          setCurrentView('chat')
         }
       }
     } catch (error) {
@@ -131,7 +128,7 @@ export function Sidebar() {
                 key={item.id}
                 variant={isActive ? "default" : "ghost"}
                 className="w-full justify-start"
-                onClick={() => navigate(item.path)}
+                onClick={() => setCurrentView(item.id)}
               >
                 <Icon className="mr-2 h-4 w-4" />
                 {item.label}
@@ -171,7 +168,10 @@ export function Sidebar() {
                           ? 'bg-blue-50 border border-blue-200'
                           : 'hover:bg-gray-50'
                       }`}
-                      onClick={() => navigate(`/chat/${chat.id}`)}
+                      onClick={() => {
+                        setSelectedChatId(chat.id)
+                        setCurrentView('chat')
+                      }}
                     >
                       <div className="flex-1 min-w-0">
                         <div className="font-medium text-sm text-gray-900 truncate">

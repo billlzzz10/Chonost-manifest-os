@@ -2,8 +2,10 @@ import { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { Sidebar } from './widgets/sidebar/Sidebar'
 import { ChatInterface } from './features/chat/ChatInterface'
-import { Connections } from './features/connections/Connections'
-import { Automations } from './features/automations/Automations'
+import { Editor } from './features/editor/Editor'
+import { Whiteboard } from './features/whiteboard/Whiteboard'
+import { Connections } from '../Connections.jsx'
+import { Automations } from '../Automations.jsx'
 import { Settings } from './features/settings/Settings'
 import { ErrorBoundary } from './shared/ErrorBoundary'
 import { ThemeProvider } from './shared/ThemeProvider'
@@ -32,6 +34,8 @@ function App() {
                 setSelectedChatId={setSelectedChatId}
               />
             )}
+            {currentView === 'editor' && <Editor />}
+            {currentView === 'whiteboard' && <Whiteboard />}
             {currentView === 'connections' && <Connections />}
             {currentView === 'automations' && <Automations />}
             {currentView === 'settings' && <Settings />}

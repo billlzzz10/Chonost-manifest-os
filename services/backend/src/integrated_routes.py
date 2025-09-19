@@ -2,77 +2,64 @@
 🎯 Integrated Routes for Chonost System
 Routes ที่ผนวกรวมทุกฟีเจอร์เข้าด้วยกัน
 """
-from flask import Blueprint, jsonify, request
-from flask_cors import cross_origin
+from fastapi import APIRouter, Query, Body
+from fastapi.responses import JSONResponse
 import json
 import asyncio
 import sqlite3
 import re
 from datetime import datetime
 from typing import Dict, Any, Optional
-from src.integrated_system_core import get_integrated_system, Task, AgentType, TaskPriority, TaskStatus
+from src.integrated_system_core import (
+    get_integrated_system,
+    Task,
+    AgentType,
+    TaskPriority,
+    TaskStatus,
+)
 
-integrated_bp = Blueprint('integrated', __name__)
+# FastAPI router (ใช้ prefix "/integrated")
+intergrated_router = APIRouter(prefix="/integrated", tags=["integrated"])
+# Alias ที่สะกดถูกต้อง (เผื่อโค้ดภายนอกอ้างอิง)
+integrated_router = intergrated_router
+
 system = get_integrated_system()
 
-# Compatibility export for code expecting a variable named
-# "intergrated_router" (note the common misspelling) or
-# "integrated_router". This file currently defines a Flask Blueprint
-# named `integrated_bp`. We expose aliases so importers can reference
-# a consistent symbol name without changing all call sites.
-#
-# If/when this module is migrated fully to FastAPI, these aliases can be
-# switched to point to an APIRouter instead, keeping external imports stable.
-intergrated_router = integrated_bp  # common misspelling alias
-integrated_router = integrated_bp   # correctly spelled alias
-
-@integrated_bp.route('/integrated/manuscripts', methods=['GET'])
-@cross_origin()
-def get_manuscripts():
+@intergrated_router.get("/manuscripts")
+def get_manuscripts(user_id: str = Query("default_user")):
     """ดึงรายการ manuscripts ทั้งหมด"""
     try:
-        # ดึงจากระบบ integrated
-        user_id = request.args.get('user_id', 'default_user')
-        
         # Input validation
         if not user_id or not isinstance(user_id, str):
-            return jsonify({
+            return JSONResponse({
                 'success': False,
                 'error': 'Invalid user_id parameter'
-            }), 400
+            }, status_code=400)
         
         # Sanitize user_id
         user_id = re.sub(r'[^a-zA-Z0-9_-]', '', user_id)
         if not user_id:
-            return jsonify({
+            return JSONResponse({
                 'success': False,
                 'error': 'Invalid user_id format'
-            }), 400
+            }, status_code=400)
         
         manuscripts = system.get_user_manuscripts(user_id)
         
-        return jsonify({
+        return {
             'success': True,
             'manuscripts': manuscripts,
             'total': len(manuscripts)
-        })
+        }
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return JSONResponse({'success': False, 'error': str(e)}, status_code=500)
 
-@integrated_bp.route('/integrated/manuscripts', methods=['POST'])
-@cross_origin()
-def create_manuscript():
+@intergrated_router.post("/manuscripts")
+def create_manuscript(data: Optional[Dict[str, Any]] = Body(None)):
     """สร้าง manuscript ใหม่"""
     try:
-        data = request.json
         if not data:
-            return jsonify({
-                'success': False,
-                'error': 'Request body is required'
-            }), 400
+            return JSONResponse({'success': False, 'error': 'Request body is required'}, status_code=400)
         
         user_id = data.get('user_id', 'default_user')
         title = data.get('title', 'Untitled')
@@ -80,10 +67,7 @@ def create_manuscript():
         
         # Input validation
         if not isinstance(user_id, str) or not isinstance(title, str) or not isinstance(content, str):
-            return jsonify({
-                'success': False,
-                'error': 'Invalid data types'
-            }), 400
+            return JSONResponse({'success': False, 'error': 'Invalid data types'}, status_code=400)
         
         # Sanitize inputs
         user_id = re.sub(r'[^a-zA-Z0-9_-]', '', user_id)
@@ -91,81 +75,58 @@ def create_manuscript():
         content = content.strip()[:50000]  # Limit content length
         
         if not user_id:
-            return jsonify({
-                'success': False,
-                'error': 'Invalid user_id format'
-            }), 400
+            return JSONResponse({'success': False, 'error': 'Invalid user_id format'}, status_code=400)
         
         manuscript_id = system.create_manuscript(user_id, title, content)
         
-        return jsonify({
+        return {
             'success': True,
             'manuscript_id': manuscript_id,
             'message': 'Manuscript created successfully'
-        }), 201
+        }
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return JSONResponse({'success': False, 'error': str(e)}, status_code=500)
 
-@integrated_bp.route('/integrated/manuscripts/<manuscript_id>', methods=['GET'])
-@cross_origin()
-def get_manuscript(manuscript_id):
+@intergrated_router.get("/manuscripts/{manuscript_id}")
+def get_manuscript(manuscript_id: str):
     """ดึง manuscript ตาม ID"""
     try:
         manuscript = system.get_manuscript(manuscript_id)
         if not manuscript:
-            return jsonify({
-                'success': False,
-                'error': 'Manuscript not found'
-            }), 404
+            return JSONResponse({'success': False, 'error': 'Manuscript not found'}, status_code=404)
         
-        return jsonify({
+        return {
             'success': True,
             'manuscript': manuscript
-        })
+        }
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return JSONResponse({'success': False, 'error': str(e)}, status_code=500)
 
-@integrated_bp.route('/integrated/manuscripts/<manuscript_id>', methods=['PUT'])
-@cross_origin()
-def update_manuscript(manuscript_id):
+@intergrated_router.put("/manuscripts/{manuscript_id}")
+def update_manuscript(manuscript_id: str, data: Optional[Dict[str, Any]] = Body(None)):
     """อัปเดต manuscript"""
     try:
-        data = request.json
-        content = data.get('content', '')
+        content = (data or {}).get('content', '')
         
         success = system.update_manuscript(manuscript_id, content)
         if not success:
-            return jsonify({
-                'success': False,
-                'error': 'Failed to update manuscript'
-            }), 500
+            return JSONResponse({'success': False, 'error': 'Failed to update manuscript'}, status_code=500)
         
-        return jsonify({
+        return {
             'success': True,
             'message': 'Manuscript updated successfully'
-        })
+        }
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return JSONResponse({'success': False, 'error': str(e)}, status_code=500)
 
-@integrated_bp.route('/integrated/ai/analyze-characters', methods=['POST'])
-@cross_origin()
-def analyze_characters():
+@intergrated_router.post("/ai/analyze-characters")
+async def analyze_characters(data: Optional[Dict[str, Any]] = Body(None)):
     """วิเคราะห์ตัวละครจากเนื้อหา"""
     try:
-        data = request.json
-        content = data.get('content', '')
+        content = (data or {}).get('content', '')
         
         if not content:
-            return jsonify({'error': 'Content is required'}), 400
+            return JSONResponse({'error': 'Content is required'}, status_code=400)
         
         # สร้าง task สำหรับ character analysis
         task = Task(
@@ -180,36 +141,28 @@ def analyze_characters():
             metadata={"content": content}
         )
         
-        # ส่ง task ไปประมวลผล (ใช้ asyncio.run แทน create_task)
+        # ส่ง task ไปประมวลผล
         try:
-            asyncio.run(system.submit_task(task))
+            await system.submit_task(task)
         except Exception as task_error:
-            return jsonify({
-                'success': False,
-                'error': f'Failed to submit task: {str(task_error)}'
-            }), 500
+            return JSONResponse({'success': False, 'error': f'Failed to submit task: {str(task_error)}'}, status_code=500)
         
-        return jsonify({
+        return {
             'success': True,
             'task_id': task.id,
             'message': 'Character analysis task submitted'
-        })
+        }
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return JSONResponse({'success': False, 'error': str(e)}, status_code=500)
 
-@integrated_bp.route('/integrated/ai/analyze-plot', methods=['POST'])
-@cross_origin()
-def analyze_plot():
+@intergrated_router.post("/ai/analyze-plot")
+async def analyze_plot(data: Optional[Dict[str, Any]] = Body(None)):
     """วิเคราะห์โครงเรื่อง"""
     try:
-        data = request.json
-        content = data.get('content', '')
+        content = (data or {}).get('content', '')
         
         if not content:
-            return jsonify({'error': 'Content is required'}), 400
+            return JSONResponse({'error': 'Content is required'}, status_code=400)
         
         # สร้าง task สำหรับ plot analysis
         task = Task(
@@ -224,37 +177,29 @@ def analyze_plot():
             metadata={"content": content}
         )
         
-        # ส่ง task ไปประมวลผล (ใช้ asyncio.run แทน create_task)
+        # ส่ง task ไปประมวลผล
         try:
-            asyncio.run(system.submit_task(task))
+            await system.submit_task(task)
         except Exception as task_error:
-            return jsonify({
-                'success': False,
-                'error': f'Failed to submit task: {str(task_error)}'
-            }), 500
+            return JSONResponse({'success': False, 'error': f'Failed to submit task: {str(task_error)}'}, status_code=500)
         
-        return jsonify({
+        return {
             'success': True,
             'task_id': task.id,
             'message': 'Plot analysis task submitted'
-        })
+        }
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return JSONResponse({'success': False, 'error': str(e)}, status_code=500)
 
-@integrated_bp.route('/integrated/ai/writing-assistant', methods=['POST'])
-@cross_origin()
-def writing_assistant():
+@intergrated_router.post("/ai/writing-assistant")
+async def writing_assistant(data: Optional[Dict[str, Any]] = Body(None)):
     """ผู้ช่วยการเขียน"""
     try:
-        data = request.json
-        content = data.get('content', '')
-        request_type = data.get('type', 'improve')
+        content = (data or {}).get('content', '')
+        request_type = (data or {}).get('type', 'improve')
         
         if not content:
-            return jsonify({'error': 'Content is required'}), 400
+            return JSONResponse({'error': 'Content is required'}, status_code=400)
         
         # สร้าง task สำหรับ writing assistant
         task = Task(
@@ -269,37 +214,29 @@ def writing_assistant():
             metadata={"content": content, "type": request_type}
         )
         
-        # ส่ง task ไปประมวลผล (ใช้ asyncio.run แทน create_task)
+        # ส่ง task ไปประมวลผล
         try:
-            asyncio.run(system.submit_task(task))
+            await system.submit_task(task)
         except Exception as task_error:
-            return jsonify({
-                'success': False,
-                'error': f'Failed to submit task: {str(task_error)}'
-            }), 500
+            return JSONResponse({'success': False, 'error': f'Failed to submit task: {str(task_error)}'}, status_code=500)
         
-        return jsonify({
+        return {
             'success': True,
             'task_id': task.id,
             'message': 'Writing assistant task submitted'
-        })
+        }
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return JSONResponse({'success': False, 'error': str(e)}, status_code=500)
 
-@integrated_bp.route('/integrated/ai/inline-editor', methods=['POST'])
-@cross_origin()
-def inline_editor():
+@intergrated_router.post("/ai/inline-editor")
+async def inline_editor(data: Optional[Dict[str, Any]] = Body(None)):
     """Inline Editor สำหรับแก้ไขเนื้อหา"""
     try:
-        data = request.json
-        content = data.get('content', '')
-        action = data.get('action', 'improve')
+        content = (data or {}).get('content', '')
+        action = (data or {}).get('action', 'improve')
         
         if not content:
-            return jsonify({'error': 'Content is required'}), 400
+            return JSONResponse({'error': 'Content is required'}, status_code=400)
         
         # สร้าง task สำหรับ inline editor
         task = Task(
@@ -314,37 +251,29 @@ def inline_editor():
             metadata={"content": content, "action": action}
         )
         
-        # ส่ง task ไปประมวลผล (ใช้ asyncio.run แทน create_task)
+        # ส่ง task ไปประมวลผล
         try:
-            asyncio.run(system.submit_task(task))
+            await system.submit_task(task)
         except Exception as task_error:
-            return jsonify({
-                'success': False,
-                'error': f'Failed to submit task: {str(task_error)}'
-            }), 500
+            return JSONResponse({'success': False, 'error': f'Failed to submit task: {str(task_error)}'}, status_code=500)
         
-        return jsonify({
+        return {
             'success': True,
             'task_id': task.id,
             'message': 'Inline editor task submitted'
-        })
+        }
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return JSONResponse({'success': False, 'error': str(e)}, status_code=500)
 
-@integrated_bp.route('/integrated/ai/assistant-chat', methods=['POST'])
-@cross_origin()
-def assistant_chat():
+@intergrated_router.post("/ai/assistant-chat")
+async def assistant_chat(data: Optional[Dict[str, Any]] = Body(None)):
     """Assistant Chat สำหรับคำถามเชิงลึก"""
     try:
-        data = request.json
-        question = data.get('question', '')
-        user_id = data.get('user_id', 'default_user')
+        question = (data or {}).get('question', '')
+        user_id = (data or {}).get('user_id', 'default_user')
         
         if not question:
-            return jsonify({'error': 'Question is required'}), 400
+            return JSONResponse({'error': 'Question is required'}, status_code=400)
         
         # สร้าง task สำหรับ assistant chat
         task = Task(
@@ -359,36 +288,28 @@ def assistant_chat():
             metadata={"question": question, "user_id": user_id}
         )
         
-        # ส่ง task ไปประมวลผล (ใช้ asyncio.run แทน create_task)
+        # ส่ง task ไปประมวลผล
         try:
-            asyncio.run(system.submit_task(task))
+            await system.submit_task(task)
         except Exception as task_error:
-            return jsonify({
-                'success': False,
-                'error': f'Failed to submit task: {str(task_error)}'
-            }), 500
+            return JSONResponse({'success': False, 'error': f'Failed to submit task: {str(task_error)}'}, status_code=500)
         
-        return jsonify({
+        return {
             'success': True,
             'task_id': task.id,
             'message': 'Assistant chat task submitted'
-        })
+        }
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return JSONResponse({'success': False, 'error': str(e)}, status_code=500)
 
-@integrated_bp.route('/integrated/ai/rag-search', methods=['POST'])
-@cross_origin()
-def rag_search():
+@intergrated_router.post("/ai/rag-search")
+async def rag_search(data: Optional[Dict[str, Any]] = Body(None)):
     """ค้นหาด้วย RAG system"""
     try:
-        data = request.json
-        query = data.get('query', '')
+        query = (data or {}).get('query', '')
         
         if not query:
-            return jsonify({'error': 'Query is required'}), 400
+            return JSONResponse({'error': 'Query is required'}, status_code=400)
         
         # สร้าง task สำหรับ RAG search
         task = Task(
@@ -403,51 +324,37 @@ def rag_search():
             metadata={"query": query}
         )
         
-        # ส่ง task ไปประมวลผล (ใช้ asyncio.run แทน create_task)
+        # ส่ง task ไปประมวลผล
         try:
-            asyncio.run(system.submit_task(task))
+            await system.submit_task(task)
         except Exception as task_error:
-            return jsonify({
-                'success': False,
-                'error': f'Failed to submit task: {str(task_error)}'
-            }), 500
+            return JSONResponse({'success': False, 'error': f'Failed to submit task: {str(task_error)}'}, status_code=500)
         
-        return jsonify({
+        return {
             'success': True,
             'task_id': task.id,
             'message': 'RAG search task submitted'
-        })
+        }
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return JSONResponse({'success': False, 'error': str(e)}, status_code=500)
 
-@integrated_bp.route('/integrated/tasks/<task_id>', methods=['GET'])
-@cross_origin()
-def get_task_status(task_id):
+@intergrated_router.get("/tasks/{task_id}")
+async def get_task_status(task_id: str):
     """ดึงสถานะของ task"""
     try:
-        task_status = asyncio.run(system.get_task_status(task_id))
+        task_status = await system.get_task_status(task_id)
         
         if not task_status:
-            return jsonify({
-                'success': False,
-                'error': 'Task not found'
-            }), 404
+            return JSONResponse({'success': False, 'error': 'Task not found'}, status_code=404)
         
-        return jsonify({
+        return {
             'success': True,
             'task': task_status
-        })
+        }
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return JSONResponse({'success': False, 'error': str(e)}, status_code=500)
 
-@integrated_bp.route('/integrated/tasks', methods=['GET'])
-@cross_origin()
+@intergrated_router.get("/tasks")
 def get_all_tasks():
     """ดึงรายการ tasks ทั้งหมด"""
     try:
@@ -475,19 +382,15 @@ def get_all_tasks():
         
         conn.close()
         
-        return jsonify({
+        return {
             'success': True,
             'tasks': tasks,
             'total': len(tasks)
-        })
+        }
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return JSONResponse({'success': False, 'error': str(e)}, status_code=500)
 
-@integrated_bp.route('/integrated/analytics/overview', methods=['GET'])
-@cross_origin()
+@intergrated_router.get("/analytics/overview")
 def get_analytics_overview():
     """ดึงภาพรวม analytics"""
     try:
@@ -516,7 +419,7 @@ def get_analytics_overview():
         
         conn.close()
         
-        return jsonify({
+        return {
             'success': True,
             'analytics': {
                 'manuscript_count': manuscript_count,
@@ -525,19 +428,15 @@ def get_analytics_overview():
                 'character_count': character_count,
                 'success_rate': round(success_rate, 2)
             }
-        })
+        }
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return JSONResponse({'success': False, 'error': str(e)}, status_code=500)
 
-@integrated_bp.route('/integrated/feedback', methods=['POST'])
-@cross_origin()
-def submit_feedback():
+@intergrated_router.post("/feedback")
+def submit_feedback(data: Optional[Dict[str, Any]] = Body(None)):
     """ส่ง feedback"""
     try:
-        data = request.json
+        data = data or {}
         user_id = data.get('user_id', 'default_user')
         content_type = data.get('content_type', 'manuscript')
         content_id = data.get('content_id', '')
@@ -557,19 +456,15 @@ def submit_feedback():
         conn.commit()
         conn.close()
         
-        return jsonify({
+        return {
             'success': True,
             'feedback_id': feedback_id,
             'message': 'Feedback submitted successfully'
-        })
+        }
     except Exception as e:
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return JSONResponse({'success': False, 'error': str(e)}, status_code=500)
 
-@integrated_bp.route('/integrated/system/health', methods=['GET'])
-@cross_origin()
+@intergrated_router.get("/system/health")
 def system_health():
     """ตรวจสอบสถานะระบบ"""
     try:
@@ -599,7 +494,7 @@ def system_health():
         
         overall_health = all([db_healthy, embedding_healthy, vector_store_healthy, openai_healthy])
         
-        return jsonify({
+        return {
             'success': True,
             'health': {
                 'overall': 'healthy' if overall_health else 'unhealthy',
@@ -608,13 +503,13 @@ def system_health():
                 'vector_store': 'healthy' if vector_store_healthy else 'unhealthy',
                 'openai_api': 'healthy' if openai_healthy else 'unhealthy'
             }
-        })
+        }
     except Exception as e:
-        return jsonify({
+        return JSONResponse({
             'success': False,
             'error': str(e),
             'health': {
                 'overall': 'unhealthy',
                 'error': str(e)
             }
-        }), 500
+        }, status_code=500)

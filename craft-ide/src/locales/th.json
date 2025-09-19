@@ -1,0 +1,78 @@
+{
+  "app": {
+    "title": "Craft IDE",
+    "welcome": "ยินดีต้อนรับสู่ Craft IDE",
+    "loading": "กำลังโหลด...",
+    "error": "เกิดข้อผิดพลาดบางอย่าง"
+  },
+  "topBar": {
+    "newFile": "ไฟล์ใหม่",
+    "openFile": "เปิดไฟล์",
+    "save": "บันทึก",
+    "export": "ส่งออก",
+    "settings": "การตั้งค่า",
+    "language": "ภาษา",
+    "theme": {
+      "light": "ธีมสว่าง",
+      "dark": "ธีมมืด",
+      "auto": "อัตโนมัติ"
+    },
+    "aiChat": "แชท AI",
+    "sync": "ซิงค์คลัง",
+    "help": "ช่วยเหลือ"
+  },
+  "leftPanel": {
+    "files": "ไฟล์",
+    "projects": "โปรเจกต์",
+    "diagrams": "แผนภาพ",
+    "search": "ค้นหา",
+    "recent": "ล่าสุด",
+    "createNew": "สร้างใหม่"
+  },
+  "rightPanel": {
+    "properties": "คุณสมบัติ",
+    "outline": "โครงร่าง",
+    "tags": "ป้ายกำกับ",
+    "history": "ประวัติ",
+    "aiSuggestions": "คำแนะนำจาก AI"
+  },
+  "editor": {
+    "toolbar": {
+      "bold": "ตัวหนา",
+      "italic": "ตัวเอียง",
+      "underline": "ขีดเส้นใต้",
+      "code": "โค้ด",
+      "link": "ลิงก์",
+      "image": "รูปภาพ",
+      "diagram": "แผนภาพ"
+    },
+    "placeholder": "เริ่มเขียนต้นฉบับของคุณ...",
+    "wordCount": "คำ: {{count}} คำ"
+  },
+  "aiChat": {
+    "placeholder": "ถาม AI เกี่ยวกับต้นฉบับของคุณ...",
+    "send": "ส่ง",
+    "generating": "AI กำลังคิด...",
+    "error": "ขออภัย ฉันไม่สามารถประมวลผลคำขอนี้ได้"
+  },
+  "dashboard": {
+    "title": "แดชบอร์ด",
+    "projectStats": "สถิติโปรเจกต์",
+    "aiInsights": "ข้อมูลเชิงลึกจาก AI",
+    "recentActivity": "กิจกรรมล่าสุด"
+  },
+  "validation": {
+    "healthy": "ระบบทั้งหมดทำงานปกติ",
+    "partial": "ตรวจพบปัญหาบางส่วน",
+    "unhealthy": "ระบบมีปัญหา"
+  },
+  "notifications": {
+    "success": "สำเร็จ!",
+    "warning": "คำเตือน",
+    "error": "ข้อผิดพลาด"
+  },
+  "manifest": {
+    "syncStatus": "สถานะการซิงค์ของ Manifest",
+    "dualCoverage": "ความครอบคลุม Dual-Identity: {{percentage}}%"
+  }
+}

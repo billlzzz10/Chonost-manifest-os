@@ -90,6 +90,10 @@
         "transport": "stdio",
         "command": "python",
         "args": ["-m", "mcp.server.postgres"]
+      },
+      "github.com/github/github-mcp-server": {
+        "type": "http",
+        "url": "https://api.githubcopilot.com/mcp/"
       }
     },
     "tools": {

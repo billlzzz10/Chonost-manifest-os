@@ -10,7 +10,7 @@ Configuration for AI behavior when interacting with Codacy's MCP Server
 - ALWAYS use:
  - provider: gh
  - organization: billlzzz10
- - repository: FileSystemMCP
+ - repository: Chonost-manifest-os
 - Avoid calling `git remote -v` unless really necessary
 
 ## CRITICAL: After ANY successful `edit_file` or `reapply` operation

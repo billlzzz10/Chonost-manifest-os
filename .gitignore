@@ -1,6 +1,31 @@
 # Chonost Project - Git Ignore File
 # ======================================
 
+# Dot Files Protection (Exclude almost all dot files, keep only essential ones)
+# ============================================================================
+.*
+# Allow essential dot files
+!.github/
+!.gitignore
+!.env.example
+!.editorconfig
+!.prettierrc
+!.eslintrc*
+!.stylelintrc*
+!.npmrc
+!.yarnrc
+!.tool-versions
+!.node-version
+!.nvmrc
+!.ruby-version
+!.clinerules/
+!.cursor/
+!.python-version
+!.pyrightconfig.json
+!.dockerignore
+!.vscode/extensions.json
+!.vscode/settings.json
+
 # Environment Variables & Secrets
 # ===============================
 .env
@@ -386,6 +411,64 @@ chonost_data/
 chonost_logs/
 chonost_temp/
 
+# Dataset Files (Prevent potential secrets in datasets)
+# ============
+datasets/
+datasets/**/*.json
+datasets/**/*.jsonl
+datasets/**/*.csv
+datasets/**/*.tsv
+datasets/**/*.db
+datasets/**/*.sqlite
+datasets/**/*.sqlite3
+
+# Except keep dataset Python scripts
+!datasets/*.py
+
+# Large Dataset Files
+# ===================
+*.pkl
+*.pickle
+*.joblib
+
+# Credentials and Secrets in Dataset Context
+# ==========================================
+**/datasets/credentials/
+**/datasets/secrets/
+**/datasets/*/credentials/
+**/datasets/*/secrets/
+
+# API Keys in any dataset-related files
+# =====================================
+*dataset*secret*
+*dataset*key*
+*dataset*password*
+*dataset*credential*
+
+# Backup and Temporary Dataset Files
+# =================================
+datasets/tmp/
+datasets/temp/
+datasets/backup/
+datasets/*.bak
+datasets/*.backup
+datasets/*.old
+datasets/*.orig
+
+# Training and Model Artifacts (Large files)
+# ==========================================
+datasets/models/
+datasets/weights/
+datasets/checkpoints/
+*.pth
+*.pt
+*.ckpt
+*.safetensors
+*.bin
+*.h5
+*.onnx
+.h5
+
 # Cursor IDE
 # ==========
 .cursor/
@@ -530,6 +613,14 @@ out/
 .stylelintcache
 .prettierignore
 .editorconfig
+
+# MCP Configuration Files
+# =======================
+mcp.json
+chonost-unified/backend/mcp/config.json
+chonost-unified/backend/mcp/config.local.json
+chonost-unified/backend/mcp/config.production.json
+chonost-unified/backend/mcp/config.development.json
 
 # Testing
 # =======
@@ -701,6 +792,7 @@ desktop.ini
 
 #Ignore vscode AI rules
 .github\instructions\codacy.instructions.md
+/.github/instructions
 
 *.cursor
 *.continue

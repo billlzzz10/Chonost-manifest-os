@@ -66,10 +66,17 @@
   "devDependencies": {
     "@types/vscode": "^1.84.0",
     "@types/node": "^18.0.0",
-    "typescript": "^5.0.0",
-    "eslint": "^8.0.0",
-    "@typescript-eslint/eslint-plugin": "^6.0.0",
-    "@typescript-eslint/parser": "^6.0.0"
+    "typescript": "^5.3.3",
+    "eslint": "^8.57.0",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "@types/jest": "^29.5.12",
+    "jest": "^29.7.0"
+  },
+  "dependencies": {
+    "lodash": "^4.17.21",
+    "axios": "^1.6.2",
+    "ws": "^8.14.2"
   }
 }
 

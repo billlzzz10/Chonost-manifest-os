@@ -6,11 +6,25 @@ from flask import Blueprint, jsonify, request
 from flask_cors import cross_origin
 import json
 import asyncio
+import sqlite3
+import re
 from datetime import datetime
+from typing import Dict, Any, Optional
 from src.integrated_system_core import get_integrated_system, Task, AgentType, TaskPriority, TaskStatus
 
 integrated_bp = Blueprint('integrated', __name__)
 system = get_integrated_system()
+
+# Compatibility export for code expecting a variable named
+# "intergrated_router" (note the common misspelling) or
+# "integrated_router". This file currently defines a Flask Blueprint
+# named `integrated_bp`. We expose aliases so importers can reference
+# a consistent symbol name without changing all call sites.
+#
+# If/when this module is migrated fully to FastAPI, these aliases can be
+# switched to point to an APIRouter instead, keeping external imports stable.
+intergrated_router = integrated_bp  # common misspelling alias
+integrated_router = integrated_bp   # correctly spelled alias
 
 @integrated_bp.route('/integrated/manuscripts', methods=['GET'])
 @cross_origin()
@@ -19,6 +33,22 @@ def get_manuscripts():
     try:
         # ดึงจากระบบ integrated
         user_id = request.args.get('user_id', 'default_user')
+        
+        # Input validation
+        if not user_id or not isinstance(user_id, str):
+            return jsonify({
+                'success': False,
+                'error': 'Invalid user_id parameter'
+            }), 400
+        
+        # Sanitize user_id
+        user_id = re.sub(r'[^a-zA-Z0-9_-]', '', user_id)
+        if not user_id:
+            return jsonify({
+                'success': False,
+                'error': 'Invalid user_id format'
+            }), 400
+        
         manuscripts = system.get_user_manuscripts(user_id)
         
         return jsonify({
@@ -38,9 +68,33 @@ def create_manuscript():
     """สร้าง manuscript ใหม่"""
     try:
         data = request.json
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': 'Request body is required'
+            }), 400
+        
         user_id = data.get('user_id', 'default_user')
         title = data.get('title', 'Untitled')
         content = data.get('content', '')
+        
+        # Input validation
+        if not isinstance(user_id, str) or not isinstance(title, str) or not isinstance(content, str):
+            return jsonify({
+                'success': False,
+                'error': 'Invalid data types'
+            }), 400
+        
+        # Sanitize inputs
+        user_id = re.sub(r'[^a-zA-Z0-9_-]', '', user_id)
+        title = title.strip()[:200]  # Limit title length
+        content = content.strip()[:50000]  # Limit content length
+        
+        if not user_id:
+            return jsonify({
+                'success': False,
+                'error': 'Invalid user_id format'
+            }), 400
         
         manuscript_id = system.create_manuscript(user_id, title, content)
         
@@ -126,8 +180,14 @@ def analyze_characters():
             metadata={"content": content}
         )
         
-        # ส่ง task ไปประมวลผล
-        asyncio.create_task(system.submit_task(task))
+        # ส่ง task ไปประมวลผล (ใช้ asyncio.run แทน create_task)
+        try:
+            asyncio.run(system.submit_task(task))
+        except Exception as task_error:
+            return jsonify({
+                'success': False,
+                'error': f'Failed to submit task: {str(task_error)}'
+            }), 500
         
         return jsonify({
             'success': True,
@@ -164,8 +224,14 @@ def analyze_plot():
             metadata={"content": content}
         )
         
-        # ส่ง task ไปประมวลผล
-        asyncio.create_task(system.submit_task(task))
+        # ส่ง task ไปประมวลผล (ใช้ asyncio.run แทน create_task)
+        try:
+            asyncio.run(system.submit_task(task))
+        except Exception as task_error:
+            return jsonify({
+                'success': False,
+                'error': f'Failed to submit task: {str(task_error)}'
+            }), 500
         
         return jsonify({
             'success': True,
@@ -203,8 +269,14 @@ def writing_assistant():
             metadata={"content": content, "type": request_type}
         )
         
-        # ส่ง task ไปประมวลผล
-        asyncio.create_task(system.submit_task(task))
+        # ส่ง task ไปประมวลผล (ใช้ asyncio.run แทน create_task)
+        try:
+            asyncio.run(system.submit_task(task))
+        except Exception as task_error:
+            return jsonify({
+                'success': False,
+                'error': f'Failed to submit task: {str(task_error)}'
+            }), 500
         
         return jsonify({
             'success': True,
@@ -242,8 +314,14 @@ def inline_editor():
             metadata={"content": content, "action": action}
         )
         
-        # ส่ง task ไปประมวลผล
-        asyncio.create_task(system.submit_task(task))
+        # ส่ง task ไปประมวลผล (ใช้ asyncio.run แทน create_task)
+        try:
+            asyncio.run(system.submit_task(task))
+        except Exception as task_error:
+            return jsonify({
+                'success': False,
+                'error': f'Failed to submit task: {str(task_error)}'
+            }), 500
         
         return jsonify({
             'success': True,
@@ -281,8 +359,14 @@ def assistant_chat():
             metadata={"question": question, "user_id": user_id}
         )
         
-        # ส่ง task ไปประมวลผล
-        asyncio.create_task(system.submit_task(task))
+        # ส่ง task ไปประมวลผล (ใช้ asyncio.run แทน create_task)
+        try:
+            asyncio.run(system.submit_task(task))
+        except Exception as task_error:
+            return jsonify({
+                'success': False,
+                'error': f'Failed to submit task: {str(task_error)}'
+            }), 500
         
         return jsonify({
             'success': True,
@@ -319,8 +403,14 @@ def rag_search():
             metadata={"query": query}
         )
         
-        # ส่ง task ไปประมวลผล
-        asyncio.create_task(system.submit_task(task))
+        # ส่ง task ไปประมวลผล (ใช้ asyncio.run แทน create_task)
+        try:
+            asyncio.run(system.submit_task(task))
+        except Exception as task_error:
+            return jsonify({
+                'success': False,
+                'error': f'Failed to submit task: {str(task_error)}'
+            }), 500
         
         return jsonify({
             'success': True,
@@ -361,13 +451,12 @@ def get_task_status(task_id):
 def get_all_tasks():
     """ดึงรายการ tasks ทั้งหมด"""
     try:
-        # ดึงจากฐานข้อมูล
-        conn = system.db_path
-        import sqlite3
-        conn = sqlite3.connect(conn)
+        # ดึงจากฐานข้อมูล (ใช้ parameterized query)
+        conn = sqlite3.connect(system.db_path)
         cursor = conn.cursor()
         
-        cursor.execute('SELECT * FROM tasks ORDER BY created_at DESC LIMIT 50')
+        # ใช้ parameterized query เพื่อป้องกัน SQL injection
+        cursor.execute('SELECT * FROM tasks ORDER BY created_at DESC LIMIT ?', (50,))
         rows = cursor.fetchall()
         
         tasks = []
@@ -414,8 +503,8 @@ def get_analytics_overview():
         cursor.execute('SELECT COUNT(*) FROM tasks')
         task_count = cursor.fetchone()[0]
         
-        # นับจำนวน tasks ที่เสร็จแล้ว
-        cursor.execute('SELECT COUNT(*) FROM tasks WHERE status = "completed"')
+        # นับจำนวน tasks ที่เสร็จแล้ว (ใช้ parameterized query)
+        cursor.execute('SELECT COUNT(*) FROM tasks WHERE status = ?', ('completed',))
         completed_tasks = cursor.fetchone()[0]
         
         # นับจำนวน characters
@@ -485,11 +574,15 @@ def system_health():
     """ตรวจสอบสถานะระบบ"""
     try:
         # ตรวจสอบการเชื่อมต่อฐานข้อมูล
-        conn = sqlite3.connect(system.db_path)
-        cursor = conn.cursor()
-        cursor.execute('SELECT 1')
-        db_healthy = cursor.fetchone() is not None
-        conn.close()
+        try:
+            conn = sqlite3.connect(system.db_path)
+            cursor = conn.cursor()
+            cursor.execute('SELECT 1')
+            db_healthy = cursor.fetchone() is not None
+            conn.close()
+        except Exception as db_error:
+            db_healthy = False
+            print(f"Database health check failed: {db_error}")
         
         # ตรวจสอบ embedding model
         embedding_healthy = system.embedding_model is not None
@@ -498,7 +591,11 @@ def system_health():
         vector_store_healthy = system.vector_store is not None
         
         # ตรวจสอบ OpenAI API
-        openai_healthy = system.openai_client.api_key is not None
+        try:
+            openai_healthy = system.openai_client.api_key is not None and len(system.openai_client.api_key) > 0
+        except Exception as openai_error:
+            openai_healthy = False
+            print(f"OpenAI API health check failed: {openai_error}")
         
         overall_health = all([db_healthy, embedding_healthy, vector_store_healthy, openai_healthy])
         

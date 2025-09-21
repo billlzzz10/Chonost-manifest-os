@@ -293,7 +293,10 @@ class MCPServer:
             user_path = Path(path)
             full_path = (ROOT_DIR / user_path).resolve()
             root_resolved = ROOT_DIR.resolve()
-            if not str(full_path).startswith(str(root_resolved)):
+            try:
+                # This will raise ValueError if full_path is not within root_resolved
+                full_path.relative_to(root_resolved)
+            except ValueError:
                 return {"error": "Access to the requested path is not allowed."}
             if not full_path.exists():
                 return {"error": f"File not found: {path}"}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 // [NOTE: Styles are omitted for brevity as they are unchanged]
 const style: React.CSSProperties = { flex: 2, padding: '10px', display: 'flex', flexDirection: 'column', backgroundColor: '#f5f5f5', overflow: 'auto' };
@@ -12,9 +12,17 @@ const thStyle: React.CSSProperties = { border: '1px solid #ddd', padding: '8px',
 const tdStyle: React.CSSProperties = { border: '1px solid #ddd', padding: '8px' };
 
 
+// TODO: This should be sourced from an environment variable.
 const MCP_SERVER_URL = 'http://localhost:3001';
 
-const logRun = (logEntry: any) => {
+type LogEntry = {
+  phase: string;
+  tool: string;
+  status: string;
+  latency_ms: number;
+};
+
+const logRun = (logEntry: LogEntry) => {
     fetch(`${MCP_SERVER_URL}/runlog/put`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -26,7 +34,7 @@ export const Console: React.FC = () => {
   const [activeTab, setActiveTab] = useState('Tools');
   const [output, setOutput] = useState('Tool output will appear here.');
 
-  const runTool = async (toolName: string, args: any = {}) => {
+  const runTool = async (toolName: string, args: Record<string, unknown> = {}) => {
     setOutput(`Running tool: ${toolName}...`);
     setActiveTab('Output');
     const startTime = Date.now();

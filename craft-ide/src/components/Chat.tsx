@@ -1,13 +1,21 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 // [NOTE: Styles are omitted for brevity as they are unchanged]
 const style: React.CSSProperties = { flex: 1, borderBottom: '1px solid #ccc', padding: '10px', overflow: 'auto', display: 'flex', flexDirection: 'column' };
 const messagesStyle: React.CSSProperties = { flexGrow: 1, marginBottom: '10px', border: '1px solid #eee', padding: '5px', backgroundColor: 'white' };
 const inputContainerStyle: React.CSSProperties = { display: 'flex', gap: '5px' };
 
+// TODO: This should be sourced from an environment variable.
 const MCP_SERVER_URL = 'http://localhost:3001';
 
-const logRun = (logEntry: any) => {
+type LogEntry = {
+  phase: string;
+  tool: string;
+  status: string;
+  latency_ms: number;
+};
+
+const logRun = (logEntry: LogEntry) => {
     fetch(`${MCP_SERVER_URL}/runlog/put`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -15,8 +23,13 @@ const logRun = (logEntry: any) => {
     }).catch(console.error); // Fire-and-forget logging
 };
 
+type Message = {
+  from: string;
+  text: string;
+};
+
 export const Chat: React.FC = () => {
-    const [messages, setMessages] = useState([{ "from": "AI", "text": "Hello! How can I help you?" }]);
+    const [messages, setMessages] = useState<Message[]>([{ from: "AI", text: "Hello! How can I help you?" }]);
     const [toolOutput, setToolOutput] = useState('');
 
     const handleToolSelection = async (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -29,6 +42,7 @@ export const Chat: React.FC = () => {
         let body = {};
         let toolIdentifier = '';
 
+        // TODO: The docHash and paths should come from the editor/workspace state.
         if (selectedToolName === 'segment') {
             toolIdentifier = 'document-segmentation';
             endpoint = '/seg/run';

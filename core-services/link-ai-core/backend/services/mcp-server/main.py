@@ -358,9 +358,15 @@ class MCPServer:
         path = args.get("path")
         language = args.get("language", "auto")
         
+        # Define a safe base directory for all file operations
+        BASE_DIR = os.path.abspath("./workspaces")  # change as needed
         try:
-            # Basic code analysis
-            full_path = Path(path)
+            # Compute full path and normalize
+            requested_path = os.path.normpath(os.path.join(BASE_DIR, path))
+            # Check containment: must start with BASE_DIR and path must not escape
+            if not requested_path.startswith(BASE_DIR):
+                return {"error": "Access to this path is not allowed."}
+            full_path = Path(requested_path)
             if not full_path.exists():
                 return {"error": f"Path not found: {path}"}
             

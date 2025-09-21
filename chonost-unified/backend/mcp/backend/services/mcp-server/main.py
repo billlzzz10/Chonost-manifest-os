@@ -12,6 +12,9 @@ import yaml
 # Define the root directory for all user file operations
 ROOT_DIR = Path("/app/root")  # <-- Adjust as appropriate for your deployment!
 
+# Ensure ROOT_DIR exists
+ROOT_DIR.mkdir(parents=True, exist_ok=True)
+
 app = FastAPI(title="Model Context Protocol Server", version="2.0.0")
 
 class MCPRequest(BaseModel):
@@ -200,14 +203,14 @@ class MCPServer:
             if not str(full_path).startswith(str(root_resolved)):
                 return {"error": "Access to the requested path is not allowed."}
             if not full_path.exists():
-                return {"error": f"File not found: {path}"}
+                return {"error": "File not found"}
             
             if full_path.is_file():
                 async with aiofiles.open(full_path, 'r', encoding='utf-8') as f:
                     content = await f.read()
                 return {
                     "contents": [{
-                        "uri": f"file://{path}",
+                        "uri": f"file://{full_path.relative_to(ROOT_DIR)}",
                         "mimeType": "text/plain",
                         "text": content
                     }]
@@ -219,11 +222,11 @@ class MCPServer:
                     items.append({
                         "name": item.name,
                         "type": "directory" if item.is_dir() else "file",
-                        "uri": f"file://{item}"
+                        "uri": f"file://{item.relative_to(ROOT_DIR)}"
                     })
                 return {
                     "contents": [{
-                        "uri": f"file://{path}",
+                        "uri": f"file://{full_path.relative_to(ROOT_DIR)}",
                         "mimeType": "application/json",
                         "text": json.dumps(items, indent=2)
                     }]
@@ -298,10 +301,7 @@ class MCPServer:
                 return {"error": "Absolute paths are not allowed."}
             full_path = (ROOT_DIR / user_path).resolve()
             root_resolved = ROOT_DIR.resolve()
-            try:
-                # This will raise ValueError if full_path is not within root_resolved
-                full_path.relative_to(root_resolved)
-            except ValueError:
+            if not str(full_path).startswith(str(root_resolved)):
                 return {"error": "Access to the requested path is not allowed."}
             if not full_path.exists():
                 # For security, do not leak existence of files outside root
@@ -342,7 +342,7 @@ class MCPServer:
             return {
                 "content": [{
                     "type": "text",
-                    "text": f"Successfully wrote to {path}"
+                    "text": "File written successfully"
                 }]
             }
         except Exception as e:
@@ -361,10 +361,10 @@ class MCPServer:
             if not str(full_path).startswith(str(root_resolved)):
                 return {"error": "Access to the requested path is not allowed."}
             if not full_path.exists():
-                return {"error": f"Directory not found: {path}"}
+                return {"error": "Directory not found"}
             
             if not full_path.is_dir():
-                return {"error": f"Path is not a directory: {path}"}
+                return {"error": "Path is not a directory"}
             
             items = []
             if recursive:
@@ -404,7 +404,7 @@ class MCPServer:
             if not str(full_path).startswith(str(root_resolved)):
                 return {"error": "Access to the requested path is not allowed."}
             if not full_path.exists():
-                return {"error": f"Path not found: {path}"}
+                return {"error": "Path not found"}
             
             analysis = {
                 "path": str(full_path),

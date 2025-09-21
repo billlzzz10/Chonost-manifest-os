@@ -9,9 +9,10 @@ import aiofiles
 from pathlib import Path
 import yaml
 
-app = FastAPI(title="Model Context Protocol Server", version="2.0.0")
+# Define the root directory for all user file operations
+ROOT_DIR = Path("/app/root")  # <-- Adjust as appropriate for your deployment!
 
-class MCPRequest(BaseModel):
+app = FastAPI(title="Model Context Protocol Server", version="2.0.0")
     method: str
     params: Dict[str, Any]
     id: Optional[str] = None
@@ -359,8 +360,12 @@ class MCPServer:
         language = args.get("language", "auto")
         
         try:
-            # Basic code analysis
-            full_path = Path(path)
+            # Restrict file access to within ROOT_DIR
+            user_path = Path(path)
+            full_path = (ROOT_DIR / user_path).resolve()
+            root_resolved = ROOT_DIR.resolve()
+            if not str(full_path).startswith(str(root_resolved)):
+                return {"error": "Access to the requested path is not allowed."}
             if not full_path.exists():
                 return {"error": f"Path not found: {path}"}
             

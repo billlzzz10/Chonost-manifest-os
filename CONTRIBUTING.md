@@ -4,7 +4,7 @@
 
 ## Overview
 
-- **Fork the repo**: สร้าง fork จาก https://github.com/user/chonost
+- **Fork the repo**: สร้าง fork จาก https://github.com/billlzzz10/chonost-manuscript-os.git
 - **Create branch**: ใช้ branch name ที่ชัดเจน เช่น `feature/add-rag-handler` หรือ `fix/lint-errors`
 - **Test locally**: ตรวจสอบ code ทำงานได้ก่อน push
 - **Submit PR**: อธิบาย changes ใน PR description รวมถึง test results และ motivation
@@ -15,7 +15,7 @@ Contributions ควร align กับ roadmap ใน [DEVELOPMENT_ROADMAP.md](
 
 1. **Clone and setup**:
    ```
-   git clone https://github.com/user/chonost.git
+   git clone https://github.com/billlzzz10/chonost-manuscript-os.git
    cd chonost
    # Backend (Python)
    pip install -r packages/backend/requirements_roadmap.txt

@@ -9,6 +9,9 @@ import aiofiles
 from pathlib import Path
 import yaml
 
+# Define the root directory for all user file operations
+ROOT_DIR = Path("/app/root")  # <-- Adjust as appropriate for your deployment!
+
 app = FastAPI(title="Model Context Protocol Server", version="2.0.0")
 
 class MCPRequest(BaseModel):
@@ -190,7 +193,12 @@ class MCPServer:
     async def read_file_resource(self, path: str) -> Dict[str, Any]:
         """Read file system resource"""
         try:
-            full_path = Path(path)
+            # Restrict file access to within ROOT_DIR
+            user_path = Path(path)
+            full_path = (ROOT_DIR / user_path).resolve()
+            root_resolved = ROOT_DIR.resolve()
+            if not str(full_path).startswith(str(root_resolved)):
+                return {"error": "Access to the requested path is not allowed."}
             if not full_path.exists():
                 return {"error": f"File not found: {path}"}
             
@@ -281,7 +289,25 @@ class MCPServer:
         encoding = args.get("encoding", "utf-8")
         
         try:
-            async with aiofiles.open(path, 'r', encoding=encoding) as f:
+            if not path or not isinstance(path, str):
+                return {"error": "Invalid or missing path argument."}
+            # Restrict file access to within ROOT_DIR
+            # Prevent absolute paths -- always treat as relative to ROOT_DIR
+            user_path = Path(path)
+            if user_path.is_absolute():
+                return {"error": "Absolute paths are not allowed."}
+            full_path = (ROOT_DIR / user_path).resolve()
+            root_resolved = ROOT_DIR.resolve()
+            try:
+                # This will raise ValueError if full_path is not within root_resolved
+                full_path.relative_to(root_resolved)
+            except ValueError:
+                return {"error": "Access to the requested path is not allowed."}
+            if not full_path.exists():
+                # For security, do not leak existence of files outside root
+                return {"error": "Requested file not found or inaccessible."}
+            
+            async with aiofiles.open(full_path, 'r', encoding=encoding) as f:
                 content = await f.read()
             
             return {
@@ -300,10 +326,17 @@ class MCPServer:
         encoding = args.get("encoding", "utf-8")
         
         try:
-            # Ensure directory exists
-            Path(path).parent.mkdir(parents=True, exist_ok=True)
+            # Restrict file access to within ROOT_DIR
+            user_path = Path(path)
+            full_path = (ROOT_DIR / user_path).resolve()
+            root_resolved = ROOT_DIR.resolve()
+            if not str(full_path).startswith(str(root_resolved)):
+                return {"error": "Access to the requested path is not allowed."}
             
-            async with aiofiles.open(path, 'w', encoding=encoding) as f:
+            # Ensure directory exists
+            full_path.parent.mkdir(parents=True, exist_ok=True)
+            
+            async with aiofiles.open(full_path, 'w', encoding=encoding) as f:
                 await f.write(content)
             
             return {
@@ -321,7 +354,12 @@ class MCPServer:
         recursive = args.get("recursive", False)
         
         try:
-            full_path = Path(path)
+            # Restrict file access to within ROOT_DIR
+            user_path = Path(path)
+            full_path = (ROOT_DIR / user_path).resolve()
+            root_resolved = ROOT_DIR.resolve()
+            if not str(full_path).startswith(str(root_resolved)):
+                return {"error": "Access to the requested path is not allowed."}
             if not full_path.exists():
                 return {"error": f"Directory not found: {path}"}
             
@@ -359,8 +397,12 @@ class MCPServer:
         language = args.get("language", "auto")
         
         try:
-            # Basic code analysis
-            full_path = Path(path)
+            # Restrict file access to within ROOT_DIR
+            user_path = Path(path)
+            full_path = (ROOT_DIR / user_path).resolve()
+            root_resolved = ROOT_DIR.resolve()
+            if not str(full_path).startswith(str(root_resolved)):
+                return {"error": "Access to the requested path is not allowed."}
             if not full_path.exists():
                 return {"error": f"Path not found: {path}"}
             

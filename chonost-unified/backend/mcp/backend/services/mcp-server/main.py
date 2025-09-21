@@ -214,7 +214,7 @@ class MCPServer:
             else:
                 # Directory listing
                 items = []
-                for item in full_path.iterdir():
+                for item in candidate_path.iterdir():
                     items.append({
                         "name": item.name,
                         "type": "directory" if item.is_dir() else "file",

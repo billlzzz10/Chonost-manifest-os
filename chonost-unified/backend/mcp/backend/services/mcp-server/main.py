@@ -289,8 +289,13 @@ class MCPServer:
         encoding = args.get("encoding", "utf-8")
         
         try:
+            if not path or not isinstance(path, str):
+                return {"error": "Invalid or missing path argument."}
             # Restrict file access to within ROOT_DIR
+            # Prevent absolute paths -- always treat as relative to ROOT_DIR
             user_path = Path(path)
+            if user_path.is_absolute():
+                return {"error": "Absolute paths are not allowed."}
             full_path = (ROOT_DIR / user_path).resolve()
             root_resolved = ROOT_DIR.resolve()
             try:
@@ -299,7 +304,8 @@ class MCPServer:
             except ValueError:
                 return {"error": "Access to the requested path is not allowed."}
             if not full_path.exists():
-                return {"error": f"File not found: {path}"}
+                # For security, do not leak existence of files outside root
+                return {"error": "Requested file not found or inaccessible."}
             
             async with aiofiles.open(full_path, 'r', encoding=encoding) as f:
                 content = await f.read()

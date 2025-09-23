@@ -444,7 +444,7 @@ class MCPServer:
                 return {"error": "Absolute paths are not allowed."}
             full_path = (ROOT_DIR / user_path).resolve()
             root_resolved = ROOT_DIR.resolve()
-            if not str(full_path).startswith(str(root_resolved)):
+            if not _is_within_root(full_path, root_resolved):
                 return {"error": "Access to the requested path is not allowed."}
             if not full_path.exists():
                 return {"error": "Path not found"}

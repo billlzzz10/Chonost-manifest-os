@@ -334,14 +334,15 @@ class MCPServer:
         try:
             if not path or not isinstance(path, str):
                 return {"error": "Invalid or missing path argument."}
-            # Restrict file access to within ROOT_DIR
-            # Prevent absolute paths -- always treat as relative to ROOT_DIR
+            # Restrict file access to within ROOT_DIR and ensure no traversal or symlink escape
             user_path = Path(path)
             if user_path.is_absolute():
                 return {"error": "Absolute paths are not allowed."}
-            full_path = (ROOT_DIR / user_path).resolve()
+            # Compose final path and normalize/resolves it
             root_resolved = ROOT_DIR.resolve()
-            if not _is_within_root(full_path, root_resolved):
+            full_path = (root_resolved / user_path).resolve()
+            # Robustly ensure full_path stays inside root_resolved
+            if os.path.commonpath([str(full_path), str(root_resolved)]) != str(root_resolved):
                 return {"error": "Access to the requested path is not allowed."}
             if not full_path.exists():
                 # For security, do not leak existence of files outside root

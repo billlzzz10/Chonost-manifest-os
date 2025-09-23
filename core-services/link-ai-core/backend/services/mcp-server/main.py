@@ -363,22 +363,23 @@ class MCPServer:
         language = args.get("language", "auto")
         
         try:
-            # Restrict file access to within ROOT_DIR
             user_path = Path(path)
-            # Reject absolute paths to prevent bypass
+            # Reject absolute paths
             if user_path.is_absolute():
                 return {"error": "Absolute paths are not allowed."}
-            # Normalize path and check for traversal
-            normalized_user_path = user_path.resolve().relative_to(user_path.anchor) if user_path.anchor else user_path
-            # Prevent ".." traversal
-            if any(part == ".." for part in normalized_user_path.parts):
+            # Prevent ".." traversal in user input before normalization
+            if any(part == ".." for part in user_path.parts):
                 return {"error": "Path traversal detected."}
-            full_path = (ROOT_DIR / normalized_user_path).resolve()
+            # Compose full path and resolve, then verify containment
+            full_path = (ROOT_DIR / user_path).resolve()
             root_resolved = ROOT_DIR.resolve()
             try:
                 full_path.relative_to(root_resolved)
             except ValueError:
                 return {"error": "Access to the requested path is not allowed."}
+            # Prevent ".." traversal in normalized path
+            if any(part == ".." for part in full_path.relative_to(root_resolved).parts):
+                return {"error": "Normalized path traversal detected."}
             if not full_path.exists():
                 return {"error": f"Path not found: {path}"}
             

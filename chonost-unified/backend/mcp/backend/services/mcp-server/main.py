@@ -342,7 +342,7 @@ class MCPServer:
             root_resolved = ROOT_DIR.resolve()
             full_path = (root_resolved / user_path).resolve()
             # Robustly ensure full_path stays inside root_resolved
-            if os.path.commonpath([str(full_path), str(root_resolved)]) != str(root_resolved):
+            if not _is_within_root(full_path, root_resolved):
                 return {"error": "Access to the requested path is not allowed."}
             if not full_path.exists():
                 # For security, do not leak existence of files outside root

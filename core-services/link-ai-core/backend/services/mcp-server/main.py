@@ -365,7 +365,15 @@ class MCPServer:
         try:
             # Restrict file access to within ROOT_DIR
             user_path = Path(path)
-            full_path = (ROOT_DIR / user_path).resolve()
+            # Reject absolute paths to prevent bypass
+            if user_path.is_absolute():
+                return {"error": "Absolute paths are not allowed."}
+            # Normalize path and check for traversal
+            normalized_user_path = user_path.resolve().relative_to(user_path.anchor) if user_path.anchor else user_path
+            # Prevent ".." traversal
+            if any(part == ".." for part in normalized_user_path.parts):
+                return {"error": "Path traversal detected."}
+            full_path = (ROOT_DIR / normalized_user_path).resolve()
             root_resolved = ROOT_DIR.resolve()
             try:
                 full_path.relative_to(root_resolved)

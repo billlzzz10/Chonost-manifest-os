@@ -1,14 +1,22 @@
 import { useMemo, useState, useEffect, useRef } from "react";
 import { useAppStore } from "../state/store";
 import { invoke } from "@tauri-apps/api/tauri";
-import mermaid from "mermaid";
 import { toMindmap } from "../lib/platform";
 
-mermaid.initialize({
-  startOnLoad: false,
-  securityLevel: "loose",
-  theme: "dark",
-});
+// Lazy-load mermaid to reduce initial bundle size and enforce strict security
+let _mermaid: any | null = null;
+async function getMermaid() {
+  if (_mermaid) return _mermaid;
+  const mod: any = await import("mermaid");
+  const m = mod.default || mod;
+  m.initialize({
+    startOnLoad: false,
+    securityLevel: "strict",
+    theme: "dark",
+  });
+  _mermaid = m;
+  return _mermaid;
+}
 
 export default function RightPanel() {
   const [tab, setTab] = useState<"tree" | "graph" | "files" | "settings">(
@@ -184,7 +192,8 @@ export default function RightPanel() {
     let cancelled = false;
     (async () => {
       try {
-        const { svg } = await mermaid.render(
+        const m = await getMermaid();
+        const { svg } = await m.render(
           "mm-" + Math.random().toString(36).slice(2),
           mm,
         );

@@ -8,7 +8,7 @@ const AshvalApp = () => {
     const [currentMood, setCurrentMood] = useState(null);
     const [tasks, setTasks] = useState([]);
     const [aiLoading, setAiLoading] = useState(false);
-    const [aiRecommendations, setAiRecommendations] = useState('');
+    const [aiRecommendations, setAiRecommendations] = useState(null);
 
     const moods = [
         { id: 1, name: 'มีความสุข', emoji: '😊', description: 'รู้สึกดีและมีพลัง' },
@@ -80,18 +80,20 @@ const AshvalApp = () => {
     const getAIRecommendations = async () => {
         if (!currentMood) return;
         setAiLoading(true);
-        setAiRecommendations('');
+        setAiRecommendations(null);
         
         setTimeout(() => {
-            setAiRecommendations(`
-                <h3>คำแนะนำสำหรับอารมณ์ ${currentMood.name}</h3>
-                <p>เมื่อคุณรู้สึก${currentMood.description} เราแนะนำให้:</p>
-                <ul>
-                    <li>ทำกิจกรรมที่ผ่อนคลาย</li>
-                    <li>ฟังเพลงที่ชอบ</li>
-                    <li>ออกไปเดินเล่น</li>
-                </ul>
-            `);
+            setAiRecommendations(
+                <>
+                    <h3>คำแนะนำสำหรับอารมณ์ {currentMood.name}</h3>
+                    <p>เมื่อคุณรู้สึก{currentMood.description} เราแนะนำให้:</p>
+                    <ul>
+                        <li>ทำกิจกรรมที่ผ่อนคลาย</li>
+                        <li>ฟังเพลงที่ชอบ</li>
+                        <li>ออกไปเดินเล่น</li>
+                    </ul>
+                </>
+            );
             setAiLoading(false);
         }, 2000);
     };
@@ -316,8 +318,8 @@ const AshvalApp = () => {
                                                 <i className="fas fa-robot text-primary mr-2"></i>
                                                 คำแนะนำจาก AI
                                             </h4>
-                                            <div className="prose dark:prose-invert max-w-none" 
-                                                 dangerouslySetInnerHTML={{ __html: aiRecommendations }}>
+                                            <div className="prose dark:prose-invert max-w-none">
+                                                 {aiRecommendations}
                                             </div>
                                         </div>
                                     )}

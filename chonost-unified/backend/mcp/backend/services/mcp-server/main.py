@@ -15,6 +15,17 @@ ROOT_DIR = Path("/app/root")  # <-- Adjust as appropriate for your deployment!
 # Ensure ROOT_DIR exists
 ROOT_DIR.mkdir(parents=True, exist_ok=True)
 
+# Helper function to check if a path is within the root directory (prevents traversal and symlink escapes)
+def _is_within_root(candidate: Path, root: Path) -> bool:
+    try:
+        candidate_resolved = candidate.resolve()
+        root_resolved = root.resolve()
+        # Use Path's relative_to for safe check
+        candidate_resolved.relative_to(root_resolved)
+        return True
+    except ValueError:
+        return False
+
 
 def _is_within_root(full_path: Path, root_resolved: Path) -> bool:
     """Return True if full_path is contained within the resolved root directory."""
@@ -207,9 +218,12 @@ class MCPServer:
         try:
             # Restrict file access to within ROOT_DIR
             user_path = Path(path)
-            full_path = (ROOT_DIR / user_path).resolve()
+            # Compose but do not resolve until after checking
+            full_path = (ROOT_DIR / user_path)
             root_resolved = ROOT_DIR.resolve()
             if not _is_within_root(full_path, root_resolved):
+            # After confirming safe path, resolve for further processing
+            full_path = full_path.resolve()
                 return {"error": "Access to the requested path is not allowed."}
             if not full_path.exists():
                 return {"error": "File not found"}

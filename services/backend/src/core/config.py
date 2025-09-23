@@ -64,8 +64,9 @@ class Settings(BaseSettings):
     )
     
     # MongoDB
+    # IMPORTANT: Do not hardcode credentials. Use environment variables or a local, non-auth default.
     MONGODB_URL: str = Field(
-        default="mongodb+srv://billlzzz10_db_user:ZxFcv9L9EUPV27kM@cluster0.ep8seuu.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
+        default="mongodb://localhost:27017",
         env="MONGODB_URL"
     )
     MONGODB_DATABASE: str = Field(

@@ -1,48 +1,60 @@
 import React, { useState, useEffect, useRef } from 'react';
-import mermaid from 'mermaid';
+// Lazy-loaded Mermaid to reduce initial bundle size
+let mermaidLib = null;
+let mermaidInitialized = false;
+async function getMermaid() {
+  if (!mermaidLib) {
+    const mod = await import('mermaid');
+    mermaidLib = mod.default || mod;
+  }
+  if (!mermaidInitialized) {
+    mermaidLib.initialize({
+      startOnLoad: false,
+      theme: 'default',
+      securityLevel: 'strict',
+      fontFamily: 'Noto Sans Thai, sans-serif',
+      flowchart: {
+        useMaxWidth: true,
+        htmlLabels: true,
+        curve: 'basis'
+      },
+      sequence: {
+        useMaxWidth: true,
+        diagramMarginX: 50,
+        diagramMarginY: 10,
+        actorMargin: 50,
+        width: 150,
+        height: 65,
+        boxMargin: 10,
+        boxTextMargin: 5,
+        noteMargin: 10,
+        messageMargin: 35,
+        mirrorActors: true,
+        bottomMarginAdj: 1,
+        useMaxWidth: true,
+        rightAngles: false,
+        showSequenceNumbers: false
+      },
+      gantt: {
+        titleTopMargin: 25,
+        barHeight: 20,
+        barGap: 4,
+        topPadding: 50,
+        leftPadding: 75,
+        gridLineStartPadding: 35,
+        fontSize: 11,
+        fontFamily: 'Noto Sans Thai, sans-serif',
+        numberSectionStyles: 4,
+        axisFormat: '%Y-%m-%d'
+      }
+    });
+    mermaidInitialized = true;
+  }
+  return mermaidLib;
+}
 import { ChonostIcon, AnimatedIcon, FloatingIcon } from './IconSystem';
 
-// ตั้งค่า Mermaid
-mermaid.initialize({
-  startOnLoad: true,
-  theme: 'default',
-  securityLevel: 'loose',
-  fontFamily: 'Noto Sans Thai, sans-serif',
-  flowchart: {
-    useMaxWidth: true,
-    htmlLabels: true,
-    curve: 'basis'
-  },
-  sequence: {
-    useMaxWidth: true,
-    diagramMarginX: 50,
-    diagramMarginY: 10,
-    actorMargin: 50,
-    width: 150,
-    height: 65,
-    boxMargin: 10,
-    boxTextMargin: 5,
-    noteMargin: 10,
-    messageMargin: 35,
-    mirrorActors: true,
-    bottomMarginAdj: 1,
-    useMaxWidth: true,
-    rightAngles: false,
-    showSequenceNumbers: false
-  },
-  gantt: {
-    titleTopMargin: 25,
-    barHeight: 20,
-    barGap: 4,
-    topPadding: 50,
-    leftPadding: 75,
-    gridLineStartPadding: 35,
-    fontSize: 11,
-    fontFamily: 'Noto Sans Thai, sans-serif',
-    numberSectionStyles: 4,
-    axisFormat: '%Y-%m-%d'
-  }
-});
+// Mermaid initialization moved to getMermaid()
 
 // AI Diagram Generator
 export const AIDiagramGenerator = ({ onGenerate, className = '' }) => {
@@ -267,18 +279,11 @@ export const MermaidDiagram = ({ code, title, className = '', onEdit, onDelete }
       // Generate unique ID
       const id = `mermaid-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       
-      // Create container
-      const container = document.createElement('div');
-      container.id = id;
-      container.className = 'mermaid';
-      container.textContent = code;
-      
+      const mermaid = await getMermaid();
+      const { svg } = await mermaid.render(id, code);
       if (diagramRef.current) {
-        diagramRef.current.appendChild(container);
+        diagramRef.current.innerHTML = svg;
       }
-      
-      // Render with Mermaid
-      await mermaid.run();
       setIsRendering(false);
     } catch (err) {
       setError(err.message);
@@ -365,14 +370,13 @@ export const MermaidEditor = ({ initialCode = '', onSave, onCancel, className = 
     
     setIsPreviewing(true);
     try {
-      // Create temporary container for preview
-      const tempContainer = document.createElement('div');
-      tempContainer.className = 'mermaid';
-      tempContainer.textContent = code;
-      
-      // Render preview
-      await mermaid.run();
-      setPreview(tempContainer.innerHTML);
+      const mermaid = await getMermaid();
+      // Render preview safely without touching the live DOM
+      const { svg } = await mermaid.render(
+        `preview-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        code
+      );
+      setPreview(svg);
     } catch (error) {
       console.error('Preview error:', error);
     } finally {

@@ -230,22 +230,27 @@ class MCPServer:
         try:
             # Restrict file access to within ROOT_DIR
             user_path = Path(path)
-            # Compose but do not resolve until after checking
-            full_path = (ROOT_DIR / user_path)
+            # Reject absolute paths to prevent root bypass
+            if user_path.is_absolute():
+                return {"error": "Access to absolute paths is not allowed."}
+            # Normalize the user input to collapse ../ etc.
+            safe_subpath = Path(os.path.normpath(str(user_path)))
+            # Compose the full path
+            full_path = (ROOT_DIR / safe_subpath)
             root_resolved = ROOT_DIR.resolve()
-            if not _is_within_root(full_path, root_resolved):
-            # After confirming safe path, resolve for further processing
-            full_path = full_path.resolve()
+            full_path_resolved = full_path.resolve()
+            # Check that resolved path is within the ROOT_DIR
+            if not _is_within_root(full_path_resolved, root_resolved):
                 return {"error": "Access to the requested path is not allowed."}
-            if not full_path.exists():
+            if not full_path_resolved.exists():
                 return {"error": "File not found"}
             
-            if full_path.is_file():
-                async with aiofiles.open(full_path, 'r', encoding='utf-8') as f:
+            if full_path_resolved.is_file():
+                async with aiofiles.open(full_path_resolved, 'r', encoding='utf-8') as f:
                     content = await f.read()
                 return {
                     "contents": [{
-                        "uri": f"file://{full_path.relative_to(ROOT_DIR)}",
+                        "uri": f"file://{full_path_resolved.relative_to(ROOT_DIR)}",
                         "mimeType": "text/plain",
                         "text": content
                     }]

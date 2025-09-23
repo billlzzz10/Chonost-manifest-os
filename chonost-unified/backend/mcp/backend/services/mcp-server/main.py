@@ -343,7 +343,10 @@ class MCPServer:
                 return {"error": "Access to the requested path is not allowed."}
             
             # Ensure directory exists
-            full_path.parent.mkdir(parents=True, exist_ok=True)
+            parent_resolved = full_path.parent.resolve()
+            if not _is_within_root(parent_resolved, root_resolved):
+                return {"error": "Directory creation outside root is not allowed."}
+            parent_resolved.mkdir(parents=True, exist_ok=True)
             
             async with aiofiles.open(full_path, 'w', encoding=encoding) as f:
                 await f.write(content)

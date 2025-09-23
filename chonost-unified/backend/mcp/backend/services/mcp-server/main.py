@@ -351,6 +351,8 @@ class MCPServer:
         try:
             # Restrict file access to within ROOT_DIR
             user_path = Path(path)
+            if user_path.is_absolute():
+                return {"error": "Absolute paths are not allowed."}
             full_path = (ROOT_DIR / user_path).resolve()
             root_resolved = ROOT_DIR.resolve()
             if not _is_within_root(full_path, root_resolved):

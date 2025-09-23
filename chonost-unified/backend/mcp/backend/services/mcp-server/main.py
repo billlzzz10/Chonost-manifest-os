@@ -15,6 +15,15 @@ ROOT_DIR = Path("/app/root")  # <-- Adjust as appropriate for your deployment!
 # Ensure ROOT_DIR exists
 ROOT_DIR.mkdir(parents=True, exist_ok=True)
 
+
+def _is_within_root(full_path: Path, root_resolved: Path) -> bool:
+    """Return True if full_path is contained within the resolved root directory."""
+    try:
+        full_path.relative_to(root_resolved)
+        return True
+    except ValueError:
+        return False
+
 app = FastAPI(title="Model Context Protocol Server", version="2.0.0")
 
 class MCPRequest(BaseModel):
@@ -200,7 +209,7 @@ class MCPServer:
             user_path = Path(path)
             full_path = (ROOT_DIR / user_path).resolve()
             root_resolved = ROOT_DIR.resolve()
-            if not str(full_path).startswith(str(root_resolved)):
+            if not _is_within_root(full_path, root_resolved):
                 return {"error": "Access to the requested path is not allowed."}
             if not full_path.exists():
                 return {"error": "File not found"}
@@ -301,7 +310,7 @@ class MCPServer:
                 return {"error": "Absolute paths are not allowed."}
             full_path = (ROOT_DIR / user_path).resolve()
             root_resolved = ROOT_DIR.resolve()
-            if not str(full_path).startswith(str(root_resolved)):
+            if not _is_within_root(full_path, root_resolved):
                 return {"error": "Access to the requested path is not allowed."}
             if not full_path.exists():
                 # For security, do not leak existence of files outside root
@@ -330,7 +339,7 @@ class MCPServer:
             user_path = Path(path)
             full_path = (ROOT_DIR / user_path).resolve()
             root_resolved = ROOT_DIR.resolve()
-            if not str(full_path).startswith(str(root_resolved)):
+            if not _is_within_root(full_path, root_resolved):
                 return {"error": "Access to the requested path is not allowed."}
             
             # Ensure directory exists
@@ -358,7 +367,7 @@ class MCPServer:
             user_path = Path(path)
             full_path = (ROOT_DIR / user_path).resolve()
             root_resolved = ROOT_DIR.resolve()
-            if not str(full_path).startswith(str(root_resolved)):
+            if not _is_within_root(full_path, root_resolved):
                 return {"error": "Access to the requested path is not allowed."}
             if not full_path.exists():
                 return {"error": "Directory not found"}
@@ -401,7 +410,7 @@ class MCPServer:
             user_path = Path(path)
             full_path = (ROOT_DIR / user_path).resolve()
             root_resolved = ROOT_DIR.resolve()
-            if not str(full_path).startswith(str(root_resolved)):
+            if not _is_within_root(full_path, root_resolved):
                 return {"error": "Access to the requested path is not allowed."}
             if not full_path.exists():
                 return {"error": "Path not found"}

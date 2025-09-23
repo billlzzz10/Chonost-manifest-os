@@ -13,6 +13,9 @@ import yaml
 ROOT_DIR = Path("/app/root")  # <-- Adjust as appropriate for your deployment!
 
 app = FastAPI(title="Model Context Protocol Server", version="2.0.0")
+
+
+class MCPRequest(BaseModel):
     method: str
     params: Dict[str, Any]
     id: Optional[str] = None
@@ -364,7 +367,9 @@ class MCPServer:
             user_path = Path(path)
             full_path = (ROOT_DIR / user_path).resolve()
             root_resolved = ROOT_DIR.resolve()
-            if not str(full_path).startswith(str(root_resolved)):
+            try:
+                full_path.relative_to(root_resolved)
+            except ValueError:
                 return {"error": "Access to the requested path is not allowed."}
             if not full_path.exists():
                 return {"error": f"Path not found: {path}"}

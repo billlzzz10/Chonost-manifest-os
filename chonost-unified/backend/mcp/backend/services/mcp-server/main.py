@@ -12,6 +12,18 @@ import yaml
 # Define the root directory for all user file operations
 ROOT_DIR = Path("/app/root")  # <-- Adjust as appropriate for your deployment!
 
+# Helper: Ensure path is within root directory using robust path comparison
+def _is_within_root(path: Path, root: Path) -> bool:
+    try:
+        # Both must be resolved for symlink safety
+        path = path.resolve()
+        root = root.resolve()
+        # Use .relative_to to check ancestor relationship
+        path.relative_to(root)
+        return True
+    except ValueError:
+        return False
+
 # Ensure ROOT_DIR exists
 ROOT_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -360,6 +372,7 @@ class MCPServer:
             
             # Ensure directory exists
             parent_resolved = full_path.parent.resolve()
+            # Defensive: Ensure parent directory for write is within ROOT_DIR
             if not _is_within_root(parent_resolved, root_resolved):
                 return {"error": "Directory creation outside root is not allowed."}
             parent_resolved.mkdir(parents=True, exist_ok=True)

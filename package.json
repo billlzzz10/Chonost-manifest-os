@@ -3,16 +3,6 @@
   "version": "2.1.0",
   "description": "A comprehensive writing platform for authors to manage characters, stories, and creative elements",
   "main": "index.js",
-  "scripts": {
-    "dev": "cd apps/frontend/chat-interface && npm run dev",
-    "build": "cd apps/frontend/chat-interface && npm run build",
-    "tauri": "cd apps/frontend/chat-interface && npm run tauri",
-    "tauri:dev": "cd apps/frontend/chat-interface && npm run tauri:dev",
-    "tauri:build": "cd apps/frontend/chat-interface && npm run tauri:build",
-    "test": "cd scripts && python -m pytest",
-    "dev:web": "cd apps/frontend/web && npm run dev",
-    "dev:chat": "cd apps/frontend/chat-interface && npm run dev"
-  },
   "keywords": [
     "writing",
     "authors",

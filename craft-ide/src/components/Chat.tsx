@@ -5,8 +5,7 @@ const style: React.CSSProperties = { flex: 1, borderBottom: '1px solid #ccc', pa
 const messagesStyle: React.CSSProperties = { flexGrow: 1, marginBottom: '10px', border: '1px solid #eee', padding: '5px', backgroundColor: 'white' };
 const inputContainerStyle: React.CSSProperties = { display: 'flex', gap: '5px' };
 
-// TODO: This should be sourced from an environment variable.
-const MCP_SERVER_URL = 'http://localhost:3001';
+const MCP_SERVER_URL = import.meta.env.VITE_MCP_SERVER_URL || 'http://localhost:3001';
 
 type LogEntry = {
   phase: string;
@@ -46,7 +45,7 @@ export const Chat: React.FC = () => {
         if (selectedToolName === 'segment') {
             toolIdentifier = 'document-segmentation';
             endpoint = '/seg/run';
-            body = { docHash: 'current-doc-hash' };
+            body = { docHash: import.meta.env.VITE_DEFAULT_DOC_HASH || 'current-doc-hash' };
         } else if (selectedToolName === 'index') {
             toolIdentifier = 'code-reference-indexer';
             endpoint = '/code-index/run';

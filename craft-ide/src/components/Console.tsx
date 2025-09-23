@@ -12,8 +12,7 @@ const thStyle: React.CSSProperties = { border: '1px solid #ddd', padding: '8px',
 const tdStyle: React.CSSProperties = { border: '1px solid #ddd', padding: '8px' };
 
 
-// TODO: This should be sourced from an environment variable.
-const MCP_SERVER_URL = 'http://localhost:3001';
+const MCP_SERVER_URL = import.meta.env.VITE_MCP_SERVER_URL || 'http://localhost:3001';
 
 type LogEntry = {
   phase: string;

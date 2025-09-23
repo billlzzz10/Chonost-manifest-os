@@ -1,5 +1,9 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
+import dotenv from 'dotenv';
+
+// Load environment variables from .env file
+dotenv.config();
 
 // --- Type Definitions ---
 
@@ -68,7 +72,8 @@ app.post('/mcp/run', (req: Request<{ tool: string, args: Record<string, unknown>
 app.post('/seg/run', (req: Request<{ docHash?: string }>, res: Response) => {
   try {
     const { docHash } = req.body;
-    const docId = docHash || 'default-doc';
+    // Use environment variable for default, fallback to a hardcoded value if not set
+    const docId = docHash || process.env.DEFAULT_DOC_ID || 'fallback-doc-id';
     console.log(`[API] /seg/run called for doc: ${docId}`);
 
     const segTool = toolRegistry.get('document-segmentation')!;

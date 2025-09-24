@@ -1,14 +1,29 @@
 import { useMemo, useState, useEffect, useRef } from "react";
 import { useAppStore } from "../state/store";
 import { invoke } from "@tauri-apps/api/tauri";
-import mermaid from "mermaid";
+// Lazy-load Mermaid to reduce initial bundle size
+let mermaidLib: any | null = null;
+let mermaidInitialized = false;
+async function getMermaid() {
+  if (!mermaidLib) {
+    const mod = await import("mermaid");
+    // Support both ESM/CJS shapes
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mermaidLib = (mod as any).default || mod;
+  }
+  if (!mermaidInitialized) {
+    mermaidLib.initialize({
+      startOnLoad: false,
+      securityLevel: "strict",
+      theme: "dark",
+    });
+    mermaidInitialized = true;
+  }
+  return mermaidLib;
+}
 import { toMindmap } from "../lib/platform";
 
-mermaid.initialize({
-  startOnLoad: false,
-  securityLevel: "loose",
-  theme: "dark",
-});
+// Initialization moved to getMermaid()
 
 export default function RightPanel() {
   const [tab, setTab] = useState<"tree" | "graph" | "files" | "settings">(
@@ -184,6 +199,7 @@ export default function RightPanel() {
     let cancelled = false;
     (async () => {
       try {
+        const mermaid = await getMermaid();
         const { svg } = await mermaid.render(
           "mm-" + Math.random().toString(36).slice(2),
           mm,

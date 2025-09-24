@@ -20,7 +20,8 @@ except ImportError:
         DEBUG = True
         HOST = "0.0.0.0"
         PORT = 8000
-        ALLOWED_ORIGINS = ["*"]
+        # Avoid permissive wildcard in production.
+        ALLOWED_ORIGINS = ["http://localhost:3000", "http://localhost:1420"]
     settings = Settings()
 
 try:

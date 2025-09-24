@@ -266,13 +266,15 @@ export const MermaidDiagram = ({ code, title, className = '', onEdit, onDelete }
     try {
       // Render with Mermaid using a safe, isolated render
       if (diagramRef.current) {
-        diagramRef.current.innerHTML = '';
+        while (diagramRef.current.firstChild) diagramRef.current.removeChild(diagramRef.current.firstChild);
       }
       const id = `mermaid-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       const m = await getMermaid();
       const { svg } = await m.render(id, code);
       if (diagramRef.current) {
-        diagramRef.current.innerHTML = svg;
+        const doc = new DOMParser().parseFromString(svg, 'image/svg+xml');
+        const node = diagramRef.current.ownerDocument.importNode(doc.documentElement, true);
+        diagramRef.current.appendChild(node);
       }
       setIsRendering(false);
     } catch (err) {
@@ -354,6 +356,7 @@ export const MermaidEditor = ({ initialCode = '', onSave, onCancel, className = 
   const [code, setCode] = useState(initialCode);
   const [preview, setPreview] = useState(null);
   const [isPreviewing, setIsPreviewing] = useState(false);
+  const previewRef = useRef(null);
 
   const generatePreview = async () => {
     if (!code.trim()) return;
@@ -376,6 +379,21 @@ export const MermaidEditor = ({ initialCode = '', onSave, onCancel, className = 
       return () => clearTimeout(timeout);
     }
   }, [code]);
+
+  useEffect(() => {
+    if (!previewRef.current) return;
+    const container = previewRef.current;
+    while (container.firstChild) container.removeChild(container.firstChild);
+    if (preview) {
+      try {
+        const doc = new DOMParser().parseFromString(preview, 'image/svg+xml');
+        const node = container.ownerDocument.importNode(doc.documentElement, true);
+        container.appendChild(node);
+      } catch (_) {
+        // best-effort; keep container empty on parse error
+      }
+    }
+  }, [preview]);
 
   return (
     <div className={`mermaid-editor ${className}`}>
@@ -407,7 +425,7 @@ export const MermaidEditor = ({ initialCode = '', onSave, onCancel, className = 
                   <span className="ml-2 text-gray-600">กำลังสร้างตัวอย่าง...</span>
                 </div>
               ) : preview ? (
-                <div dangerouslySetInnerHTML={{ __html: preview }} />
+                <div ref={previewRef} />
               ) : (
                 <div className="flex items-center justify-center h-full text-gray-500">
                   ตัวอย่างจะแสดงที่นี่

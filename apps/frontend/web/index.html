@@ -448,7 +448,7 @@
             const [currentMood, setCurrentMood] = useState(null);
             const [tasks, setTasks] = useState([]);
             const [aiLoading, setAiLoading] = useState(false);
-            const [aiRecommendations, setAiRecommendations] = useState('');
+            const [aiRecommendations, setAiRecommendations] = useState(null);
 
             const moods = [
                 { id: 1, name: 'มีความสุข', emoji: '😊', description: 'รู้สึกดีและมีพลัง' },
@@ -520,18 +520,20 @@
             const getAIRecommendations = async () => {
                 if (!currentMood) return;
                 setAiLoading(true);
-                setAiRecommendations('');
+                setAiRecommendations(null);
                 
                 setTimeout(() => {
-                    setAiRecommendations(`
-                        <h3>คำแนะนำสำหรับอารมณ์ ${currentMood.name}</h3>
-                        <p>เมื่อคุณรู้สึก${currentMood.description} เราแนะนำให้:</p>
-                        <ul>
-                            <li>ทำกิจกรรมที่ผ่อนคลาย</li>
-                            <li>ฟังเพลงที่ชอบ</li>
-                            <li>ออกไปเดินเล่น</li>
-                        </ul>
-                    `);
+                    setAiRecommendations(
+                        React.createElement(React.Fragment, null,
+                            React.createElement('h3', null, `คำแนะนำสำหรับอารมณ์ ${currentMood.name}`),
+                            React.createElement('p', null, `เมื่อคุณรู้สึก${currentMood.description} เราแนะนำให้:`),
+                            React.createElement('ul', null,
+                                React.createElement('li', null, 'ทำกิจกรรมที่ผ่อนคลาย'),
+                                React.createElement('li', null, 'ฟังเพลงที่ชอบ'),
+                                React.createElement('li', null, 'ออกไปเดินเล่น')
+                            )
+                        )
+                    );
                     setAiLoading(false);
                 }, 2000);
             };
@@ -760,9 +762,7 @@
                                                 <ChonostIcon name="ai" size="1.2rem" className="mr-2" />
                                                 คำแนะนำจาก AI
                                             </h4>
-                                                    <div className="prose dark:prose-invert max-w-none" 
-                                                         dangerouslySetInnerHTML={{ __html: aiRecommendations }}>
-                                                    </div>
+                                            <div className="prose dark:prose-invert max-w-none">{aiRecommendations}</div>
                                                 </div>
                                             )}
                                         </div>

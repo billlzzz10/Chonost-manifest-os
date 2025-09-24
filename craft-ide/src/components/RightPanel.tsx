@@ -197,16 +197,30 @@ export default function RightPanel() {
           "mm-" + Math.random().toString(36).slice(2),
           mm,
         );
-        if (!cancelled && containerRef.current)
-          containerRef.current.innerHTML = svg;
+        if (!cancelled && containerRef.current) {
+          const container = containerRef.current;
+          while (container.firstChild) container.removeChild(container.firstChild);
+          const doc = new DOMParser().parseFromString(svg, "image/svg+xml");
+          const node = container.ownerDocument.importNode(doc.documentElement, true);
+          container.appendChild(node);
+        }
       } catch (e) {
-        if (containerRef.current)
-          containerRef.current.innerHTML = `<pre style="color:#f87171">Mermaid error</pre>`;
+        if (containerRef.current) {
+          const container = containerRef.current;
+          while (container.firstChild) container.removeChild(container.firstChild);
+          const pre = document.createElement("pre");
+          pre.style.color = "#f87171";
+          pre.textContent = "Mermaid error";
+          container.appendChild(pre);
+        }
       }
     })();
     return () => {
       cancelled = true;
-      if (containerRef.current) containerRef.current.innerHTML = "";
+      if (containerRef.current) {
+        const container = containerRef.current;
+        while (container.firstChild) container.removeChild(container.firstChild);
+      }
     };
   }, [tab, mm]);
 

@@ -28,8 +28,19 @@ class AIService {
 
   // Check if request is within tier limits
   private checkTierLimits(): boolean {
+    this.resetUsageStatsIfNeeded();
     const tier = getCurrentTier();
     return this.usageStats.totalRequests < tier.maxRequestsPerHour;
+  }
+
+  // Reset usage stats if an hour has passed
+  private resetUsageStatsIfNeeded(): void {
+    const now = Date.now();
+    const oneHour = 60 * 60 * 1000; // 1 hour in milliseconds
+
+    if (now - this.usageStats.lastReset > oneHour) {
+      this.resetUsageStats();
+    }
   }
 
   // Get the best available model for the task

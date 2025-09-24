@@ -9,7 +9,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://postgres:password@postgres:5432/chonost
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/chonost
       - REDIS_URL=redis://redis:6379
       - QDRANT_URL=http://qdrant:6333
     depends_on:
@@ -50,7 +50,7 @@ services:
     environment:
       - AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY}
       - AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT}
-      - DATABASE_URL=postgresql://postgres:password@postgres:5432/chonost
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/chonost
     depends_on:
       - postgres
       - redis
@@ -66,7 +66,7 @@ services:
     environment:
       - POSTGRES_DB=chonost
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
@@ -117,7 +117,7 @@ services:
       context: ./services/testing
       dockerfile: Dockerfile
     environment:
-      - DATABASE_URL=postgresql://postgres:password@postgres:5432/chonost_test
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/chonost_test
       - REDIS_URL=redis://redis:6379
     depends_on:
       - postgres

@@ -106,7 +106,6 @@ class Settings(BaseSettings):
     
     # Security
     SECRET_KEY: str = Field(
-        default="your-secret-key-change-in-production",
         env="SECRET_KEY"
     )
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(

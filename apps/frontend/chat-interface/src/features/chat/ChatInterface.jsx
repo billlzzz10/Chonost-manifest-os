@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
 import { ScrollArea } from '@/shared/ui/scroll-area'
-import { Avatar, AvatarFallback } from '@/shared/ui/avatar'
-import { Send, Bot, User } from 'lucide-react'
+import { Send, Bot } from 'lucide-react'
+import MessageItem from './MessageItem'
 
 export function ChatInterface({ selectedChatId, setSelectedChatId }) {
   const [messages, setMessages] = useState([])
@@ -18,17 +18,17 @@ export function ChatInterface({ selectedChatId, setSelectedChatId }) {
     } else {
       setMessages([])
     }
-  }, [selectedChatId])
+  }, [selectedChatId, fetchMessages])
 
   useEffect(() => {
     scrollToBottom()
-  }, [messages])
+  }, [messages, scrollToBottom])
 
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
+  }, [])
 
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     setLoading(true)
     try {
       const response = await fetch(`/api/chat/sessions/${selectedChatId}`)
@@ -41,9 +41,9 @@ export function ChatInterface({ selectedChatId, setSelectedChatId }) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [selectedChatId])
 
-  const sendMessage = async () => {
+  const sendMessage = useCallback(async () => {
     if (!currentMessage.trim() || !selectedChatId || sending) return
     const messageContent = currentMessage.trim()
     setCurrentMessage('')
@@ -74,16 +74,17 @@ export function ChatInterface({ selectedChatId, setSelectedChatId }) {
     } finally {
       setSending(false)
     }
-  }
+  }, [currentMessage, selectedChatId, sending])
 
-  const handleKeyPress = (e) => {
+  const handleKeyPress = useCallback((e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       sendMessage()
     }
-  }
+  }, [sendMessage])
 
-  const formatTime = (timestamp) => new Date(timestamp).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
+  const formatTime = useCallback((timestamp) => 
+    new Date(timestamp).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }), [])
 
   if (!selectedChatId) {
     return (
@@ -113,21 +114,11 @@ export function ChatInterface({ selectedChatId, setSelectedChatId }) {
         ) : (
           <div className="space-y-4">
             {messages.map((message) => (
-              <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`flex max-w-[70%] ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                  <Avatar className="w-8 h-8">
-                    <AvatarFallback>
-                      {message.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className={`mx-2 ${message.role === 'user' ? 'text-right' : 'text-left'}`}>
-                    <div className={`inline-block p-3 rounded-lg ${message.role === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-900'}`}>
-                      <p className="whitespace-pre-wrap">{message.content}</p>
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">{formatTime(message.timestamp)}</div>
-                  </div>
-                </div>
-              </div>
+              <MessageItem 
+                key={message.id} 
+                message={message} 
+                formatTime={formatTime} 
+              />
             ))}
             <div ref={messagesEndRef} />
           </div>

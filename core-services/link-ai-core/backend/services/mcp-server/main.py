@@ -9,7 +9,11 @@ import aiofiles
 from pathlib import Path
 import yaml
 
+# Define the root directory for all user file operations
+ROOT_DIR = Path("/app/root")  # <-- Adjust as appropriate for your deployment!
+
 app = FastAPI(title="Model Context Protocol Server", version="2.0.0")
+
 
 class MCPRequest(BaseModel):
     method: str
@@ -359,8 +363,23 @@ class MCPServer:
         language = args.get("language", "auto")
         
         try:
-            # Basic code analysis
-            full_path = Path(path)
+            user_path = Path(path)
+            # Reject absolute paths
+            if user_path.is_absolute():
+                return {"error": "Absolute paths are not allowed."}
+            # Prevent ".." traversal in user input before normalization
+            if any(part == ".." for part in user_path.parts):
+                return {"error": "Path traversal detected."}
+            # Compose full path and resolve, then verify containment
+            full_path = (ROOT_DIR / user_path).resolve()
+            root_resolved = ROOT_DIR.resolve()
+            try:
+                full_path.relative_to(root_resolved)
+            except ValueError:
+                return {"error": "Access to the requested path is not allowed."}
+            # Prevent ".." traversal in normalized path
+            if any(part == ".." for part in full_path.relative_to(root_resolved).parts):
+                return {"error": "Normalized path traversal detected."}
             if not full_path.exists():
                 return {"error": f"Path not found: {path}"}
             

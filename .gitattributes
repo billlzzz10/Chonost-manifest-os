@@ -206,7 +206,7 @@ cursor_rules/ text
 # Environment
 .env text
 .env.* text
-!.env.example text
+.env.example text
 
 # Docker
 Dockerfile* text
@@ -353,7 +353,7 @@ log/ binary
 
 # Environment
 .env* text
-!.env.example text
+.env.example text
 
 # Secrets
 secrets/ binary

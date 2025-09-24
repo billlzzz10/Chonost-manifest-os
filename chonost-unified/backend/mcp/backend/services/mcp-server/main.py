@@ -9,6 +9,44 @@ import aiofiles
 from pathlib import Path
 import yaml
 
+# Define the root directory for all user file operations
+ROOT_DIR = Path("/app/root")  # <-- Adjust as appropriate for your deployment!
+
+# Helper: Ensure path is within root directory using robust path comparison
+def _is_within_root(path: Path, root: Path) -> bool:
+    try:
+        # Both must be resolved for symlink safety
+        path = path.resolve()
+        root = root.resolve()
+        # Use .relative_to to check ancestor relationship
+        path.relative_to(root)
+        return True
+    except ValueError:
+        return False
+
+# Ensure ROOT_DIR exists
+ROOT_DIR.mkdir(parents=True, exist_ok=True)
+
+# Helper function to check if a path is within the root directory (prevents traversal and symlink escapes)
+def _is_within_root(candidate: Path, root: Path) -> bool:
+    try:
+        candidate_resolved = candidate.resolve()
+        root_resolved = root.resolve()
+        # Use Path's relative_to for safe check
+        candidate_resolved.relative_to(root_resolved)
+        return True
+    except ValueError:
+        return False
+
+
+def _is_within_root(full_path: Path, root_resolved: Path) -> bool:
+    """Return True if full_path is contained within the resolved root directory."""
+    try:
+        full_path.relative_to(root_resolved)
+        return True
+    except ValueError:
+        return False
+
 app = FastAPI(title="Model Context Protocol Server", version="2.0.0")
 
 class MCPRequest(BaseModel):
@@ -190,16 +228,29 @@ class MCPServer:
     async def read_file_resource(self, path: str) -> Dict[str, Any]:
         """Read file system resource"""
         try:
-            full_path = Path(path)
-            if not full_path.exists():
-                return {"error": f"File not found: {path}"}
+            # Restrict file access to within ROOT_DIR
+            user_path = Path(path)
+            # Reject absolute paths to prevent root bypass
+            if user_path.is_absolute():
+                return {"error": "Access to absolute paths is not allowed."}
+            # Normalize the user input to collapse ../ etc.
+            safe_subpath = Path(os.path.normpath(str(user_path)))
+            # Compose the full path
+            full_path = (ROOT_DIR / safe_subpath)
+            root_resolved = ROOT_DIR.resolve()
+            full_path_resolved = full_path.resolve()
+            # Check that resolved path is within the ROOT_DIR
+            if not _is_within_root(full_path_resolved, root_resolved):
+                return {"error": "Access to the requested path is not allowed."}
+            if not full_path_resolved.exists():
+                return {"error": "File not found"}
             
-            if full_path.is_file():
-                async with aiofiles.open(full_path, 'r', encoding='utf-8') as f:
+            if full_path_resolved.is_file():
+                async with aiofiles.open(full_path_resolved, 'r', encoding='utf-8') as f:
                     content = await f.read()
                 return {
                     "contents": [{
-                        "uri": f"file://{path}",
+                        "uri": f"file://{full_path_resolved.relative_to(ROOT_DIR)}",
                         "mimeType": "text/plain",
                         "text": content
                     }]
@@ -211,11 +262,11 @@ class MCPServer:
                     items.append({
                         "name": item.name,
                         "type": "directory" if item.is_dir() else "file",
-                        "uri": f"file://{item}"
+                        "uri": f"file://{item.relative_to(ROOT_DIR)}"
                     })
                 return {
                     "contents": [{
-                        "uri": f"file://{path}",
+                        "uri": f"file://{full_path.relative_to(ROOT_DIR)}",
                         "mimeType": "application/json",
                         "text": json.dumps(items, indent=2)
                     }]
@@ -281,7 +332,23 @@ class MCPServer:
         encoding = args.get("encoding", "utf-8")
         
         try:
-            async with aiofiles.open(path, 'r', encoding=encoding) as f:
+            if not path or not isinstance(path, str):
+                return {"error": "Invalid or missing path argument."}
+            # Restrict file access to within ROOT_DIR and ensure no traversal or symlink escape
+            user_path = Path(path)
+            if user_path.is_absolute():
+                return {"error": "Absolute paths are not allowed."}
+            # Compose final path and normalize/resolves it
+            root_resolved = ROOT_DIR.resolve()
+            full_path = (root_resolved / user_path).resolve()
+            # Robustly ensure full_path stays inside root_resolved
+            if not _is_within_root(full_path, root_resolved):
+                return {"error": "Access to the requested path is not allowed."}
+            if not full_path.exists():
+                # For security, do not leak existence of files outside root
+                return {"error": "Requested file not found or inaccessible."}
+            
+            async with aiofiles.open(full_path, 'r', encoding=encoding) as f:
                 content = await f.read()
             
             return {
@@ -300,16 +367,29 @@ class MCPServer:
         encoding = args.get("encoding", "utf-8")
         
         try:
-            # Ensure directory exists
-            Path(path).parent.mkdir(parents=True, exist_ok=True)
+            # Restrict file access to within ROOT_DIR
+            user_path = Path(path)
+            if user_path.is_absolute():
+                return {"error": "Absolute paths are not allowed."}
+            full_path = (ROOT_DIR / user_path).resolve()
+            root_resolved = ROOT_DIR.resolve()
+            if not _is_within_root(full_path, root_resolved):
+                return {"error": "Access to the requested path is not allowed."}
             
-            async with aiofiles.open(path, 'w', encoding=encoding) as f:
+            # Ensure directory exists
+            parent_resolved = full_path.parent.resolve()
+            # Defensive: Ensure parent directory for write is within ROOT_DIR
+            if not _is_within_root(parent_resolved, root_resolved):
+                return {"error": "Directory creation outside root is not allowed."}
+            parent_resolved.mkdir(parents=True, exist_ok=True)
+            
+            async with aiofiles.open(full_path, 'w', encoding=encoding) as f:
                 await f.write(content)
             
             return {
                 "content": [{
                     "type": "text",
-                    "text": f"Successfully wrote to {path}"
+                    "text": "File written successfully"
                 }]
             }
         except Exception as e:
@@ -321,12 +401,17 @@ class MCPServer:
         recursive = args.get("recursive", False)
         
         try:
-            full_path = Path(path)
+            # Restrict file access to within ROOT_DIR
+            user_path = Path(path)
+            full_path = (ROOT_DIR / user_path).resolve()
+            root_resolved = ROOT_DIR.resolve()
+            if not _is_within_root(full_path, root_resolved):
+                return {"error": "Access to the requested path is not allowed."}
             if not full_path.exists():
-                return {"error": f"Directory not found: {path}"}
+                return {"error": "Directory not found"}
             
             if not full_path.is_dir():
-                return {"error": f"Path is not a directory: {path}"}
+                return {"error": "Path is not a directory"}
             
             items = []
             if recursive:
@@ -359,10 +444,16 @@ class MCPServer:
         language = args.get("language", "auto")
         
         try:
-            # Basic code analysis
-            full_path = Path(path)
+            # Restrict file access to within ROOT_DIR
+            user_path = Path(path)
+            if user_path.is_absolute():
+                return {"error": "Absolute paths are not allowed."}
+            full_path = (ROOT_DIR / user_path).resolve()
+            root_resolved = ROOT_DIR.resolve()
+            if not _is_within_root(full_path, root_resolved):
+                return {"error": "Access to the requested path is not allowed."}
             if not full_path.exists():
-                return {"error": f"Path not found: {path}"}
+                return {"error": "Path not found"}
             
             analysis = {
                 "path": str(full_path),

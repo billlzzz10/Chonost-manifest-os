@@ -1,0 +1,78 @@
+{
+  "app": {
+    "title": "Craft IDE",
+    "welcome": "Welcome to Craft IDE",
+    "loading": "Loading...",
+    "error": "Something went wrong"
+  },
+  "topBar": {
+    "newFile": "New File",
+    "openFile": "Open File",
+    "save": "Save",
+    "export": "Export",
+    "settings": "Settings",
+    "language": "Language",
+    "theme": {
+      "light": "Light",
+      "dark": "Dark",
+      "auto": "Auto"
+    },
+    "aiChat": "AI Chat",
+    "sync": "Sync Vault",
+    "help": "Help"
+  },
+  "leftPanel": {
+    "files": "Files",
+    "projects": "Projects",
+    "diagrams": "Diagrams",
+    "search": "Search",
+    "recent": "Recent",
+    "createNew": "Create New"
+  },
+  "rightPanel": {
+    "properties": "Properties",
+    "outline": "Outline",
+    "tags": "Tags",
+    "history": "History",
+    "aiSuggestions": "AI Suggestions"
+  },
+  "editor": {
+    "toolbar": {
+      "bold": "Bold",
+      "italic": "Italic",
+      "underline": "Underline",
+      "code": "Code",
+      "link": "Link",
+      "image": "Image",
+      "diagram": "Diagram"
+    },
+    "placeholder": "Start writing your manuscript...",
+    "wordCount": "Words: {{count}}"
+  },
+  "aiChat": {
+    "placeholder": "Ask AI about your manuscript...",
+    "send": "Send",
+    "generating": "AI is thinking...",
+    "error": "Sorry, I couldn't process that request"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "projectStats": "Project Statistics",
+    "aiInsights": "AI Insights",
+    "recentActivity": "Recent Activity"
+  },
+  "validation": {
+    "healthy": "All systems healthy",
+    "partial": "Some issues detected",
+    "unhealthy": "System unhealthy"
+  },
+  "notifications": {
+    "success": "Success!",
+    "warning": "Warning",
+    "error": "Error"
+  },
+  "manifest": {
+    "syncStatus": "Manifest sync status",
+    "dualCoverage": "Dual-identity coverage: {{percentage}}%"
+  }
+}

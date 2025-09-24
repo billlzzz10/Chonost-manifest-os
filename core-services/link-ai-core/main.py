@@ -30,11 +30,15 @@ try:
     from .mcp.registry import MCPRegistry
     from .mcp.client import MCPClient
     from .config import Settings
+    from src.api.handlers import router as api_router
 
     # Initialize MCP components
     settings = Settings()
     mcp_registry = MCPRegistry()
     mcp_client = MCPClient()  # Unified client that handles server selection automatically
+    
+    # Include API router
+    app.include_router(api_router, prefix="/api", tags=["api"])
 
 except ImportError as e:
     print(f"Warning: MCP components not available: {e}")
@@ -131,6 +135,7 @@ def run_app(host: str = "0.0.0.0", port: int = 8765, reload: bool = True) -> Non
     print("🚀 Starting MCP AI Orchestrator...")
     print(f"📍 Server will be available at: http://{host}:{port}")
     print(f"🔧 MCP Orchestrator endpoint: http://{host}:{port}/mcp")
+    print(f"🔐 Secure API endpoint: http://{host}:{port}/api/rag")
     
     uvicorn.run(
         "backend.mcp.main:app",

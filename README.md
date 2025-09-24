@@ -1,3 +1,30 @@
+# Chonost Manuscript OS
+
+Chonost Manuscript OS is a comprehensive AI monorepo designed for advanced AI agent ecosystems, RAG pipelines, and desktop integrations. This project combines backend services, MCP servers, and desktop applications for seamless AI-driven manuscript management.
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js 18+
+- Python 3.8+
+- Rust (for Tauri desktop builds)
+- Docker (for containerized services)
+
+### Installation
+```bash
+# Clone the repository
+git clone https://github.com/user/chonost.git
+cd chonost
+
+# Install Node.js dependencies
+npm install
+
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Start core services
+docker-compose up -d
+```
 # Chonost Manuscript OS v2.1.0
 
 An Intelligent Manuscript Management System.
@@ -36,6 +63,118 @@ This guide will get you up and running with the Chonost Manuscript OS.
     docker-compose up -d
     ```
 
+### Development
+```bash
+# Start MCP servers
+npm run mcp:start
+
+# Run backend services
+python core-services/link-ai-core/main.py
+
+# Start frontend development
+npm run dev
+```
+
+## 🏗️ Architecture
+
+### Core Components
+- **MCP Servers**: Memory, Filesystem, Sequential Thinking, Context7
+- **RAG Pipeline**: Enhanced retrieval-augmented generation with Notion integration
+- **AI Agents**: Multi-agent orchestration with CrewAI and Ollama
+- **Desktop Integration**: Tauri-based Nodition desktop application
+- **Monitoring**: Grafana dashboards and alert systems
+
+### Data Flow
+1. **Notion Sync** → `scripts/notion.py` → Manuscript Vault
+2. **RAG Processing** → Vector stores → AI responses
+3. **Agent Orchestration** → MCP tools → Task execution
+4. **Desktop Interface** → Nodition → User interaction
+
+## 📱 Desktop Integration - Nodition
+
+Nodition is the desktop companion for Chonost Manuscript OS, providing native desktop experience with Tauri.
+
+### Features
+- **Native Desktop UI**: Cross-platform (Windows/Mac/Linux) with Tauri
+- **Notion Integration**: Real-time sync with manuscript vault via sidecar
+- **RAG Health Checks**: Validation service for system monitoring
+- **Sidecar Architecture**: Node.js backend with Python subprocess integration
+- **Production Ready**: Bundled executables with system tray support
+
+### Badges
+[![Nodition Desktop](https://img.shields.io/badge/Nodition-Desktop%20Ready-brightgreen)](https://github.com/user/chonost/tree/main/nodition)
+[![Tauri Build](https://img.shields.io/badge/Tauri-v1.5.0-blue)](https://tauri.app)
+[![Notion Integration](https://img.shields.io/badge/Notion-API%20v1-yellow)](https://developers.notion.com)
+[![Cross%20Platform](https://img.shields.io/badge/Windows-Mac-Linux-green)](https://tauri.app)
+
+### Quick Start - Nodition
+```bash
+cd nodition
+npm install
+npx tauri dev  # Development mode
+npx tauri build  # Production build
+```
+
+### Configuration
+1. Set `NOTION_TOKEN` in `.env` for Notion API access
+2. Configure `MANUSCRIPT_VAULT` path for data storage
+3. Set `NOTION_DATABASE_ID` for target database sync
+
+## 🔧 Core Services
+
+### Link AI Core
+- **AI Chat Interface**: Enhanced chat with memory and context
+- **RAG System**: Complete retrieval-augmented generation pipeline
+- **Notion AI Integration**: Seamless Notion data sync and processing
+
+### MCP Ecosystem
+- **Memory Server**: Knowledge graph and conversation memory
+- **Filesystem Server**: Secure file operations and vault management
+- **Sequential Thinking**: Advanced problem-solving with chain-of-thought
+
+## 📊 Monitoring & Observability
+
+- **Grafana Dashboards**: Real-time metrics and performance tracking
+- **Alert System**: Automated notifications for system health
+- **Logging**: Structured logs with correlation IDs
+
+## 🛠️ Development Tools
+
+### VSCode Extension
+- **MCP Tools Provider**: Integrated MCP server access
+- **Cursor Integration**: AI-powered code assistance
+- **Tool Schema Management**: Dynamic tool discovery and usage
+
+### Scripts
+- **Vault Management**: Automated manuscript vault organization
+- **Dataset Generation**: AI conversation and performance datasets
+- **Quality Control**: Master quality assurance and validation
+
+## 📈 Performance & Scale
+
+- **Horizontal Scaling**: Kubernetes-ready with HPA configurations
+- **Caching**: Redis integration for response caching
+- **Load Balancing**: Multi-MCP server pooling and orchestration
+
+## 🤝 Contributing
+
+See our [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to contribute to the project.
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- [Tauri Team](https://tauri.app) - Desktop framework
+- [Notion Developers](https://developers.notion.com) - API integration
+- [Model Context Protocol](https://modelcontextprotocol.io) - AI agent communication
+- [CrewAI](https://crewai.com) - Multi-agent orchestration
+
+---
+
+⭐ **Star us on GitHub** if you find this project useful!  
+📢 **Join the conversation** in our [community discussions](https://github.com/user/chonost/discussions)
 ---
 
 ## 🧠 Core Concepts

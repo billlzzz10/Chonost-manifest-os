@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/billlzzz10-chonost-manifest-os-badge.png)](https://mseep.ai/app/billlzzz10-chonost-manifest-os)
+
 # Chonost Manuscript OS
 
 Chonost Manuscript OS is a comprehensive AI monorepo designed for advanced AI agent ecosystems, RAG pipelines, and desktop integrations. This project combines backend services, MCP servers, and desktop applications for seamless AI-driven manuscript management.

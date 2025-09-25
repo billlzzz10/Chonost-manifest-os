@@ -4,6 +4,8 @@ import { Input } from '@/shared/ui/input'
 import { ScrollArea } from '@/shared/ui/scroll-area'
 import { Send, Bot } from 'lucide-react'
 import MessageItem from './MessageItem'
+import { OperationalInsightCard } from './components/OperationalInsightCard'
+import { createDemoCardLayout } from './card-system/defaultCardFactory'
 
 export function ChatInterface({ selectedChatId, setSelectedChatId }) {
   const [messages, setMessages] = useState([])
@@ -11,6 +13,35 @@ export function ChatInterface({ selectedChatId, setSelectedChatId }) {
   const [loading, setLoading] = useState(false)
   const [sending, setSending] = useState(false)
   const messagesEndRef = useRef(null)
+
+  const insightCardLayout = useMemo(() => createDemoCardLayout(selectedChatId), [selectedChatId])
+
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [])
+
+  const fetchMessages = useCallback(async () => {
+    setLoading(true)
+    try {
+      if (!selectedChatId) {
+        return
+      }
+      const response = await fetch(`/api/chat/sessions/${selectedChatId}`)
+      if (!response.ok) {
+        throw new Error(`Failed to fetch messages: ${response.status}`)
+      }
+      const data = await response.json()
+      if (data.success) {
+        setMessages(data.data.messages || [])
+      } else {
+        console.warn('Chat session responded without success flag set to true.')
+      }
+    } catch (error) {
+      console.error('Error fetching messages:', error)
+    } finally {
+      setLoading(false)
+    }
+  }, [selectedChatId])
 
   useEffect(() => {
     if (selectedChatId) {
@@ -24,24 +55,19 @@ export function ChatInterface({ selectedChatId, setSelectedChatId }) {
     scrollToBottom()
   }, [messages, scrollToBottom])
 
-  const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [])
-
-  const fetchMessages = useCallback(async () => {
-    setLoading(true)
-    try {
-      const response = await fetch(`/api/chat/sessions/${selectedChatId}`)
-      const data = await response.json()
-      if (data.success) {
-        setMessages(data.data.messages || [])
-      }
-    } catch (error) {
-      console.error('Error fetching messages:', error)
-    } finally {
-      setLoading(false)
+  const handleExecuteCli = useCallback(async (command, sandboxed) => {
+    const startedAt = new Date()
+    return {
+      message: `Simulated execution of "${command}"${sandboxed ? ' in sandbox' : ''}.`,
+      output: [
+        `Command validated at ${startedAt.toISOString()}`,
+        sandboxed ? 'Sandbox isolation: enabled' : 'Sandbox isolation: disabled',
+        'No destructive operations detected.',
+      ],
+      startedAt,
+      completedAt: new Date(),
     }
-  }, [selectedChatId])
+  }, [])
 
   const sendMessage = useCallback(async () => {
     if (!currentMessage.trim() || !selectedChatId || sending) return
@@ -54,6 +80,9 @@ export function ChatInterface({ selectedChatId, setSelectedChatId }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: messageContent, message_metadata: { timestamp: new Date().toISOString() } }),
       })
+      if (!response.ok) {
+        throw new Error(`Failed to send message: ${response.status}`)
+      }
       const data = await response.json()
       if (data.success) {
         setMessages((prev) => [...prev, data.data])
@@ -68,6 +97,8 @@ export function ChatInterface({ selectedChatId, setSelectedChatId }) {
           }
           setMessages((prev) => [...prev, aiResponse])
         }, 1000)
+      } else {
+        console.warn('Message submission did not return a success flag.')
       }
     } catch (error) {
       console.error('Error sending message:', error)
@@ -103,7 +134,8 @@ export function ChatInterface({ selectedChatId, setSelectedChatId }) {
       <div className="bg-white border-b border-gray-200 p-4">
         <h2 className="text-lg font-semibold text-gray-900">แชต</h2>
       </div>
-      <ScrollArea className="flex-1 p-4">
+      <ScrollArea className="flex-1 space-y-4 p-4">
+        <OperationalInsightCard layout={insightCardLayout} onExecuteCli={handleExecuteCli} />
         {loading ? (
           <div className="text-center py-8 text-gray-500">กำลังโหลดข้อความ...</div>
         ) : messages.length === 0 ? (
@@ -114,10 +146,10 @@ export function ChatInterface({ selectedChatId, setSelectedChatId }) {
         ) : (
           <div className="space-y-4">
             {messages.map((message) => (
-              <MessageItem 
-                key={message.id} 
-                message={message} 
-                formatTime={formatTime} 
+              <MessageItem
+                key={message.id}
+                message={message}
+                formatTime={formatTime}
               />
             ))}
             <div ref={messagesEndRef} />

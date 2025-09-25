@@ -7,181 +7,187 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
+env:
+  OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+  ENABLE_AI_REVIEW: 'false'
+
 jobs:
   version-check:
     runs-on: ubuntu-latest
     name: Version Management Check
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-    
-    - name: Install dependencies
-      run: npm ci
-    
-    - name: Check version consistency
-      run: |
-        echo "🔍 Checking version consistency..."
-        CURRENT_VERSION=$(node -p "require('./package.json').version")
-        echo "📦 Current version: $CURRENT_VERSION"
-        LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
-        echo "🏷️  Latest tag: $LATEST_TAG"
-        if [[ "$CURRENT_VERSION" != "$LATEST_TAG" ]]; then
-          echo "✅ Version has been updated: $LATEST_TAG → $CURRENT_VERSION"
-        else
-          echo "ℹ️  Version unchanged: $CURRENT_VERSION"
-        fi
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Check version consistency
+        run: |
+          echo "🔍 Checking version consistency..."
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "📦 Current version: $CURRENT_VERSION"
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "🏷️  Latest tag: $LATEST_TAG"
+          if [[ "$CURRENT_VERSION" != "$LATEST_TAG" ]]; then
+            echo "✅ Version has been updated: $LATEST_TAG → $CURRENT_VERSION"
+          else
+            echo "ℹ️  Version unchanged: $CURRENT_VERSION"
+          fi
 
   test-ai-agents:
     runs-on: ubuntu-latest
     name: Test AI Agents
     needs: version-check
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-    
-    - name: Install dependencies
-      run: npm ci
-    
-    - name: Test agent initialization
-      run: |
-        echo "🧪 Testing AI agent initialization..."
-        node -e "
-          try {
-            const CodeReviewAgent = require('./agents/code-review-agent.js');
-            console.log('✅ CodeReviewAgent loaded');
-            
-            const MemoryThinkingAgent = require('./agents/memory-thinking-agent.js');
-            console.log('✅ MemoryThinkingAgent loaded');
-            
-            console.log('✅ All AI agents loaded successfully');
-            process.exit(0);
-          } catch (error) {
-            console.error('❌ Agent loading error:', error.message);
-            process.exit(1);
-          }
-        "
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Test agent initialization
+        run: |
+          echo "🧪 Testing AI agent initialization..."
+          node -e "
+            try {
+              const CodeReviewAgent = require('./agents/code-review-agent.js');
+              console.log('✅ CodeReviewAgent loaded');
+
+              const MemoryThinkingAgent = require('./agents/memory-thinking-agent.js');
+              console.log('✅ MemoryThinkingAgent loaded');
+
+              console.log('✅ All AI agents loaded successfully');
+              process.exit(0);
+            } catch (error) {
+              console.error('❌ Agent loading error:', error.message);
+              process.exit(1);
+            }
+          "
 
   integration-tests:
     runs-on: ubuntu-latest
     name: Integration Tests
     needs: [version-check, test-ai-agents]
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-    
-    - name: Install dependencies
-      run: npm ci
-    
-    - name: Run basic tests
-      run: |
-        echo "🧪 Running basic integration tests..."
-        
-        # Test AI commit script
-        if node scripts/ai-commit.js commit --help > /dev/null 2>&1; then
-          echo "✅ AI commit script accessible"
-        else
-          echo "⚠️  AI commit script test"
-        fi
-        
-        # Test version manager
-        if node scripts/version-manager.js --help > /dev/null 2>&1; then
-          echo "✅ Version manager script accessible"
-        else
-          echo "⚠️  Version manager script test"
-        fi
-        
-        echo "✅ Basic integration tests completed"
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Run basic tests
+        run: |
+          echo "🧪 Running basic integration tests..."
+
+          # Test AI commit script module loading without requiring network access
+          if node -e "require('./scripts/ai-commit.js');" > /dev/null 2>&1; then
+            echo "✅ AI commit module can be required"
+          else
+            echo "❌ AI commit module failed to load"
+            exit 1
+          fi
+
+          # Test version manager module loading without invoking release creation
+          if node -e "require('./scripts/version-manager.js');" > /dev/null 2>&1; then
+            echo "✅ Version manager module can be required"
+          else
+            echo "❌ Version manager module failed to load"
+            exit 1
+          fi
+
+          echo "✅ Basic integration tests completed"
 
   production-readiness:
     runs-on: ubuntu-latest
     name: Production Readiness Check
     needs: [version-check, test-ai-agents, integration-tests]
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-    
-    - name: Install dependencies
-      run: npm ci
-    
-    - name: Security scan
-      uses: aquasecurity/trivy-action@master
-      with:
-        scan-type: 'fs'
-        format: 'sarif'
-        output: 'trivy-results.sarif'
-    
-    - name: Configuration validation
-      run: |
-        echo "🔍 Production configuration validation..."
-        
-        # Check required files
-        REQUIRED_FILES=(".env.example" "mcp.json" "scripts/ai-commit.js" "agents/code-review-agent.js" "agents/memory-thinking-agent.js")
-        for file in "${REQUIRED_FILES[@]}"; do
-          if [ -f "$file" ]; then
-            echo "✅ Required file found: $file"
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Security scan
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          scan-type: 'fs'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Configuration validation
+        run: |
+          echo "🔍 Production configuration validation..."
+
+          # Check required files
+          REQUIRED_FILES=(".env.example" "mcp.json" "scripts/ai-commit.js" "agents/code-review-agent.js" "agents/memory-thinking-agent.js")
+          for file in "${REQUIRED_FILES[@]}"; do
+            if [ -f "$file" ]; then
+              echo "✅ Required file found: $file"
+            else
+              echo "❌ Missing required file: $file"
+              exit 1
+            fi
+          done
+
+          # Check package.json dependencies
+          if jq -e '.dependencies.openai' package.json > /dev/null 2>&1; then
+            echo "✅ OpenAI dependency present"
           else
-            echo "❌ Missing required file: $file"
-            exit 1
+            echo "⚠️  OpenAI dependency missing"
           fi
-        done
-        
-        # Check package.json dependencies
-        if jq -e '.dependencies.openai' package.json > /dev/null 2>&1; then
-          echo "✅ OpenAI dependency present"
-        else
-          echo "⚠️  OpenAI dependency missing"
-        fi
-        
-        # Check MCP configuration
-        if [ -f mcp.json ] && jq -e '.servers | length > 0' mcp.json > /dev/null 2>&1; then
-          echo "✅ MCP configuration valid"
-          SERVER_COUNT=$(jq '.servers | length' mcp.json)
-          echo "📊 Found $SERVER_COUNT MCP servers"
-        else
-          echo "⚠️  MCP configuration incomplete"
-        fi
-        
-        echo "✅ Production readiness validation passed"
-    
-    - name: Generate readiness report
-      run: |
-        cat > readiness-report.md << 'EOL'
+
+          # Check MCP configuration
+          if [ -f mcp.json ] && jq -e '.servers | length > 0' mcp.json > /dev/null 2>&1; then
+            echo "✅ MCP configuration valid"
+            SERVER_COUNT=$(jq '.servers | length' mcp.json)
+            echo "📊 Found $SERVER_COUNT MCP servers"
+          else
+            echo "⚠️  MCP configuration incomplete"
+          fi
+
+          echo "✅ Production readiness validation passed"
+
+      - name: Generate readiness report
+        run: |
+          cat > readiness-report.md << 'EOL'
 # Production Readiness Report
 
 ## ✅ Configuration Status
@@ -203,55 +209,55 @@ jobs:
 
 Generated: $(date)
 EOL
-        echo "✅ Readiness report generated"
+          echo "✅ Readiness report generated"
 
   create-release:
     needs: [version-check, test-ai-agents, integration-tests, production-readiness]
     runs-on: ubuntu-latest
     name: Create Release
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-    
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && env.OPENROUTER_API_KEY != ''
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        token: ${{ secrets.GITHUB_TOKEN }}
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-    
-    - name: Install dependencies
-      run: npm ci
-    
-    - name: Generate release notes
-      id: release
-      run: |
-        echo "🚀 Generating release information..."
-        RELEASE_INFO=$(node scripts/version-manager.js create)
-        
-        if [ -n "$RELEASE_INFO" ]; then
-          echo "release_info<<EOF" >> $GITHUB_OUTPUT
-          echo "$RELEASE_INFO" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-          
-          VERSION=$(echo "$RELEASE_INFO" | grep -o 'Version: [0-9.]*' | cut -d' ' -f2 | head -1)
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-        else
-          echo "release_info=" >> $GITHUB_OUTPUT
-          echo "version=0.0.0" >> $GITHUB_OUTPUT
-        fi
-        
-        echo "📦 Release version: $VERSION"
-    
-    - name: Create release notes file
-      if: steps.release.outputs.release_info != ''
-      run: |
-        VERSION=${{ steps.release.outputs.version }}
-        cat > release-notes.md << 'EOL'
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Generate release notes
+        id: release
+        run: |
+          echo "🚀 Generating release information..."
+          RELEASE_INFO=$(node scripts/version-manager.js create)
+
+          if [ -n "$RELEASE_INFO" ]; then
+            echo "release_info<<EOF" >> $GITHUB_OUTPUT
+            echo "$RELEASE_INFO" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+
+            VERSION=$(echo "$RELEASE_INFO" | grep -o 'Version: [0-9.]*' | cut -d' ' -f2 | head -1)
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+          else
+            echo "release_info=" >> $GITHUB_OUTPUT
+            echo "version=0.0.0" >> $GITHUB_OUTPUT
+          fi
+
+          echo "📦 Release version: $VERSION"
+
+      - name: Create release notes file
+        if: steps.release.outputs.release_info != ''
+        run: |
+          VERSION=${{ steps.release.outputs.version }}
+          cat > release-notes.md << 'EOL'
 # AI Enhanced Commit System v${VERSION}
 
 ## Key Features
@@ -276,83 +282,91 @@ npm run ai:commit
 
 Generated by GitHub Actions
 EOL
-    
-    - name: Create GitHub release
-      if: steps.release.outputs.release_info != ''
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        VERSION=${{ steps.release.outputs.version }}
-        RELEASE_INFO=${{ steps.release.outputs.release_info }}
-        
-        # Extract notes
-        NOTES=$(echo "$RELEASE_INFO" | grep -A 10 'Release Notes:' || echo "AI Enhanced release with improved commit workflow")
-        
-        gh release create "v$VERSION" \
-          --title "v$VERSION - AI Enhanced Commit System" \
-          --notes-file release-notes.md \
-          --target "${{ github.sha }}"
-        
-        echo "✅ Release v$VERSION created successfully"
-    
-    - name: Upload artifacts
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: release-artifacts
-        path: |
-          release-notes.md
-          readiness-report.md
+
+      - name: Create GitHub release
+        if: steps.release.outputs.release_info != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=${{ steps.release.outputs.version }}
+          RELEASE_INFO=${{ steps.release.outputs.release_info }}
+
+          # Extract notes
+          NOTES=$(echo "$RELEASE_INFO" | grep -A 10 'Release Notes:' || echo "AI Enhanced release with improved commit workflow")
+
+          gh release create "v$VERSION" \
+            --title "v$VERSION - AI Enhanced Commit System" \
+            --notes-file release-notes.md \
+            --target "${{ github.sha }}"
+
+          echo "✅ Release v$VERSION created successfully"
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts
+          path: |
+            release-notes.md
+            readiness-report.md
+
+  release-skip:
+    needs: [version-check, test-ai-agents, integration-tests, production-readiness]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && env.OPENROUTER_API_KEY == ''
+    steps:
+      - run: echo "⏭️  Skipping release creation because OPENROUTER_API_KEY is not configured."
 
   validate-commit-messages:
     runs-on: ubuntu-latest
     name: Commit Message Validation
     needs: version-check
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-    
-    - name: Install dependencies
-      run: npm ci
-    
-    - name: Validate commits
-      run: |
-        echo "🔍 Validating commit messages..."
-        
-        if git describe --tags --abbrev=0 2>/dev/null; then
-          LATEST_TAG=$(git describe --tags --abbrev=0)
-          COMMITS=$(git log --oneline $LATEST_TAG..HEAD)
-        else
-          COMMITS=$(git log --oneline -10)
-        fi
-        
-        if [ -n "$COMMITS" ]; then
-          echo "📝 Checking commits:"
-          echo "$COMMITS"
-          
-          INVALID_COUNT=0
-          while IFS= read -r commit; do
-            if [[ ! $commit =~ ^[a-f0-9]{7,}\s+(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([^)]+\))?: ]]; then
-              echo "❌ Invalid format: $commit"
-              ((INVALID_COUNT++))
-            fi
-          done <<< "$COMMITS"
-          
-          if [ $INVALID_COUNT -eq 0 ]; then
-            echo "✅ All commits valid"
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate commits
+        run: |
+          echo "🔍 Validating commit messages..."
+
+          if git describe --tags --abbrev=0 2>/dev/null; then
+            LATEST_TAG=$(git describe --tags --abbrev=0)
+            COMMITS=$(git log --oneline $LATEST_TAG..HEAD)
           else
-            echo "❌ Found $INVALID_COUNT invalid commits"
-            exit 1
+            COMMITS=$(git log --oneline -10)
           fi
-        else
-          echo "ℹ️  No commits to validate"
-        fi
+
+          if [ -n "$COMMITS" ]; then
+            echo "📝 Checking commits:"
+            echo "$COMMITS"
+
+            INVALID_COUNT=0
+            while IFS= read -r commit; do
+              if [[ ! $commit =~ ^[a-f0-9]{7,}\s+(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([^)]+\))?: ]]; then
+                echo "❌ Invalid format: $commit"
+                ((INVALID_COUNT++))
+              fi
+            done <<< "$COMMITS"
+
+            if [ $INVALID_COUNT -eq 0 ]; then
+              echo "✅ All commits valid"
+            else
+              echo "❌ Found $INVALID_COUNT invalid commits"
+              exit 1
+            fi
+          else
+            echo "ℹ️  No commits to validate"
+          fi
+

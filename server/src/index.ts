@@ -8,7 +8,7 @@ dotenv.config();
 // --- Type Definitions ---
 
 interface Tool {
-  run: (args: Record<string, unknown>) => unknown;
+  run: (args: Record<string, unknown>) => unknown | Promise<unknown>;
 }
 
 // --- Tool Registry and I/O Bridge ---
@@ -53,7 +53,7 @@ app.use(express.json());
 
 // --- API Endpoints ---
 
-app.post('/mcp/run', (req: Request<{ tool: string, args: Record<string, unknown> }>, res: Response) => {
+app.post('/mcp/run', async (req: Request<{ tool: string, args: Record<string, unknown> }>, res: Response) => {
   try {
     const { tool, args } = req.body;
     console.log(`[API] /mcp/run called for tool: ${tool}`);
@@ -61,7 +61,7 @@ app.post('/mcp/run', (req: Request<{ tool: string, args: Record<string, unknown>
       return res.status(404).json({ error: `Tool '${tool}' not found.` });
     }
     const toolImplementation = toolRegistry.get(tool)!;
-    const result = toolImplementation.run(args);
+    const result = await toolImplementation.run(args);
     res.json({ result });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
@@ -69,7 +69,7 @@ app.post('/mcp/run', (req: Request<{ tool: string, args: Record<string, unknown>
   }
 });
 
-app.post('/seg/run', (req: Request<{ docHash?: string }>, res: Response) => {
+app.post('/seg/run', async (req: Request<{ docHash?: string }>, res: Response) => {
   try {
     const { docHash } = req.body;
     // Use environment variable for default, fallback to a hardcoded value if not set
@@ -78,7 +78,7 @@ app.post('/seg/run', (req: Request<{ docHash?: string }>, res: Response) => {
 
     const segTool = toolRegistry.get('document-segmentation')!;
     const inputText = doc.read(docId);
-    const segments = segTool.run({ text: inputText });
+    const segments = await segTool.run({ text: inputText });
 
     memory.put({
         docHash: docId,
@@ -93,13 +93,13 @@ app.post('/seg/run', (req: Request<{ docHash?: string }>, res: Response) => {
   }
 });
 
-app.post('/code-index/run', (req: Request<{ paths: string[] }>, res: Response) => {
+app.post('/code-index/run', async (req: Request<{ paths: string[] }>, res: Response) => {
   try {
     const { paths } = req.body;
     console.log(`[API] /code-index/run called for paths:`, paths);
 
     const indexerTool = toolRegistry.get('code-reference-indexer')!;
-    const result = indexerTool.run({ paths });
+    const result = await indexerTool.run({ paths });
 
     memory.put({
         type: 'citation',

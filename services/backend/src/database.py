@@ -7,69 +7,61 @@ and utilities for the Chat Integration Backend.
 
 import os
 import sqlite3
-from flask import g, current_app
-from contextlib import contextmanager
+import asyncio
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator
 
 
-def get_db():
-    """Get database connection from application context.
-    
+async def get_db_connection() -> sqlite3.Connection:
+    """Get database connection.
+
     Returns:
         sqlite3.Connection: Database connection object.
     """
-    if 'db' not in g:
-        database_path = current_app.config.get('DATABASE_PATH')
-        if not database_path:
-            database_path = os.path.join(
-                os.path.dirname(__file__), 
-                'database', 
-                'app.db'
-            )
-        
-        # Ensure database directory exists
-        os.makedirs(os.path.dirname(database_path), exist_ok=True)
-        
-        g.db = sqlite3.connect(database_path)
-        g.db.row_factory = sqlite3.Row
-    
-    return g.db
+    database_path = os.environ.get('DATABASE_PATH', 'chonost.db')
+
+    # Ensure database directory exists
+    os.makedirs(os.path.dirname(database_path), exist_ok=True)
+
+    conn = sqlite3.connect(database_path)
+    conn.row_factory = sqlite3.Row
+    return conn
 
 
-def close_db(e=None):
+async def close_db_connection(conn: sqlite3.Connection):
     """Close database connection.
-    
+
     Args:
-        e: Exception object (if any).
+        conn: Database connection object.
     """
-    db = g.pop('db', None)
-    
-    if db is not None:
-        db.close()
+    if conn is not None:
+        conn.close()
 
 
-@contextmanager
-def get_db_connection():
-    """Context manager for database connections.
-    
+@asynccontextmanager
+async def get_db_transaction() -> AsyncGenerator[sqlite3.Connection, None]:
+    """Async context manager for database transactions.
+
     Yields:
         sqlite3.Connection: Database connection object.
     """
-    conn = get_db()
+    conn = await get_db_connection()
     try:
         yield conn
+        await asyncio.get_event_loop().run_in_executor(None, conn.commit)
     except Exception:
-        conn.rollback()
+        await asyncio.get_event_loop().run_in_executor(None, conn.rollback)
         raise
-    else:
-        conn.commit()
+    finally:
+        await asyncio.get_event_loop().run_in_executor(None, conn.close)
 
 
-def init_db():
+async def init_db():
     """Initialize database with schema."""
-    db = get_db()
-    
+    conn = await get_db_connection()
+
     # Create tables if they don't exist
-    db.executescript('''
+    await asyncio.get_event_loop().run_in_executor(None, conn.executescript, '''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE NOT NULL,
@@ -160,20 +152,19 @@ def init_db():
             FOREIGN KEY (created_by) REFERENCES users (id)
         );
     ''')
-    
-    db.commit()
+
+    await asyncio.get_event_loop().run_in_executor(None, conn.commit)
+    await asyncio.get_event_loop().run_in_executor(None, conn.close)
 
 
-def init_app(app):
-    """Initialize database with Flask app.
-    
+async def init_app(app):
+    """Initialize database with FastAPI app.
+
     Args:
-        app (Flask): Flask application instance.
+        app: FastAPI application instance.
     """
-    app.teardown_appcontext(close_db)
-    
-    with app.app_context():
-        init_db()
+    # Initialize database on startup
+    await init_db()
 
 
 # Migration utilities (for future PostgreSQL migration)
@@ -213,7 +204,7 @@ def get_postgresql_connection_string():
     """
     return os.environ.get(
         'POSTGRESQL_URL',
-        'postgresql://user:password@localhost:5432/chat_integration'
+        'postgresql://localhost:5432/chat_integration'
     )
 
 

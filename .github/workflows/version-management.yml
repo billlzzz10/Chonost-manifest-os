@@ -17,16 +17,16 @@ jobs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    
+      
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '18'
         cache: 'npm'
-    
+      
     - name: Install dependencies
       run: npm ci
-    
+      
     - name: Check version consistency
       run: |
         echo "🔍 Checking version consistency..."
@@ -50,16 +50,16 @@ jobs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    
+      
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '18'
         cache: 'npm'
-    
+      
     - name: Install dependencies
       run: npm ci
-    
+      
     - name: Test agent initialization
       run: |
         echo "🧪 Testing AI agent initialization..."
@@ -89,16 +89,16 @@ jobs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    
+      
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '18'
         cache: 'npm'
-    
+      
     - name: Install dependencies
       run: npm ci
-    
+      
     - name: Run basic tests
       run: |
         echo "🧪 Running basic integration tests..."
@@ -129,23 +129,23 @@ jobs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    
+      
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '18'
         cache: 'npm'
-    
+      
     - name: Install dependencies
       run: npm ci
-    
+      
     - name: Security scan
       uses: aquasecurity/trivy-action@master
       with:
         scan-type: 'fs'
         format: 'sarif'
         output: 'trivy-results.sarif'
-    
+      
     - name: Configuration validation
       run: |
         echo "🔍 Production configuration validation..."
@@ -178,32 +178,31 @@ jobs:
         fi
         
         echo "✅ Production readiness validation passed"
-    
+      
     - name: Generate readiness report
-      run: |
+      run: | # Corrected indentation for the run block
         cat > readiness-report.md << 'EOL'
-# Production Readiness Report
+        # Production Readiness Report
 
-## ✅ Configuration Status
-- Required files: All present
-- Dependencies: OpenAI and core packages available
-- MCP servers: Configuration validated
-- Security scan: No critical vulnerabilities
+        ## ✅ Configuration Status
+        - Required files: All present
+        - Dependencies: OpenAI and core packages available
+        - MCP servers: Configuration validated
+        - Security scan: No critical vulnerabilities
 
-## 🧪 Test Results
-- AI agents: Successfully loaded
-- Integration tests: Basic functionality confirmed
-- Version management: Scripts accessible
+        ## 🧪 Test Results
+        - AI agents: Successfully loaded
+        - Integration tests: Basic functionality confirmed
+        - Version management: Scripts accessible
 
-## 📋 Deployment Checklist
-- [ ] Configure production API keys
-- [ ] Set MCP server environment variables
-- [ ] Test full AI review workflow
-- [ ] Monitor agent performance in production
+        ## 📋 Deployment Checklist
+        - [ ] Configure production API keys
+        - [ ] Set MCP server environment variables
+        - [ ] Test full AI review workflow
+        - [ ] Monitor agent performance in production
 
-Generated: $(date)
-EOL
-        echo "✅ Readiness report generated"
+        Generated: $(date)
+        EOL
 
   create-release:
     needs: [version-check, test-ai-agents, integration-tests, production-readiness]
@@ -217,16 +216,16 @@ EOL
       with:
         fetch-depth: 0
         token: ${{ secrets.GITHUB_TOKEN }}
-    
+      
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '18'
         cache: 'npm'
-    
+      
     - name: Install dependencies
       run: npm ci
-    
+      
     - name: Generate release notes
       id: release
       run: |
@@ -246,37 +245,37 @@ EOL
         fi
         
         echo "📦 Release version: $VERSION"
-    
+      
     - name: Create release notes file
       if: steps.release.outputs.release_info != ''
       run: |
         VERSION=${{ steps.release.outputs.version }}
         cat > release-notes.md << 'EOL'
-# AI Enhanced Commit System v${VERSION}
+        # AI Enhanced Commit System v${VERSION}
 
-## Key Features
-- AI-powered commit message generation
-- Automated code review with issue classification
-- Auto-fix for non-critical issues
-- Context-aware decision making
-- MCP integration for specialized analysis
+        ## Key Features
+        - AI-powered commit message generation
+        - Automated code review with issue classification
+        - Auto-fix for non-critical issues
+        - Context-aware decision making
+        - MCP integration for specialized analysis
 
-## Installation
-```bash
-npm install
-cp .env.example .env
-# Configure your API keys
-npm run ai:commit
-```
+        ## Installation
+        ```bash
+        npm install
+        cp .env.example .env
+        # Configure your API keys
+        npm run ai:commit
+        ```
 
-## Usage
-- `npm run ai:commit` - Generate AI commit messages
-- Critical issues trigger manual review
-- Non-critical issues are auto-fixed
+        ## Usage
+        - `npm run ai:commit` - Generate AI commit messages
+        - Critical issues trigger manual review
+        - Non-critical issues are auto-fixed
 
-Generated by GitHub Actions
-EOL
-    
+        Generated by GitHub Actions
+        EOL
+      
     - name: Create GitHub release
       if: steps.release.outputs.release_info != ''
       env:
@@ -294,7 +293,7 @@ EOL
           --target "${{ github.sha }}"
         
         echo "✅ Release v$VERSION created successfully"
-    
+      
     - name: Upload artifacts
       if: always()
       uses: actions/upload-artifact@v4
@@ -314,16 +313,16 @@ EOL
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    
+      
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '18'
         cache: 'npm'
-    
+      
     - name: Install dependencies
       run: npm ci
-    
+      
     - name: Validate commits
       run: |
         echo "🔍 Validating commit messages..."

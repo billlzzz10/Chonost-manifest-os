@@ -7,7 +7,7 @@
 				"@codacy/codacy-mcp@latest"
 			],
 			"env": {
-				"CODACY_ACCOUNT_TOKEN": "Nzl6Dgv4O3A63GDNMZBX"
+				"CODACY_ACCOUNT_TOKEN": "${input:codacy_token}"
 			}
 		},
 		"github": {
@@ -113,6 +113,12 @@
 			"id": "NOTION_TOKEN",
 			"type": "promptString",
 			"description": "Notion API Token (https://www.notion.so/profile/integrations)",
+			"password": true
+		},
+		{
+			"id": "codacy_token",
+			"type": "promptString",
+			"description": "Codacy Account Token for code analysis",
 			"password": true
 		},
 		{

@@ -106,6 +106,22 @@
         "-y",
         "@modelcontextprotocol/server-sequential-thinking"
       ]
+    },
+    "git": {
+      "command": "uvx",
+      "args": [
+        "mcp-server-git",
+        "--repository",
+        "/1_PROJECTS/02_DEV/"
+      ]
+    },
+    "sqlite": {
+      "command": "uvx",
+      "args": [
+        "mcp-server-sqlite",
+        "--db-path",
+        "/1_PROJECTS/02_DEV/REPO/chonost-manuscript-os/services/backend/chonost.db"
+      ]
     }
   },
   "inputs": [

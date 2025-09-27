@@ -199,8 +199,8 @@ class MCPServer:
             full_path = Path(path)
             if not full_path.exists():
                 return {"error": f"File not found: {path}"}
-            if candidate_path.is_file():
-                async with aiofiles.open(candidate_path, 'r', encoding='utf-8') as f:
+            if full_path.is_file():
+                async with aiofiles.open(full_path, 'r', encoding='utf-8') as f:
                     content = await f.read()
                 return {
                     "contents": [{
@@ -212,7 +212,7 @@ class MCPServer:
             else:
                 # Directory listing
                 items = []
-                for item in candidate_path.iterdir():
+                for item in full_path.iterdir():
                     items.append({
                         "name": item.name,
                         "type": "directory" if item.is_dir() else "file",

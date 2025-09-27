@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card'
 import { FileUpload } from './FileUpload'
 import { useAuth } from '../hooks/useAuth'
-import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Alert, AlertDescription } from '@/shared/ui/alert'
 import { CheckCircle, AlertCircle, FileText, Download, Trash2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/shared/ui/button'
 import { format } from 'date-fns'
 
 export function FileManagement({ isMobile }) {

@@ -196,23 +196,8 @@ class MCPServer:
     async def read_file_resource(self, path: str) -> Dict[str, Any]:
         """Read file system resource"""
         try:
-<<<<<<< HEAD
-            # Restrict file access to within ROOT_DIR
-            user_path = Path(path)
-            full_path = (ROOT_DIR / user_path).resolve()
-            root_resolved = ROOT_DIR.resolve()
-            if not str(full_path).startswith(str(root_resolved)):
-                return {"error": "Access to the requested path is not allowed."}
+            full_path = Path(path)
             if not full_path.exists():
-=======
-            # Prevent path traversal by resolving against allowed root
-            # Remove leading slashes to avoid absolute path bypass
-            safe_rel_path = path.lstrip("/\\")
-            candidate_path = (self.ALLOWED_FILES_ROOT / safe_rel_path).resolve()
-            if not str(candidate_path).startswith(str(self.ALLOWED_FILES_ROOT)):
-                return {"error": "Access denied: file outside allowed directory"}
-            if not candidate_path.exists():
->>>>>>> 953427f6d00c4076fad5274dd8a3ae96183fef64
                 return {"error": f"File not found: {path}"}
             if candidate_path.is_file():
                 async with aiofiles.open(candidate_path, 'r', encoding='utf-8') as f:

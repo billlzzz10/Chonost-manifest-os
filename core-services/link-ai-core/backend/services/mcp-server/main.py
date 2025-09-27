@@ -366,24 +366,9 @@ class MCPServer:
         path = args.get("path")
         language = args.get("language", "auto")
         
-        # Define a safe base directory for all file operations
-        BASE_DIR = os.path.abspath("./workspaces")  # change as needed
         try:
-<<<<<<< HEAD
-            # Restrict file access to within ROOT_DIR
-            user_path = Path(path)
-            full_path = (ROOT_DIR / user_path).resolve()
-            root_resolved = ROOT_DIR.resolve()
-            if not str(full_path).startswith(str(root_resolved)):
-                return {"error": "Access to the requested path is not allowed."}
-=======
-            # Compute full path and normalize
-            requested_path = os.path.normpath(os.path.join(BASE_DIR, path))
-            # Check containment: must start with BASE_DIR and path must not escape
-            if not requested_path.startswith(BASE_DIR):
-                return {"error": "Access to this path is not allowed."}
-            full_path = Path(requested_path)
->>>>>>> 953427f6d00c4076fad5274dd8a3ae96183fef64
+            # Basic code analysis
+            full_path = Path(path)
             if not full_path.exists():
                 return {"error": f"Path not found: {path}"}
             

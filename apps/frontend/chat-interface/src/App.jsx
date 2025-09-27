@@ -7,10 +7,9 @@ import { Whiteboard } from './features/whiteboard/Whiteboard'
 import { Connections } from '../Connections.jsx'
 import { Automations } from '../Automations.jsx'
 import { Settings } from './features/settings/Settings'
-import { ErrorBoundary } from './shared/ErrorBoundary'
+import ErrorBoundary from '../ErrorBoundary.jsx'
 import { ThemeProvider } from './shared/ThemeProvider'
 import { NotFound } from './shared/NotFound'
-import './App.css'
 
 function App() {
   const [currentView, setCurrentView] = useState('chat')

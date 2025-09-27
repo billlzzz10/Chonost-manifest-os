@@ -11,7 +11,7 @@ import {
   Trash2,
   Edit,
   Files,
-  Template,
+  Layout,
   Brain
 } from 'lucide-react'
 import {
@@ -27,12 +27,12 @@ export function Sidebar({ currentView, setCurrentView, selectedChatId, setSelect
 
   const menuItems = [
     { id: 'chat', label: 'แชต', icon: MessageSquare },
-    { id: 'editor', label: 'เอดิเตอร์', icon: Template },
+    { id: 'editor', label: 'เอดิเตอร์', icon: Layout },
     { id: 'whiteboard', label: 'ไวท์บอร์ด', icon: Files },
     { id: 'connections', label: 'การเชื่อมต่อ', icon: Link },
     { id: 'automations', label: 'อัตโนมัติ', icon: Zap },
     { id: 'agents', label: 'Agent Builder', icon: Brain },
-    { id: 'templates', label: 'เทมเพลต', icon: Template },
+    { id: 'templates', label: 'เทมเพลต', icon: Layout },
     { id: 'settings', label: 'ตั้งค่า', icon: Settings },
   ]
 

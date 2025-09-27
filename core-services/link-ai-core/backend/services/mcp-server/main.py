@@ -29,6 +29,8 @@ class MCPTool(BaseModel):
     inputSchema: Dict[str, Any]
 
 class MCPServer:
+    ALLOWED_FILES_ROOT = Path("allowed_files").resolve()  # Adjust path to desired root directory
+    
     def __init__(self):
         self.resources: Dict[str, MCPResource] = {}
         self.tools: Dict[str, MCPTool] = {}
@@ -191,12 +193,17 @@ class MCPServer:
     async def read_file_resource(self, path: str) -> Dict[str, Any]:
         """Read file system resource"""
         try:
-            full_path = Path(path)
-            if not full_path.exists():
+            # Prevent path traversal by resolving against allowed root
+            # Remove leading slashes to avoid absolute path bypass
+            safe_rel_path = path.lstrip("/\\")
+            candidate_path = (self.ALLOWED_FILES_ROOT / safe_rel_path).resolve()
+            if not str(candidate_path).startswith(str(self.ALLOWED_FILES_ROOT)):
+                return {"error": "Access denied: file outside allowed directory"}
+            if not candidate_path.exists():
                 return {"error": f"File not found: {path}"}
             
-            if full_path.is_file():
-                async with aiofiles.open(full_path, 'r', encoding='utf-8') as f:
+            if candidate_path.is_file():
+                async with aiofiles.open(candidate_path, 'r', encoding='utf-8') as f:
                     content = await f.read()
                 return {
                     "contents": [{
@@ -208,7 +215,7 @@ class MCPServer:
             else:
                 # Directory listing
                 items = []
-                for item in full_path.iterdir():
+                for item in candidate_path.iterdir():
                     items.append({
                         "name": item.name,
                         "type": "directory" if item.is_dir() else "file",
@@ -359,13 +366,24 @@ class MCPServer:
         path = args.get("path")
         language = args.get("language", "auto")
         
+        # Define a safe base directory for all file operations
+        BASE_DIR = os.path.abspath("./workspaces")  # change as needed
         try:
+<<<<<<< HEAD
             # Restrict file access to within ROOT_DIR
             user_path = Path(path)
             full_path = (ROOT_DIR / user_path).resolve()
             root_resolved = ROOT_DIR.resolve()
             if not str(full_path).startswith(str(root_resolved)):
                 return {"error": "Access to the requested path is not allowed."}
+=======
+            # Compute full path and normalize
+            requested_path = os.path.normpath(os.path.join(BASE_DIR, path))
+            # Check containment: must start with BASE_DIR and path must not escape
+            if not requested_path.startswith(BASE_DIR):
+                return {"error": "Access to this path is not allowed."}
+            full_path = Path(requested_path)
+>>>>>>> 953427f6d00c4076fad5274dd8a3ae96183fef64
             if not full_path.exists():
                 return {"error": f"Path not found: {path}"}
             

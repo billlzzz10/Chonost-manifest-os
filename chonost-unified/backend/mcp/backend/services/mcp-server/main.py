@@ -197,8 +197,8 @@ class MCPServer:
         """Read file system resource (strict sanitized access within ROOT_DIR)"""
         try:
             # Prevent accidental escapes if the incoming path is absolute, etc.
-            sanitized_path = path.lstrip("/\\")  # remove leading slashes/backslashes
-            full_path = (ROOT_DIR / sanitized_path).resolve()
+            # Join ROOT_DIR with user path, then resolve to get canonical path
+            full_path = (ROOT_DIR / path).resolve()
             # Ensure containment using Path.relative_to, which raises ValueError if escaping
             try:
                 full_path.relative_to(ROOT_DIR.resolve())

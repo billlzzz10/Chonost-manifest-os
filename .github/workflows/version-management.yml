@@ -1,10 +1,4 @@
-name: Enhanced Version Management & AI Review System
-
-on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+  branches: [ main, master ]
   workflow_dispatch:
 
 env:
@@ -29,7 +23,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
       - name: Check version consistency
         run: |
@@ -62,7 +56,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
       - name: Test agent initialization
         run: |
@@ -101,7 +95,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
       - name: Run basic tests
         run: |
@@ -143,7 +137,7 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
       - name: Security scan
         uses: aquasecurity/trivy-action@0.20.0
@@ -231,7 +225,7 @@ EOL
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
       - name: Generate release notes
         id: release
@@ -369,4 +363,3 @@ EOL
           else
             echo "ℹ️  No commits to validate"
           fi
-

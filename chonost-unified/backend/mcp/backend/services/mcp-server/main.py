@@ -331,10 +331,17 @@ class MCPServer:
         
         try:
             # Restrict file access to within ROOT_DIR
+            if not path or not isinstance(path, str):
+                return {"error": "Invalid or missing path argument."}
             user_path = Path(path)
+            if user_path.is_absolute():
+                return {"error": "Absolute paths are not allowed."}
             full_path = (ROOT_DIR / user_path).resolve()
             root_resolved = ROOT_DIR.resolve()
-            if not str(full_path).startswith(str(root_resolved)):
+            try:
+                # Ensure full_path is strictly within root_resolved
+                full_path.relative_to(root_resolved)
+            except ValueError:
                 return {"error": "Access to the requested path is not allowed."}
             
             # Ensure directory exists

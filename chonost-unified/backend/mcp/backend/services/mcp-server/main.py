@@ -196,33 +196,24 @@ class MCPServer:
     async def read_file_resource(self, path: str) -> Dict[str, Any]:
         """Read file system resource (strict sanitized access within ROOT_DIR)"""
         try:
-            # Normalize incoming path to avoid directory traversal
-            normalized_path = os.path.normpath(path)
-            # Reject absolute paths and those which try to escape via '..'
-            if (
-                os.path.isabs(normalized_path) or
-                normalized_path.startswith("..") or
-                any(part == ".." for part in normalized_path.split(os.sep)) or
-                normalized_path == ""    # no empty path allowed
-            ):
-                return {"error": "Access denied"}
-            # At this point, normalized_path is safe to join
-            candidate_path = (ROOT_DIR / normalized_path)
-            # Now resolve to its true location
-            full_path = candidate_path.resolve()
-            # Ensure containment using Path.relative_to, which raises ValueError if escaping
+            # Remove any leading slashes, so user cannot supply absolute paths
+            safe_path = path.lstrip("/\\")
+            # Join with root and resolve
+            candidate_path = (ROOT_DIR / safe_path)
             try:
+                full_path = candidate_path.resolve(strict=False)
+                # Ensure containment using Path.relative_to, which raises ValueError if escaping
                 full_path.relative_to(ROOT_DIR.resolve())
-            except ValueError:
+            except Exception:
                 return {"error": "Access denied"}
             if not full_path.exists():
-                return {"error": f"File not found: {normalized_path}"}
+                return {"error": f"File not found: {safe_path}"}
             if full_path.is_file():
                 async with aiofiles.open(full_path, 'r', encoding='utf-8') as f:
                     content = await f.read()
                 return {
                     "contents": [{
-                        "uri": f"file://{normalized_path}",
+                        "uri": f"file://{safe_path}",
                         "mimeType": "text/plain",
                         "text": content
                     }]
@@ -238,7 +229,7 @@ class MCPServer:
                     })
                 return {
                     "contents": [{
-                        "uri": f"file://{path}",
+                        "uri": f"file://{safe_path}",
                         "mimeType": "application/json",
                         "text": json.dumps(items, indent=2)
                     }]

@@ -344,9 +344,12 @@ class MCPServer:
             # Restrict file access to within ROOT_DIR
             if not path or not isinstance(path, str):
                 return {"error": "Invalid or missing path argument."}
-            user_path = Path(path)
-            if user_path.is_absolute():
-                return {"error": "Absolute paths are not allowed."}
+            # Normalize user input to prevent traversal attacks
+            normalized_user_path_str = os.path.normpath(path)
+            # Prevent absolute/escaped paths after normalization
+            if normalized_user_path_str.startswith(os.sep) or normalized_user_path_str.startswith(".."):
+                return {"error": "Path traversal or absolute paths are not allowed."}
+            user_path = Path(normalized_user_path_str)
             full_path = (ROOT_DIR / user_path).resolve()
             root_resolved = ROOT_DIR.resolve()
             try:

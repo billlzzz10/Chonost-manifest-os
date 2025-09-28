@@ -229,14 +229,22 @@ class MCPServer:
                 # Directory listing
                 items = []
                 for item in full_path.iterdir():
+                    # Construct a safe, root-relative path for item URI
+                    try:
+                        rel_item_path = item.resolve(strict=True).relative_to(ROOT_DIR.resolve()).as_posix()
+                    except Exception:
+                        # Skip items that escape the root (shouldn't happen due to earlier checks)
+                        continue
                     items.append({
                         "name": item.name,
                         "type": "directory" if item.is_dir() else "file",
-                        "uri": f"file://{item}"
+                        "uri": f"file://{rel_item_path}"
                     })
+                # Construct root-relative path for the directory itself
+                safe_rel_path = full_path.relative_to(ROOT_DIR.resolve()).as_posix()
                 return {
                     "contents": [{
-                        "uri": f"file://{safe_path}",
+                        "uri": f"file://{safe_rel_path}",
                         "mimeType": "application/json",
                         "text": json.dumps(items, indent=2)
                     }]

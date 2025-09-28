@@ -114,10 +114,29 @@ app.post('/code-index/run', async (req: Request<{ paths: string[] }>, res: Respo
   }
 });
 
+// Recursively sanitize an object for log safety (removes newlines from any string fields)
+function sanitizeLogEntry(entry: any): any {
+  if (typeof entry === 'string') {
+    return entry.replace(/[\r\n]+/g, ' ');
+  } else if (Array.isArray(entry)) {
+    return entry.map(sanitizeLogEntry);
+  } else if (entry && typeof entry === 'object') {
+    const sanitized: Record<string, any> = {};
+    for (const key in entry) {
+      if (Object.prototype.hasOwnProperty.call(entry, key)) {
+        sanitized[key] = sanitizeLogEntry(entry[key]);
+      }
+    }
+    return sanitized;
+  }
+  return entry;
+}
+
 app.post('/runlog/put', (req: Request, res: Response) => {
   try {
     const logEntry = req.body;
-    console.log(`[API] /runlog/put:`, logEntry);
+    const sanitizedLogEntry = sanitizeLogEntry(logEntry);
+    console.log(`[API] /runlog/put:`, sanitizedLogEntry);
     res.status(201).json({ status: "logged" });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";

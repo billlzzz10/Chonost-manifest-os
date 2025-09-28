@@ -22,7 +22,11 @@ function register(name: string, implementation: Tool) {
 
 const doc = {
   read: (docHash: string): string => {
-    console.log(`[Bridge] Reading from doc: ${docHash}`);
+    // Remove newlines/carriage returns before logging user input
+    const safeDocHash = typeof docHash === 'string'
+        ? docHash.replace(/[\n\r]/g, '').trim()
+        : String(docHash).trim();
+    console.log(`[Bridge] Reading from doc: ${safeDocHash}`);
     return "This is a long document content simulation. ".repeat(1000);
   }
 };

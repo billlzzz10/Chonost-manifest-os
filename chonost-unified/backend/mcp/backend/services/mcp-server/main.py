@@ -194,12 +194,15 @@ class MCPServer:
             return {"error": f"Unknown resource URI scheme: {uri}"}
     
     async def read_file_resource(self, path: str) -> Dict[str, Any]:
-        """Read file system resource (sanitized access within ROOT_DIR)"""
+        """Read file system resource (strict sanitized access within ROOT_DIR)"""
         try:
-            # Get the absolute path within ROOT_DIR
-            full_path = (ROOT_DIR / path).resolve()
-            # Prevent directory traversal and ensure containment
-            if not str(full_path).startswith(str(ROOT_DIR.resolve())):
+            # Prevent accidental escapes if the incoming path is absolute, etc.
+            sanitized_path = path.lstrip("/\\")  # remove leading slashes/backslashes
+            full_path = (ROOT_DIR / sanitized_path).resolve()
+            # Ensure containment using Path.relative_to, which raises ValueError if escaping
+            try:
+                full_path.relative_to(ROOT_DIR.resolve())
+            except ValueError:
                 return {"error": "Access denied"}
             if not full_path.exists():
                 return {"error": f"File not found: {path}"}

@@ -98,7 +98,8 @@ app.post('/seg/run', async (req: Request<{ docHash?: string }>, res: Response) =
 app.post('/code-index/run', async (req: Request<{ paths: string[] }>, res: Response) => {
   try {
     const { paths } = req.body;
-    console.log(`[API] /code-index/run called for paths:`, paths);
+    const sanitizedPaths = sanitizeLogEntry(paths);
+    console.log(`[API] /code-index/run called for paths:`, sanitizedPaths);
 
     const indexerTool = toolRegistry.get('code-reference-indexer')!;
     const result = await indexerTool.run({ paths });

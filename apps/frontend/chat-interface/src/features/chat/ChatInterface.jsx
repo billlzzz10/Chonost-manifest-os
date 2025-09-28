@@ -1,6 +1,3 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
-import { Button } from '@/shared/ui/button'
-import { Input } from '@/shared/ui/input'
 import { ScrollArea } from '@/shared/ui/scroll-area'
 import { Send, Bot } from 'lucide-react'
 import MessageItem from './MessageItem'
@@ -16,6 +13,45 @@ export function ChatInterface({ selectedChatId, setSelectedChatId }) {
 
   const insightCardLayout = useMemo(() => createDemoCardLayout(selectedChatId), [selectedChatId])
 
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [])
+
+  const fetchMessages = useCallback(async () => {
+    setLoading(true)
+    try {
+      if (!selectedChatId) {
+        return
+      }
+      const response = await fetch(`/api/chat/sessions/${selectedChatId}`)
+      if (!response.ok) {
+        throw new Error(`Failed to fetch messages: ${response.status}`)
+      }
+      const data = await response.json()
+      if (data.success) {
+        setMessages(data.data.messages || [])
+      } else {
+        console.warn('Chat session responded without success flag set to true.')
+      }
+    } catch (error) {
+      console.error('Error fetching messages:', error)
+    } finally {
+      setLoading(false)
+    }
+  }, [selectedChatId])
+
+  useEffect(() => {
+    if (selectedChatId) {
+      fetchMessages()
+    } else {
+      setMessages([])
+    }
+  }, [selectedChatId, fetchMessages])
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages, scrollToBottom])
+
   const handleExecuteCli = useCallback(async (command, sandboxed) => {
     const startedAt = new Date()
     return {
@@ -30,37 +66,6 @@ export function ChatInterface({ selectedChatId, setSelectedChatId }) {
     }
   }, [])
 
-  useEffect(() => {
-    if (selectedChatId) {
-      fetchMessages()
-    } else {
-      setMessages([])
-    }
-  }, [selectedChatId, fetchMessages])
-
-  useEffect(() => {
-    scrollToBottom()
-  }, [messages, scrollToBottom])
-
-  const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [])
-
-  const fetchMessages = useCallback(async () => {
-    setLoading(true)
-    try {
-      const response = await fetch(`/api/chat/sessions/${selectedChatId}`)
-      const data = await response.json()
-      if (data.success) {
-        setMessages(data.data.messages || [])
-      }
-    } catch (error) {
-      console.error('Error fetching messages:', error)
-    } finally {
-      setLoading(false)
-    }
-  }, [selectedChatId])
-
   const sendMessage = useCallback(async () => {
     if (!currentMessage.trim() || !selectedChatId || sending) return
     const messageContent = currentMessage.trim()
@@ -72,6 +77,9 @@ export function ChatInterface({ selectedChatId, setSelectedChatId }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: messageContent, message_metadata: { timestamp: new Date().toISOString() } }),
       })
+      if (!response.ok) {
+        throw new Error(`Failed to send message: ${response.status}`)
+      }
       const data = await response.json()
       if (data.success) {
         setMessages((prev) => [...prev, data.data])
@@ -86,6 +94,8 @@ export function ChatInterface({ selectedChatId, setSelectedChatId }) {
           }
           setMessages((prev) => [...prev, aiResponse])
         }, 1000)
+      } else {
+        console.warn('Message submission did not return a success flag.')
       }
     } catch (error) {
       console.error('Error sending message:', error)
@@ -126,34 +136,3 @@ export function ChatInterface({ selectedChatId, setSelectedChatId }) {
         {loading ? (
           <div className="text-center py-8 text-gray-500">กำลังโหลดข้อความ...</div>
         ) : messages.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <Bot className="mx-auto h-8 w-8 text-gray-400 mb-2" />
-            เริ่มการสนทนาใหม่
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {messages.map((message) => (
-              <MessageItem
-                key={message.id}
-                message={message}
-                formatTime={formatTime}
-              />
-            ))}
-            <div ref={messagesEndRef} />
-          </div>
-        )}
-      </ScrollArea>
-      <div className="bg-white border-t border-gray-200 p-4">
-        <div className="flex space-x-2">
-          <Input value={currentMessage} onChange={(e) => setCurrentMessage(e.target.value)} onKeyPress={handleKeyPress} placeholder="พิมพ์ข้อความ..." disabled={sending} className="flex-1" />
-          <Button onClick={sendMessage} disabled={!currentMessage.trim() || sending} size="icon">
-            <Send className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-export default ChatInterface
-

@@ -196,10 +196,13 @@ class MCPServer:
     async def read_file_resource(self, path: str) -> Dict[str, Any]:
         """Read file system resource (strict sanitized access within ROOT_DIR)"""
         try:
-            # Remove any leading slashes, so user cannot supply absolute paths
-            safe_path = path.lstrip("/\\")
+            # Normalize the path and prevent directory traversal attacks
+            normalized_path = os.path.normpath(path)
+            # Reject if any ".." after normalization or if path is absolute
+            if normalized_path.startswith("..") or os.path.isabs(normalized_path):
+                return {"error": "Access denied"}
             # Join with root and resolve
-            candidate_path = (ROOT_DIR / safe_path)
+            candidate_path = (ROOT_DIR / normalized_path)
             try:
                 full_path = candidate_path.resolve(strict=False)
                 # Ensure containment using Path.relative_to, which raises ValueError if escaping
@@ -207,7 +210,7 @@ class MCPServer:
             except Exception:
                 return {"error": "Access denied"}
             if not full_path.exists():
-                return {"error": f"File not found: {safe_path}"}
+                return {"error": f"File not found: {normalized_path}"}
             if full_path.is_file():
                 async with aiofiles.open(full_path, 'r', encoding='utf-8') as f:
                     content = await f.read()

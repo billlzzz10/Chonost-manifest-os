@@ -1,4 +1,4 @@
-# mcp-server/main.py
+# main.py
 from fastapi import FastAPI, HTTPException, WebSocket
 from pydantic import BaseModel
 from typing import Dict, List, Any, Optional, Union

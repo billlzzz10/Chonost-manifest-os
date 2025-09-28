@@ -10,11 +10,6 @@
 				"CODACY_ACCOUNT_TOKEN": "${input:codacy_token}"
 			}
 		},
-		"github": {
-			"type": "http",
-			"url": "https://api.githubcopilot.com/mcp/",
-			"gallery": true
-		},
 		"notion": {
 			"type": "stdio",
 			"command": "npx",

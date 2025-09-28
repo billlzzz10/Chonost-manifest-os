@@ -1,10 +1,4 @@
-name: Enhanced Version Management & AI Review System
-
-on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+  branches: [ main, master ]
   workflow_dispatch:
 
 env:
@@ -369,4 +363,3 @@ EOL
           else
             echo "ℹ️  No commits to validate"
           fi
-

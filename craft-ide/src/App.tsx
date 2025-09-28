@@ -1,3 +1,4 @@
+<<<<<<< Current (Your changes)
 import React, { Suspense } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { useTranslation } from 'react-i18next';
@@ -117,3 +118,14 @@ export default function App() {
     </I18nextProvider>
   );
 }
+=======
+import { Workspace } from './components/Workspace';
+
+function App() {
+  return (
+    <Workspace />
+  );
+}
+
+export default App;
+>>>>>>> Incoming (Background Agent changes)

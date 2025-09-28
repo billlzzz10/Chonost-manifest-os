@@ -199,10 +199,17 @@ class MCPServer:
             # Normalize incoming path to avoid directory traversal
             normalized_path = os.path.normpath(path)
             # Reject absolute paths and those which try to escape via '..'
-            if os.path.isabs(normalized_path) or normalized_path.startswith("..") or ".." in normalized_path.split(os.sep):
+            if (
+                os.path.isabs(normalized_path) or
+                normalized_path.startswith("..") or
+                any(part == ".." for part in normalized_path.split(os.sep)) or
+                normalized_path == ""    # no empty path allowed
+            ):
                 return {"error": "Access denied"}
-            # Join ROOT_DIR with normalized path, then resolve to get canonical path
-            full_path = (ROOT_DIR / normalized_path).resolve()
+            # At this point, normalized_path is safe to join
+            candidate_path = (ROOT_DIR / normalized_path)
+            # Now resolve to its true location
+            full_path = candidate_path.resolve()
             # Ensure containment using Path.relative_to, which raises ValueError if escaping
             try:
                 full_path.relative_to(ROOT_DIR.resolve())

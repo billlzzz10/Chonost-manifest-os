@@ -1,7 +1,0 @@
-{
-  "dataset_name": "tool_selection_dataset",
-  "description": "Dataset for AI tool selection and command execution",
-  "version": "1.0.0",
-  "created_date": "2025-08-31T13:33:09.497042",
-  "tool_entries": []
-}

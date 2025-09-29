@@ -1,10 +1,10 @@
 version: '3.8'
 
 services:
-  # Backend API Service
-  backend:
+  # Unified API Server (Backend + AI)
+  api-server:
     build:
-      context: ./services/backend
+      context: ./services/api-server
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
@@ -12,51 +12,33 @@ services:
       - DATABASE_URL=postgresql://postgres:password@postgres:5432/chonost
       - REDIS_URL=redis://redis:6379
       - QDRANT_URL=http://qdrant:6333
+      - AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY}
+      - AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT}
     depends_on:
       - postgres
       - redis
       - qdrant
     volumes:
-      - ./services/backend:/app
+      - ./services/api-server:/app
       - ./data:/app/data
     networks:
       - chonost-network
 
-  # Frontend Web Application
-  frontend:
+  # Craft IDE Frontend
+  craft-ide:
     build:
-      context: ./services/frontend
+      context: ./craft-ide
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
     environment:
-      - REACT_APP_API_URL=http://backend:8000
-      - REACT_APP_WS_URL=ws://backend:8000/ws
+      - VITE_API_URL=http://api-server:8000
+      - VITE_WS_URL=ws://api-server:8000/ws
     depends_on:
-      - backend
+      - api-server
     volumes:
-      - ./services/frontend:/app
+      - ./craft-ide:/app
       - /app/node_modules
-    networks:
-      - chonost-network
-
-  # AI Service
-  ai-service:
-    build:
-      context: ./services/ai
-      dockerfile: Dockerfile
-    ports:
-      - "8001:8001"
-    environment:
-      - AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY}
-      - AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT}
-      - DATABASE_URL=postgresql://postgres:password@postgres:5432/chonost
-    depends_on:
-      - postgres
-      - redis
-    volumes:
-      - ./services/ai:/app
-      - ./data:/app/data
     networks:
       - chonost-network
 
@@ -71,7 +53,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./services/database/migrations:/docker-entrypoint-initdb.d
+      - ./services/api-server/configs:/docker-entrypoint-initdb.d
     networks:
       - chonost-network
 
@@ -114,7 +96,7 @@ services:
   # Testing Service
   testing:
     build:
-      context: ./services/testing
+      context: ./services/api-server
       dockerfile: Dockerfile
     environment:
       - DATABASE_URL=postgresql://postgres:password@postgres:5432/chonost_test
@@ -123,7 +105,7 @@ services:
       - postgres
       - redis
     volumes:
-      - ./services/testing:/app
+      - ./services/api-server:/app
     networks:
       - chonost-network
     profiles:

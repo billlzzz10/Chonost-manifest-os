@@ -196,36 +196,31 @@ class MCPServer:
     async def read_file_resource(self, path: str) -> Dict[str, Any]:
         """Read file system resource (strict sanitized access within ROOT_DIR)"""
         try:
-            # Normalize and validate using pathlib
+            # Normalize and resolve user input as a strict relative path to ROOT_DIR
             input_path = Path(path)
-            if input_path.is_absolute():
-                return {"error": "Access denied"}
-            # Make sure no path components are '..'
-            if any(part == ".." for part in input_path.parts):
-                return {"error": "Access denied"}
-            # Resolve against the root directory securely
             candidate_path = (ROOT_DIR / input_path)
             try:
                 full_path = candidate_path.resolve(strict=True)
-                # Ensure containment using Path.relative_to (prevents escape even via symlink)
+                # Ensure full containment (prevents escape even via symlink/traversal)
                 full_path.relative_to(ROOT_DIR.resolve())
             except Exception:
                 return {"error": "Access denied"}
+            # After resolution, make sure the path is not the root itself (deny reading dir)
             if not full_path.exists():
                 return {"error": f"File not found: {input_path.as_posix()}"}
-            if full_path.is_file():
-                async with aiofiles.open(full_path, 'r', encoding='utf-8') as f:
-                    content = await f.read()
-                # For the result URI, safely return a normalized relative path under root
-                safe_rel_path = full_path.relative_to(ROOT_DIR.resolve()).as_posix()
-                return {
-                    "contents": [{
-                        "uri": f"file://{safe_rel_path}",
-                        "mimeType": "text/plain",
-                        "text": content
-                    }]
-                }
-            else:
+            if not full_path.is_file():
+                return {"error": "Requested resource is not a file"}
+            async with aiofiles.open(full_path, 'r', encoding='utf-8') as f:
+                content = await f.read()
+            # For the result URI, safely return a normalized relative path under root
+            safe_rel_path = full_path.relative_to(ROOT_DIR.resolve()).as_posix()
+            return {
+                "contents": [{
+                    "uri": f"file://{safe_rel_path}",
+                    "mimeType": "text/plain",
+                    "text": content
+                }]
+            }
                 # Directory listing
                 items = []
                 for item in full_path.iterdir():

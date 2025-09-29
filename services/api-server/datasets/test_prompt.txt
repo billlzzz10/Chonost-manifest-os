@@ -1,0 +1,5 @@
+This is a test prompt file.
+
+It should be automatically categorized as a prompt and moved to the Prompts/General folder.
+
+The Auto Vault Watcher should detect the word "prompt" in the filename and content and organize it accordingly.

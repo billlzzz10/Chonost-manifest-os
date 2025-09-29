@@ -1,0 +1,29 @@
+# Requirements สำหรับการสร้างดาต้าเซ็ต
+# ใช้สำหรับ AI Agent Multi-Action Dataset Generator
+
+# Core dependencies
+pathlib2>=2.3.7
+typing-extensions>=4.0.0
+
+# Data processing
+regex>=2022.0.0
+
+# Logging และ utilities
+colorama>=0.4.4
+
+# Optional: สำหรับการวิเคราะห์ข้อมูลขั้นสูง
+# pandas>=1.5.0
+# numpy>=1.21.0
+
+# Optional: สำหรับการสร้าง embeddings
+# sentence-transformers>=2.2.0
+# torch>=1.12.0
+
+# Optional: สำหรับการเชื่อมต่อกับ vector database
+# qdrant-client>=1.1.0
+
+# Development dependencies
+pytest>=7.0.0
+black>=22.0.0
+mypy>=1.0.0
+flake8>=5.0.0

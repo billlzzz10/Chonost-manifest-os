@@ -1,0 +1,3 @@
+"""
+Chat Applications for FileSystemMCP
+"""

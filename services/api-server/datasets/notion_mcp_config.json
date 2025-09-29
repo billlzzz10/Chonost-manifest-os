@@ -1,0 +1,45 @@
+{
+  "mcpServers": {
+    "notion": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "INTERNAL_INTEGRATION_TOKEN",
+        "mcp/notion"
+      ],
+      "env": {
+        "INTERNAL_INTEGRATION_TOKEN": "ntn_****"
+      }
+    }
+  },
+  "notionSettings": {
+    "defaultParentPageId": "",
+    "fileAnalysisDatabaseId": "",
+    "autoExportEnabled": true,
+    "exportFormat": "structured",
+    "syncInterval": 300,
+    "maxFileSize": 10485760,
+    "supportedFileTypes": [
+      ".py", ".js", ".ts", ".java", ".cpp", ".c", ".md", ".txt", 
+      ".doc", ".pdf", ".jpg", ".png", ".gif", ".svg", ".mp4", 
+      ".avi", ".mov", ".mp3", ".wav", ".flac", ".zip", ".rar", ".7z"
+    ]
+  },
+  "integrationFeatures": {
+    "fileStructureExport": true,
+    "fileAnalysisDatabase": true,
+    "realTimeSync": false,
+    "batchProcessing": true,
+    "searchIntegration": true,
+    "taggingSystem": true
+  },
+  "uiSettings": {
+    "theme": "dark",
+    "language": "th",
+    "notifications": true,
+    "autoSave": true
+  }
+}

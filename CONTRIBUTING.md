@@ -1,96 +1,32 @@
 # Contributing to Chonost Manuscript OS
 
-ขอบคุณสำหรับความสนใจในการมีส่วนร่วมกับ Chonost Manuscript OS! โครงการนี้มุ่งเน้นที่การพัฒนา AI orchestration system ด้วย RAG features และ MCP extensions. เราให้การต้อนรับ contributions ที่ช่วยปรับปรุง maintainability, features, และ documentation.
+Thank you for your interest in improving Chonost Manuscript OS. The project is still evolving, so thoughtful pull requests that clarify intent and keep the codebase approachable are highly appreciated.
 
-## Overview
+## Development Workflow
+1. **Fork and clone** the repository.
+2. **Create a branch** using `feature/<short-description>` or `fix/<short-description>`.
+3. **Install dependencies** following `docs/ENV_SETUP_GUIDE.md` and verify that the backend and frontend start locally.
+4. **Write tests** for any behaviour changes.
+5. **Run the test suite** (`python -m pytest` inside `services/api-server`).
+6. **Open a pull request** with a clear summary, screenshots for UI changes, and test results.
 
-- **Fork the repo**: สร้าง fork จาก [https://github.com/billlzzz10/Chonost-manifest-os]
-- **Create branch**: ใช้ branch name ที่ชัดเจน เช่น `feature/add-rag-handler` หรือ `fix/lint-errors`
-- **Test locally**: ตรวจสอบ code ทำงานได้ก่อน push
-- **Submit PR**: อธิบาย changes ใน PR description รวมถึง test results และ motivation
+## Coding Standards
+- **Python**: Format with `black`, type-check with `mypy`, and keep imports sorted (`isort` or the tooling of your choice).
+- **TypeScript/React**: Run `npm run lint` from `craft-ide`. Follow modern React patterns (function components, hooks) and co-locate component docs where helpful.
+- **Commits**: Prefer small, focused commits. Reference issues when applicable (`Fixes #123`).
 
-Contributions ควร align กับ roadmap ใน [DEVELOPMENT_ROADMAP.md](chonost-unified/backend/mcp/docs/DEVELOPMENT_ROADMAP.md).
+## Testing Guidelines
+- `python -m pytest` covers current backend behaviour.
+- Add fast unit tests for new logic; integration and E2E coverage can live under `services/testing` as it grows.
+- For frontend contributions, include Storybook examples or screencasts when practical.
 
-## Setup Development Environment
+## Documentation
+- Update relevant files in `docs/` when altering architecture, setup, or API behaviour.
+- Keep `README.md` aligned with real capabilities. If something is experimental, label it clearly.
 
-1. **Clone and setup**:
-   ```
-   git clone https://github.com/billlzzz10/Chonost-manifest-os.git
-   cd chonost
-   # Backend (Python)
-   pip install -r packages/backend/requirements_roadmap.txt
-   # Frontend (TypeScript)
-   npm install
-   # Copy env
-   cp .env.example .env
-   # Configure API keys (OpenAI, Notion, etc.)
-   ```
+## Communication
+- Use GitHub Discussions or issues for design proposals.
+- Draft pull requests are welcome when you need early feedback.
 
-2. **Run services**:
-   ```
-   # Docker compose for full stack
-   docker-compose up -d
-   # Or individual services
-   python scripts/start_backend.py
-   npm run dev  # สำหรับ frontend
-   ```
+By contributing you agree to the MIT license that covers this repository.
 
-3. **Verify setup**:
-   - Run `pytest tests/` เพื่อตรวจ unit tests
-   - Access `http://localhost:3000` เพื่อ test frontend
-   - Check CI badges ใน [README.md](README.md) สำหรับ status
-
-ดูรายละเอียดเพิ่มใน [ENV_SETUP_GUIDE.md](chonost-unified/backend/mcp/docs/ENV_SETUP_GUIDE.md).
-
-## Adding Features
-
-Contributions สำหรับ new features ควร focus ที่ RAG enhancements, MCP tools, หรือ integrations. ตัวอย่าง: Adding RAG feature
-
-1. **Update core files**: Modify `handlers.py` (หรือ relevant Python files ใน core-services/link-ai-core/) เพื่อ add new RAG logic เช่น vector search integration.
-2. **Add tests**: สร้าง test cases ใน `tests/e2e/test_rag_flow.py` หรือ `tests/integration/`
-   - Example: `def test_new_rag_handler(): assert response.contains("relevant docs")`
-3. **Update docs**: Add usage examples ใน `examples/` และ update [MCP_TOOLS_README.md](chonost-unified/backend/mcp/docs/MCP_TOOLS_README.md)
-4. **For MCP extensions**: Update `mcp.json` schema และ add handlers ใน `core-services/link-ai-core/scripts/`
-
-ใช้ [DEVELOPMENT_STANDARDS_SUMMARY.md](chonost-unified/backend/mcp/docs/DEVELOPMENT_STANDARDS_SUMMARY.md) สำหรับ architecture guidelines.
-
-## Code Style
-
-- **Python**: Use [Black](https://black.readthedocs.io/) สำหรับ formatting: `black .`
-  - Type checking ด้วย [mypy](https://mypy-lang.org/): `mypy .`
-  - Linting ด้วย flake8 หรือ ruff
-- **TypeScript**: Use ESLint: `npm run lint`
-  - Prettier สำหรับ formatting: `npm run format`
-  - TypeScript strict mode ใน `tsconfig.json`
-- **General**: Follow PEP8 สำหรับ Python, Airbnb style สำหรับ JS/TS. Run `pre-commit install` ถ้ามี hooks.
-
-ตรวจสอบก่อน commit: `black . && mypy . && npm run lint && npm run format`
-
-## Testing and PR Process
-
-1. **Run tests**:
-   - Unit/Integration: `pytest tests/ -v`
-   - Load testing: `locust -f tests/load/locustfile.py`
-   - E2E: `python scripts/comprehensive_testing.py`
-   - Coverage: `pytest --cov` (target >90%)
-
-2. **Lint and format**: ตรวจสอบ code style ตามด้านบน
-
-3. **Before push**:
-   - Ensure no breaking changes (test locally)
-   - Update CHANGELOG.md ถ้ามี significant changes
-   - Run CI locally ถ้า possible (ดู [.github/workflows/roadmap.yml](.github/workflows/roadmap.yml))
-
-4. **Submit PR**:
-   - Target `main` branch
-   - Include: Description ของ changes, test results, screenshots ถ้ามี UI changes
-   - Reference issues: `Fixes #123`
-   - Wait สำหรับ CI pass (badges ใน PR)
-
-PR จะ reviewed โดย maintainers. เราจะ merge หลังจาก approve และ rebase ถ้าจำเป็น.
-
-## Questions?
-
-เปิด issue ใน repo หรือ comment ใน PR. สำหรับ urgent, ping ใน GitHub discussions.
-
-ขอบคุณสำหรับ contributions ของคุณ!

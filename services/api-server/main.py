@@ -2,10 +2,7 @@
 MCP AI Orchestrator - Main Entry Point.
 """
 
-import asyncio
 import uvicorn
-from typing import Optional
-from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -13,15 +10,24 @@ from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI(
     title="MCP AI Orchestrator",
     description="AI-powered MCP (Model Context Protocol) Orchestrator",
-    version="2.2.0"
+    version="2.2.0",
 )
 
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://localhost:1420",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:1420",
+        "https://chonost.vercel.app",
+        "https://your-frontend-domain.com",  # Replace with your actual frontend domain
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -35,8 +41,10 @@ try:
     # Initialize MCP components
     settings = Settings()
     mcp_registry = MCPRegistry()
-    mcp_client = MCPClient()  # Unified client that handles server selection automatically
-    
+    mcp_client = (
+        MCPClient()
+    )  # Unified client that handles server selection automatically
+
     # Include API router
     app.include_router(api_router, prefix="/api", tags=["api"])
 
@@ -48,16 +56,14 @@ except ImportError as e:
 
 # API Endpoints for MCP Orchestrator
 
+
 @app.get("/health")
 async def health_check():
     """
     A health check endpoint for the service.
     """
-    return {
-        "status": "healthy",
-        "service": "mcp-orchestrator",
-        "version": "2.2.0"
-    }
+    return {"status": "healthy", "service": "mcp-orchestrator", "version": "2.2.0"}
+
 
 @app.get("/mcp/servers")
 async def list_servers():
@@ -73,6 +79,7 @@ async def list_servers():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to list servers: {str(e)}")
 
+
 @app.get("/mcp/tools")
 async def list_tools():
     """
@@ -87,29 +94,27 @@ async def list_tools():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to list tools: {str(e)}")
 
+
 @app.post("/mcp/call")
 async def call_tool(tool_call: dict):
     """
     Executes an MCP tool.
     """
+    tool_name = tool_call.get("tool")
+    if not tool_name:
+        raise HTTPException(status_code=400, detail="Tool name is required")
+
     if not mcp_client:
         raise HTTPException(status_code=503, detail="MCP client not available")
 
     try:
-        tool_name = tool_call.get("tool")
         parameters = tool_call.get("parameters", {})
 
-        if not tool_name:
-            raise HTTPException(status_code=400, detail="Tool name is required")
-
         result = await mcp_client.call_tool(tool_name, parameters)
-        return {
-            "success": True,
-            "result": result,
-            "tool": tool_name
-        }
+        return {"success": True, "result": result, "tool": tool_name}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Tool execution failed: {str(e)}")
+
 
 @app.get("/mcp/status")
 async def get_status():
@@ -120,13 +125,14 @@ async def get_status():
         "status": "operational" if mcp_registry and mcp_client else "degraded",
         "registry": "available" if mcp_registry else "unavailable",
         "client": "available" if mcp_client else "unavailable",
-        "settings": settings.dict() if settings else None
+        "settings": settings.dict() if settings else None,
     }
+
 
 def run_app(host: str = "0.0.0.0", port: int = 8765, reload: bool = True) -> None:
     """
     Run the MCP AI Orchestrator application.
-    
+
     Args:
         host: Host to bind to
         port: Port to bind to
@@ -136,18 +142,16 @@ def run_app(host: str = "0.0.0.0", port: int = 8765, reload: bool = True) -> Non
     print(f"📍 Server will be available at: http://{host}:{port}")
     print(f"🔧 MCP Orchestrator endpoint: http://{host}:{port}/mcp")
     print(f"🔐 Secure API endpoint: http://{host}:{port}/api/rag")
-    
+
     uvicorn.run(
-        "backend.mcp.main:app",
-        host=host,
-        port=port,
-        reload=reload,
-        log_level="info"
+        "backend.mcp.main:app", host=host, port=port, reload=reload, log_level="info"
     )
+
 
 def run_mcp_server() -> None:
     """Run the MCP Server specifically."""
     run_app()
+
 
 if __name__ == "__main__":
     run_app()

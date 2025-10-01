@@ -4,17 +4,28 @@
   "version": "0.1.0",
   "publisher": "chonost",
   "description": "VS Code extension for Chonost MCP Tools",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/billlzzz10/Chonost-manifest-os.git"
+  },
+  "homepage": "https://github.com/billlzzz10/Chonost-manifest-os#readme",
+  "license": "MIT",
   "engines": {
     "vscode": "^1.84.0"
   },
   "categories": [
     "Other"
   ],
+  "keywords": [
+    "mcp",
+    "tools",
+    "orchestrator",
+    "ai",
+    "productivity"
+  ],
+  "icon": "media/icon.png",
   "activationEvents": [
-    "onStartupFinished",
-    "onCommand:chonost.tools.run",
-    "onCommand:chonost.tools.pickAndRun",
-    "onCommand:chonost.tools.list"
+    "onStartupFinished"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -64,19 +75,19 @@
     "lint": "eslint src --ext ts"
   },
   "devDependencies": {
-    "@types/vscode": "^1.84.0",
-    "@types/node": "^18.0.0",
-    "typescript": "^5.3.3",
-    "eslint": "^8.57.0",
-    "@typescript-eslint/eslint-plugin": "^6.21.0",
-    "@typescript-eslint/parser": "^6.21.0",
+    "@types/vscode": "^1.93.0",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0",
+    "eslint": "^9.12.0",
+    "@typescript-eslint/eslint-plugin": "^8.8.0",
+    "@typescript-eslint/parser": "^8.8.0",
     "@types/jest": "^29.5.12",
     "jest": "^29.7.0"
   },
   "dependencies": {
     "lodash": "^4.17.21",
-    "axios": "^1.6.2",
-    "ws": "^8.14.2"
+    "axios": "^1.7.0",
+    "ws": "^8.18.0"
   }
 }
 

@@ -11,7 +11,7 @@
     "i18n:extract": "i18next-scanner --config i18n.config.js"
   },
   "dependencies": {
-    "@chonost/ui": "workspace:*",
+    "@chonost/ui": "2.1.0",
     "@anthropic-ai/sdk": "^0.61.0",
     "@google/generative-ai": "^0.21.0",
     "@monaco-editor/react": "^4.7.0",

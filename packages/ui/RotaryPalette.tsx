@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Icon } from '../atoms/Icon';
+import { Icon } from './Icon';
 
 interface RotaryPaletteProps {
-  colors: string[];
+  colors?: string[];
   onColorSelect?: (color: string) => void;
   className?: string;
 }

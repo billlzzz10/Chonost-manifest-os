@@ -18,7 +18,7 @@ pydantic-settings==2.1.0
 
 # HTTP Client (for external API calls)
 httpx==0.25.2
-requests==2.32.4
+# duplicate entry removed (already listed elsewhere in this file)
 
 # Environment and Configuration
 python-dotenv==1.0.0

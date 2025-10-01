@@ -27,7 +27,7 @@ python-dotenv==1.0.0
 structlog==23.2.0
 
 # Security
-python-multipart==0.0.18
+# duplicate entry removed (already listed elsewhere in this file)
 python-jose[cryptography]==3.4.0
 passlib[bcrypt]==1.7.4
 

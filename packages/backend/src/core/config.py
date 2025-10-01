@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     
     # MongoDB
     MONGODB_URL: str = Field(
-        default="mongodb+srv://YOUR _URL",
+        default="",
         env="MONGODB_URL"
     )
     MONGODB_DATABASE: str = Field(

@@ -53,7 +53,13 @@ async function loadConfig() {
 
   try {
     const raw = await fs.readFile(configPath, 'utf8');
-    cachedConfig = JSON.parse(raw);
+    cachedConfig = JSON.parse(raw, (key, value) => {
+      // Prevent prototype pollution
+      if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
+        return undefined;
+      }
+      return value;
+    });
     cachedConfigMtime = stat.mtimeMs;
   } catch (error) {
     cachedConfig = { servers: {}, inputs: [] };

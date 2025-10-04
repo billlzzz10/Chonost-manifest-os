@@ -275,6 +275,24 @@ export function OperationalInsightCard({ layout, onExecuteCli }: OperationalInsi
         return
       }
 
+      // Clear error state if command is now valid
+      if (action.type === 'execute' && !cliError) {
+        setActionStates((prev) => {
+          const existing = prev[action.id]
+          if (existing?.status === 'error') {
+            return {
+              ...prev,
+              [action.id]: {
+                ...existing,
+                status: 'idle',
+                result: undefined,
+              },
+            }
+          }
+          return prev
+        })
+      }
+
       setActionStates((prev) => ({
         ...prev,
         [action.id]: { ...prev[action.id], status: 'running', result: undefined },

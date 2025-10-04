@@ -42,7 +42,8 @@ class MongoDBManager:
             print(f"✅ Connected to MongoDB: {settings.MONGODB_DATABASE}")
 
         except Exception as e:
-            print(f"❌ MongoDB connection failed ({settings.get_sanitized_mongodb_url()}): {e}")
+            import logging
+            logging.exception(f"❌ MongoDB connection failed ({settings.get_sanitized_mongodb_url()}): {e}")
             raise
     
     async def disconnect(self):

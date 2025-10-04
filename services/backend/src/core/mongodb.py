@@ -61,7 +61,7 @@ class MongoDBManager:
         """
         if not self.sync_client:
             mongo_url = settings.get_mongodb_url()
-            self.sync_client = MongoClient(mongo_url)
+            self.sync_client = MongoClient(mongo_url, serverSelectionTimeoutMS=5000)
         return self.sync_client
     
     def get_collection(self, collection_name: str):

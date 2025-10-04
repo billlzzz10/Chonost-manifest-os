@@ -97,14 +97,20 @@ class Settings(BaseSettings):
         return self.MONGODB_URL
 
     def get_sanitized_mongodb_url(self) -> str:
+    def get_sanitized_mongodb_url(self) -> str:
         """Mask credentials in the MongoDB URL for safe logging."""
 
         parsed = urlsplit(self.MONGODB_URL)
-        if "@" not in parsed.netloc:
+        if not parsed.username and not parsed.password:
             return self.MONGODB_URL
 
-        safe_netloc = parsed.netloc.split("@", maxsplit=1)[1]
+        # Reconstruct URL without credentials
+        safe_netloc = parsed.hostname
+        if parsed.port:
+            safe_netloc += f":{parsed.port}"
+        
         sanitized = parsed._replace(netloc=safe_netloc)
+        return urlunsplit(sanitized)
         return urlunsplit(sanitized)
 
     

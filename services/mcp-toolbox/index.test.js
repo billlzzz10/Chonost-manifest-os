@@ -13,7 +13,7 @@ test('loadConfig refreshes cache when configuration changes', async (t) => {
   const originalRoot = process.env.MCP_PROJECT_ROOT;
   process.env.MCP_PROJECT_ROOT = tempDir;
 
-  t.after(async () => {
+  t.teardown(async () => {
     process.env.MCP_PROJECT_ROOT = originalRoot;
     await fs.rm(tempDir, { recursive: true, force: true });
     delete require.cache[require.resolve('./index')];

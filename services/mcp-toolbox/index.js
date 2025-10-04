@@ -33,19 +33,28 @@ function getRepoRoot() {
 }
 
 async function loadConfig() {
-  if (cachedConfig) {
+  const configPath = path.resolve(getRepoRoot(), CONFIG_FILENAME);
+
+  let stat;
+  try {
+    stat = await fs.stat(configPath);
+  } catch (error) {
+    cachedConfig = { servers: {}, inputs: [] };
+    cachedConfigMtime = null;
+    if (process.env.MCP_TOOLBOX_DEBUG === 'true') {
+      console.warn(`⚠️  Unable to load ${CONFIG_FILENAME}: ${error.message}`);
+    }
     return cachedConfig;
   }
 
-  const configPath = path.resolve(getRepoRoot(), CONFIG_FILENAME);
+  if (cachedConfig && cachedConfigMtime === stat.mtimeMs) {
+    return cachedConfig;
+  }
 
   try {
-    const stat = await fs.stat(configPath);
-    if (!cachedConfig || !cachedConfigMtime || stat.mtimeMs !== cachedConfigMtime) {
-      const raw = await fs.readFile(configPath, 'utf8');
-      cachedConfig = JSON.parse(raw);
-      cachedConfigMtime = stat.mtimeMs;
-    }
+    const raw = await fs.readFile(configPath, 'utf8');
+    cachedConfig = JSON.parse(raw);
+    cachedConfigMtime = stat.mtimeMs;
   } catch (error) {
     cachedConfig = { servers: {}, inputs: [] };
     cachedConfigMtime = null;

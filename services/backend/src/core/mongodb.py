@@ -34,7 +34,7 @@ class MongoDBManager:
         """Connects to the MongoDB database."""
         try:
             mongo_url = settings.get_mongodb_url()
-            self.client = motor.motor_asyncio.AsyncIOMotorClient(mongo_url)
+            self.client = motor.motor_asyncio.AsyncIOMotorClient(mongo_url, serverSelectionTimeoutMS=5000)
             self.database = self.client[settings.MONGODB_DATABASE]
 
             # Test connection

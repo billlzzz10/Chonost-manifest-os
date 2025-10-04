@@ -33,15 +33,16 @@ class MongoDBManager:
     async def connect(self):
         """Connects to the MongoDB database."""
         try:
-            self.client = motor.motor_asyncio.AsyncIOMotorClient(settings.MONGODB_URL)
+            mongo_url = settings.get_mongodb_url()
+            self.client = motor.motor_asyncio.AsyncIOMotorClient(mongo_url)
             self.database = self.client[settings.MONGODB_DATABASE]
-            
+
             # Test connection
             await self.client.admin.command('ping')
             print(f"✅ Connected to MongoDB: {settings.MONGODB_DATABASE}")
-            
+
         except Exception as e:
-            print(f"❌ MongoDB connection failed: {e}")
+            print(f"❌ MongoDB connection failed ({settings.get_sanitized_mongodb_url()}): {e}")
             raise
     
     async def disconnect(self):
@@ -58,7 +59,8 @@ class MongoDBManager:
             MongoClient: A synchronous MongoDB client.
         """
         if not self.sync_client:
-            self.sync_client = MongoClient(settings.MONGODB_URL)
+            mongo_url = settings.get_mongodb_url()
+            self.sync_client = MongoClient(mongo_url)
         return self.sync_client
     
     def get_collection(self, collection_name: str):

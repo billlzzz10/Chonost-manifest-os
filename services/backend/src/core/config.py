@@ -5,8 +5,10 @@ Configuration settings for Chonost FastAPI Backend
 
 import os
 from typing import List
+from urllib.parse import urlsplit, urlunsplit
+
 from pydantic_settings import BaseSettings
-from pydantic import Field
+from pydantic import Field, field_validator
 
 class Settings(BaseSettings):
     """
@@ -73,6 +75,38 @@ class Settings(BaseSettings):
         default="chonost",
         env="MONGODB_DATABASE"
     )
+
+    @field_validator("MONGODB_URL", mode="before")
+    @classmethod
+    def validate_mongodb_url(cls, value: str | None) -> str:
+        """Validate and normalize the configured MongoDB connection string."""
+
+        candidate = value or os.getenv("MONGODB_URI") or os.getenv("MONGO_URL")
+        if not candidate:
+            candidate = "mongodb://localhost:27017"
+
+        normalized = candidate.strip()
+        if not normalized.startswith(("mongodb://", "mongodb+srv://")):
+            raise ValueError("MONGODB_URL must start with mongodb:// or mongodb+srv://")
+
+        return normalized
+
+    def get_mongodb_url(self) -> str:
+        """Return the normalized MongoDB connection string."""
+
+        return self.MONGODB_URL
+
+    def get_sanitized_mongodb_url(self) -> str:
+        """Mask credentials in the MongoDB URL for safe logging."""
+
+        parsed = urlsplit(self.MONGODB_URL)
+        if "@" not in parsed.netloc:
+            return self.MONGODB_URL
+
+        safe_netloc = parsed.netloc.split("@", maxsplit=1)[1]
+        sanitized = parsed._replace(netloc=safe_netloc)
+        return urlunsplit(sanitized)
+
     
     # Redis
     REDIS_URL: str = Field(

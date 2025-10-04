@@ -200,7 +200,9 @@ const validateCommand = (command: string, validation: CardLayout['content']['cli
 export function OperationalInsightCard({ layout, onExecuteCli }: OperationalInsightCardProps) {
   const [cardState, setCardState] = useState<CardState>(() => buildInitialCardState(layout))
   const [cliCommand, setCliCommand] = useState(layout.content.cliSnippet.command)
-  const [cliError, setCliError] = useState<string | null>(null)
+  const [cliError, setCliError] = useState<string | null>(() =>
+    validateCommand(layout.content.cliSnippet.command, layout.content.cliSnippet.validation),
+  )
   const [actionStates, setActionStates] = useState<ActionStateMap>(() => mergeActionStates(layout))
   const [metrics, setMetrics] = useState(() => layout.metrics)
   const [showUndoAction, setShowUndoAction] = useState<string | null>(null)
@@ -208,6 +210,7 @@ export function OperationalInsightCard({ layout, onExecuteCli }: OperationalInsi
   useEffect(() => {
     setCardState(buildInitialCardState(layout))
     setCliCommand(layout.content.cliSnippet.command)
+    setCliError(validateCommand(layout.content.cliSnippet.command, layout.content.cliSnippet.validation))
     setActionStates(mergeActionStates(layout))
     setMetrics(layout.metrics)
   }, [layout])
@@ -241,6 +244,37 @@ export function OperationalInsightCard({ layout, onExecuteCli }: OperationalInsi
 
   const runAction = useCallback(
     async (action: ActionButton) => {
+      if (action.type === 'execute' && cliError) {
+        const timestamp = new Date()
+        setActionStates((prev) => {
+          const existing =
+            prev[action.id] ?? {
+              type: action.type,
+              status: 'idle' as const,
+              result: undefined,
+              canUndo: false,
+              undoDeadline: undefined,
+            }
+
+          return {
+            ...prev,
+            [action.id]: {
+              ...existing,
+              status: 'error',
+              result: {
+                message: cliError,
+                errors: [cliError],
+                startedAt: timestamp,
+                completedAt: timestamp,
+              },
+              canUndo: false,
+              undoDeadline: undefined,
+            },
+          }
+        })
+        return
+      }
+
       setActionStates((prev) => ({
         ...prev,
         [action.id]: { ...prev[action.id], status: 'running', result: undefined },
@@ -315,11 +349,16 @@ export function OperationalInsightCard({ layout, onExecuteCli }: OperationalInsi
         }))
       }
     },
-    [cardState.sandboxMode, cliCommand, onExecuteCli],
+    [cardState.sandboxMode, cliCommand, cliError, onExecuteCli],
   )
 
   const triggerAction = useCallback(
     (action: ActionButton) => {
+      if (action.type === 'execute' && cliError) {
+        runAction(action)
+        return
+      }
+
       if (action.confirmation?.required) {
         const confirmation: ConfirmationState = {
           actionId: action.id,
@@ -331,7 +370,7 @@ export function OperationalInsightCard({ layout, onExecuteCli }: OperationalInsi
         runAction(action)
       }
     },
-    [runAction],
+    [cliError, runAction],
   )
 
   const confirmAction = useCallback(() => {
@@ -568,9 +607,13 @@ export function OperationalInsightCard({ layout, onExecuteCli }: OperationalInsi
           <div key={action.id} className="flex items-center gap-2">
             <Button
               variant={action.intent === 'danger' ? 'destructive' : action.intent === 'primary' ? 'default' : 'outline'}
-              disabled={action.disabled || isRunning}
+              disabled={
+                action.disabled ||
+                isRunning ||
+                (action.type === 'execute' && Boolean(cliError))
+              }
               onClick={() => triggerAction(action)}
-              title={action.tooltip}
+              title={action.type === 'execute' && cliError ? cliError : action.tooltip}
             >
               {isRunning ? 'Running…' : action.label}
             </Button>

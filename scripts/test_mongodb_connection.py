@@ -19,7 +19,7 @@ from core.config import settings
 async def test_mongodb_connection():
     """Test MongoDB connection"""
     print("🔍 Testing MongoDB Connection...")
-    print(f"URL: {settings.MONGODB_URL}")
+    print(f"URL: {settings.get_sanitized_mongodb_url()}")
     print(f"Database: {settings.MONGODB_DATABASE}")
     
     try:
@@ -56,7 +56,7 @@ async def test_mongodb_connection():
         return True
         
     except Exception as e:
-        print(f"❌ MongoDB connection failed: {e}")
+        print(f"❌ MongoDB connection failed ({settings.get_sanitized_mongodb_url()}): {e}")
         return False
 
 async def test_mongodb_collections():
@@ -110,7 +110,7 @@ async def test_mongodb_collections():
         return True
         
     except Exception as e:
-        print(f"❌ MongoDB collections test failed: {e}")
+        print(f"❌ MongoDB collections test failed ({settings.get_sanitized_mongodb_url()}): {e}")
         return False
 
 async def main():

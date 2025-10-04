@@ -46,7 +46,7 @@ test('loadConfig refreshes cache when configuration changes', async (t) => {
   const refreshedLoad = await loadMCPConfig();
   assert.deepStrictEqual(refreshedLoad, secondConfig);
 
-  await fs.rm(configPath);
+  await fs.rm(configPath, { force: true });
 
   const fallbackLoad = await loadMCPConfig();
   assert.deepStrictEqual(fallbackLoad, { servers: {}, inputs: [] });

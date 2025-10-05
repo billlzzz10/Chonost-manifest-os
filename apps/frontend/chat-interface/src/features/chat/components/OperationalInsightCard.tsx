@@ -144,8 +144,11 @@ const MermaidPreview = ({ config, previewMode }: { config: MermaidConfig; previe
   }, [config, previewMode])
 
   return (
-    <div className="space-y-2">
-      <div ref={containerRef} className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900" />
+    <div className="space-y-2" data-testid="mermaid-preview">
+      <div
+        ref={containerRef}
+        className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900"
+      />
       {error ? <p className="text-sm text-rose-600">{error}</p> : null}
     </div>
   )
@@ -153,11 +156,26 @@ const MermaidPreview = ({ config, previewMode }: { config: MermaidConfig; previe
 
 const formatDate = (date: Date) => format(date, 'yyyy-MM-dd HH:mm')
 
+const getInitialMermaidPreviewState = (layout: CardLayout) => {
+  const block = layout.content.mermaidBlock
+  if (!block) return false
+
+  switch (block.viewMode) {
+    case 'preview':
+    case 'split':
+      return true
+    case 'code':
+      return false
+    default:
+      return block.autoRender ?? false
+  }
+}
+
 const buildInitialCardState = (layout: CardLayout): CardState =>
   cardStateSchema.parse({
     isExpanded: true,
     editingCLI: false,
-    showingMermaidPreview: layout.content.mermaidBlock?.autoRender ?? false,
+    showingMermaidPreview: getInitialMermaidPreviewState(layout),
     confirmationModal: null,
     sandboxMode: layout.content.cliSnippet.execution.sandboxed,
     undoTimer: null,
@@ -394,6 +412,24 @@ export function OperationalInsightCard({ layout, onExecuteCli }: OperationalInsi
   }
 
   const signalColor = SIGNAL_COLORS[layout.header.signalBadge]
+  const mermaidBlock = layout.content.mermaidBlock
+  const mermaidViewMode = mermaidBlock?.viewMode ?? 'code'
+  const mermaidEditable = mermaidBlock?.editable ?? false
+  const showMermaidToggle = Boolean(mermaidBlock) && mermaidEditable && (mermaidViewMode === 'code' || mermaidViewMode === 'preview')
+  const mermaidPreviewVisible = mermaidBlock
+    ? mermaidViewMode === 'split'
+      ? true
+      : showMermaidToggle
+        ? cardState.showingMermaidPreview
+        : mermaidViewMode === 'preview'
+    : false
+  const mermaidCodeVisible = mermaidBlock
+    ? mermaidViewMode === 'split'
+      ? true
+      : showMermaidToggle
+        ? !cardState.showingMermaidPreview
+        : mermaidViewMode === 'code'
+    : false
 
   const renderChart = () => {
     if (!layout.content.mainChart) return null
@@ -641,29 +677,42 @@ export function OperationalInsightCard({ layout, onExecuteCli }: OperationalInsi
 
             {renderChart()}
 
-            {layout.content.mermaidBlock ? (
+            {mermaidBlock ? (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-100">Process Flow</h4>
-                  {layout.content.mermaidBlock.editable ? (
+                  {showMermaidToggle ? (
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => setCardState((state) => ({ ...state, showingMermaidPreview: !state.showingMermaidPreview }))}
+                      onClick={() =>
+                        setCardState((state) => ({ ...state, showingMermaidPreview: !state.showingMermaidPreview }))
+                      }
                     >
                       {cardState.showingMermaidPreview ? 'Show Code' : 'Preview Diagram'}
                     </Button>
                   ) : null}
                 </div>
-                {cardState.showingMermaidPreview ? (
-                  <MermaidPreview config={layout.content.mermaidBlock} previewMode={true} />
-                ) : (
+                {mermaidViewMode === 'split' ? (
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <MermaidPreview config={mermaidBlock} previewMode={true} />
+                    <Textarea
+                      value={mermaidBlock.syntax}
+                      readOnly={!mermaidEditable}
+                      className="min-h-[160px]"
+                      data-testid="mermaid-code"
+                    />
+                  </div>
+                ) : mermaidPreviewVisible ? (
+                  <MermaidPreview config={mermaidBlock} previewMode={mermaidPreviewVisible} />
+                ) : mermaidCodeVisible ? (
                   <Textarea
-                    value={layout.content.mermaidBlock.syntax}
-                    readOnly={!layout.content.mermaidBlock.editable}
+                    value={mermaidBlock.syntax}
+                    readOnly={!mermaidEditable}
                     className="min-h-[160px]"
+                    data-testid="mermaid-code"
                   />
-                )}
+                ) : null}
               </div>
             ) : null}
 

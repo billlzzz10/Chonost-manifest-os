@@ -29,9 +29,6 @@ async function callFetch(url, options) {
 function getRepoRoot() {
   return process.env.MCP_PROJECT_ROOT
     ? path.resolve(process.env.MCP_PROJECT_ROOT)
-    : process.cwd();
-}
-
 async function loadConfig() {
   const configPath = path.resolve(getRepoRoot(), CONFIG_FILENAME);
 
@@ -53,17 +50,24 @@ async function loadConfig() {
 
   try {
     const raw = await fs.readFile(configPath, 'utf8');
-    cachedConfig = JSON.parse(raw, (key, value) => {
-      // Prevent prototype pollution
-      if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
-        return undefined;
-      }
-      return value;
-    });
-    cachedConfigMtime = stat.mtimeMs;
+    // Re-check mtime after reading to ensure consistency
+    const postReadStat = await fs.stat(configPath);
+    if (postReadStat.mtimeMs !== stat.mtimeMs) {
+      // File was modified during read, retry once
+      return loadConfig();
+    }
+    cachedConfig = JSON.parse(raw);
+    cachedConfigMtime = postReadStat.mtimeMs;
   } catch (error) {
     cachedConfig = { servers: {}, inputs: [] };
     cachedConfigMtime = null;
+    if (process.env.MCP_TOOLBOX_DEBUG === 'true') {
+      console.warn(`⚠️  Unable to load ${CONFIG_FILENAME}: ${error.message}`);
+    }
+  }
+
+  return cachedConfig;
+}
     if (process.env.MCP_TOOLBOX_DEBUG === 'true') {
       console.warn(`⚠️  Unable to load ${CONFIG_FILENAME}: ${error.message}`);
     }

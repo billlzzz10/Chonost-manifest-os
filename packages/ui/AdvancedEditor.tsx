@@ -1,18 +1,31 @@
-import React, { useState, useRef } from 'react';
-import { Input } from './Input';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from './Button';
 import { Typography } from './Typography';
 import { RotaryPalette } from './RotaryPalette';
 import { RotaryToolkit } from './RotaryToolkit';
 import { MarkdownAnalyzer } from './MarkdownAnalyzer';
 import { CharacterRelationshipMap } from './CharacterRelationshipMap';
-import { ApiService, Manuscript, ManuscriptAnalysis } from './ApiService';
+import { ApiService, Manuscript } from './ApiService';
+
+interface CharacterSummary {
+  id: string;
+  name: string;
+  relationships: string[];
+  appearances: number;
+}
+
+interface AnalyzerCharacter {
+  name: string;
+  relationships: string[];
+  mentions: number;
+}
 
 interface AdvancedEditorProps {
   content?: string;
   onContentChange?: (content: string) => void;
   onSave?: () => void;
   className?: string;
+  manuscript?: Manuscript;
 }
 
 export const AdvancedEditor: React.FC<AdvancedEditorProps> = ({
@@ -20,18 +33,52 @@ export const AdvancedEditor: React.FC<AdvancedEditorProps> = ({
   onContentChange,
   onSave,
   className = '',
+  manuscript,
 }) => {
   const [editorContent, setEditorContent] = useState(content);
   const [selectedColor, setSelectedColor] = useState('#3B82F6');
   const [showAnalyzer, setShowAnalyzer] = useState(false);
   const [showRelationshipMap, setShowRelationshipMap] = useState(false);
-  const [characters, setCharacters] = useState([]);
-  const [currentManuscript, setCurrentManuscript] = useState<Manuscript | null>(null);
-  const [analysis, setAnalysis] = useState<ManuscriptAnalysis | null>(null);
+  const [characters, setCharacters] = useState<CharacterSummary[]>([]);
+  const [currentManuscript, setCurrentManuscript] = useState<Manuscript | null>(manuscript ?? null);
   const [isLoading, setIsLoading] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const autoSaveStatusStyles = {
+    saved: 'text-green-600',
+    saving: 'text-blue-600',
+    error: 'text-red-600',
+  } as const;
+
+  const autoSaveStatusLabel = {
+    saved: 'All changes saved',
+    saving: 'Saving…',
+    error: 'Auto-save failed',
+  } as const;
+
+  useEffect(() => {
+    if (manuscript) {
+      setCurrentManuscript(manuscript);
+      setEditorContent(manuscript.content);
+    }
+  }, [manuscript]);
+
+  useEffect(() => {
+    if (!manuscript) {
+      setEditorContent(content);
+    }
+  }, [content, manuscript]);
+
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, []);
+
 
   const handleContentChange = (value: string) => {
     setEditorContent(value);
@@ -59,6 +106,8 @@ export const AdvancedEditor: React.FC<AdvancedEditorProps> = ({
   };
 
   const handleSave = async () => {
+    setAutoSaveStatus('saving');
+
     if (currentManuscript) {
       try {
         setIsLoading(true);
@@ -73,8 +122,10 @@ export const AdvancedEditor: React.FC<AdvancedEditorProps> = ({
       } finally {
         setIsLoading(false);
       }
+    } else {
+      setIsLoading(false);
     }
-    
+
     if (onSave) {
       onSave();
     }
@@ -137,12 +188,12 @@ export const AdvancedEditor: React.FC<AdvancedEditorProps> = ({
     { name: 'Relationship Map', icon: 'book', action: () => setShowRelationshipMap(!showRelationshipMap) },
   ];
 
-  const handleCharactersAnalyzed = (analyzedCharacters: any[]) => {
+  const handleCharactersAnalyzed = (analyzedCharacters: AnalyzerCharacter[]) => {
     const formattedCharacters = analyzedCharacters.map((char, index) => ({
       id: `char-${index}`,
       name: char.name,
-      relationships: char.relationships,
-      appearances: char.mentions,
+      relationships: Array.isArray(char.relationships) ? char.relationships : [],
+      appearances: typeof char.mentions === 'number' ? char.mentions : 0,
     }));
     setCharacters(formattedCharacters);
   };

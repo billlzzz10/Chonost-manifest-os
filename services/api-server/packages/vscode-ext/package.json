@@ -1,0 +1,93 @@
+{
+  "name": "chonost-mcp-tools",
+  "displayName": "Chonost MCP Tools",
+  "version": "0.1.0",
+  "publisher": "chonost",
+  "description": "VS Code extension for Chonost MCP Tools",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/billlzzz10/Chonost-manifest-os.git"
+  },
+  "homepage": "https://github.com/billlzzz10/Chonost-manifest-os#readme",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.84.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "mcp",
+    "tools",
+    "orchestrator",
+    "ai",
+    "productivity"
+  ],
+  "icon": "media/icon.png",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "chonost.tools.run",
+        "title": "Chonost: Run Tool",
+        "category": "Chonost MCP"
+      },
+      {
+        "command": "chonost.tools.pickAndRun",
+        "title": "Chonost: Pick & Run Tool",
+        "category": "Chonost MCP"
+      },
+      {
+        "command": "chonost.tools.list",
+        "title": "Chonost: List Available Tools",
+        "category": "Chonost MCP"
+      }
+    ],
+    "configuration": {
+      "title": "Chonost MCP",
+      "properties": {
+        "chonost.orchestratorUrl": {
+          "type": "string",
+          "default": "http://localhost:8000",
+          "description": "MCP Orchestrator base URL"
+        },
+        "chonost.toolsSchemaPath": {
+          "type": "string",
+          "default": "${workspaceFolder}/tools.schema.json",
+          "description": "Path to tools.schema.json"
+        }
+      }
+    },
+    "jsonValidation": [
+      {
+        "fileMatch": ["/tools.schema.json", "*/tools.schema.json"],
+        "url": "./schemas/tools.schema.json"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.93.0",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0",
+    "eslint": "^9.12.0",
+    "@typescript-eslint/eslint-plugin": "^8.8.0",
+    "@typescript-eslint/parser": "^8.8.0",
+    "@types/jest": "^29.5.12",
+    "jest": "^29.7.0"
+  },
+  "dependencies": {
+    "lodash": "^4.17.21",
+    "axios": "^1.7.0",
+    "ws": "^8.18.0"
+  }
+}
+

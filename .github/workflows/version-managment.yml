@@ -1,0 +1,164 @@
+name: Version Management
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+  push:
+    branches: [main]
+
+jobs:
+  # --- PR review & auto-label ---
+  review_and_label:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # (Optional) Sync labels from .github/labels.yml to repo
+      # ใช้เฉพาะเมื่อคุณต้องการ "สร้าง/อัพเดต" labels ใน repo จากไฟล์ schema
+      - name: Sync labels
+        uses: crazy-max/ghaction-github-labeler@v5
+        with:
+          dry-run: false
+          skip-delete: true
+          # ถ้าไฟล์ของคุณอยู่ที่ .github/labels.yml ให้ตั้ง path ตามนี้
+          yaml-file: .github/labels.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run code review agent and label PR
+        run: node agents/code-review-agent.js
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # ถ้าคุณใช้ตัวแปรอื่นใน agent ให้เพิ่มตรงนี้ เช่น:
+          # REPO: ${{ github.repository }}
+          # PR_NUMBER: ${{ github.event.pull_request.number }}
+
+  # --- Version bump on push to main ---
+  bump_version_and_tag:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout with full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine last tag
+        id: lasttag
+        run: |
+          set -e
+          if git describe --tags --abbrev=0 >/dev/null 2>&1; then
+            LAST_TAG=$(git describe --tags --abbrev=0)
+          else
+            LAST_TAG=""
+          fi
+          echo "last_tag=$LAST_TAG" >> $GITHUB_OUTPUT
+
+      - name: Collect commit messages since last tag
+        id: commits
+        run: |
+          set -e
+          if [ -n "${{ steps.lasttag.outputs.last_tag }}" ]; then
+            RANGE="${{ steps.lasttag.outputs.last_tag }}..HEAD"
+          else
+            RANGE="HEAD"
+          fi
+          git log --pretty=format:%B $RANGE > commits.txt
+          echo "collected=$(wc -l < commits.txt)" >> $GITHUB_OUTPUT
+
+      - name: Decide bump type (major/minor/patch/none)
+        id: bump
+        run: |
+          set -e
+          COMMITS=$(cat commits.txt)
+
+          if echo "$COMMITS" | grep -qE 'BREAKING CHANGE|^feat!|^fix!|^chore!|^refactor!'; then
+            BUMP="major"
+          elif echo "$COMMITS" | grep -qiE '^feat(\(|: )'; then
+            BUMP="minor"
+          elif echo "$COMMITS" | grep -qiE '^fix(\(|: )'; then
+            BUMP="patch"
+          else
+            BUMP="none"
+          fi
+
+          echo "bump=$BUMP" >> $GITHUB_OUTPUT
+          echo "Bump type: $BUMP"
+
+      - name: Compute next version
+        id: nextver
+        run: |
+          set -e
+          BUMP="${{ steps.bump.outputs.bump }}"
+
+          # อ่านจาก package.json ถ้ามี, ไม่งั้นอ่านจาก tag ล่าสุด
+          CURRENT=""
+          if [ -f package.json ]; then
+            CURRENT=$(node -e "console.log(require('./package.json').version || '')")
+          fi
+
+          if [ -z "$CURRENT" ]; then
+            if [ -n "${{ steps.lasttag.outputs.last_tag }}" ]; then
+              CURRENT=$(echo "${{ steps.lasttag.outputs.last_tag }}" | sed 's/^v//')
+            else
+              CURRENT="0.1.0"
+            fi
+          fi
+
+          MAJOR=$(echo "$CURRENT" | cut -d. -f1)
+          MINOR=$(echo "$CURRENT" | cut -d. -f2)
+          PATCH=$(echo "$CURRENT" | cut -d. -f3)
+
+          case "$BUMP" in
+            major) MAJOR=$((MAJOR+1)); MINOR=0; PATCH=0 ;;
+            minor) MINOR=$((MINOR+1)); PATCH=0 ;;
+            patch) PATCH=$((PATCH+1)) ;;
+            none)  ;;
+          esac
+
+          NEXT="$MAJOR.$MINOR.$PATCH"
+          echo "current=$CURRENT" >> $GITHUB_OUTPUT
+          echo "next=$NEXT" >> $GITHUB_OUTPUT
+          echo "Next version: $NEXT"
+
+      - name: Apply version (package.json if present)
+        if: steps.bump.outputs.bump != 'none'
+        run: |
+          set -e
+          NEXT="${{ steps.nextver.outputs.next }}"
+          if [ -f package.json ]; then
+            node -e "const fs=require('fs');const p=require('./package.json');p.version='$NEXT';fs.writeFileSync('package.json', JSON.stringify(p,null,2)+'\n')"
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add package.json
+            git commit -m "ci(version): set version to $NEXT"
+          fi
+
+      - name: Create and push tag
+        if: steps.bump.outputs.bump != 'none'
+        run: |
+          set -e
+          NEXT="${{ steps.nextver.outputs.next }}"
+          git tag "v$NEXT"
+          git push origin "v$NEXT"
+
+      - name: Summary
+        run: |
+          echo "Last tag: ${{ steps.lasttag.outputs.last_tag }}"
+          echo "Bump: ${{ steps.bump.outputs.bump }}"
+          echo "Next version: ${{ steps.nextver.outputs.next }}"

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Icon } from '../atoms/Icon';
+import { Icon } from './Icon';
 
 interface Tool {
   name: string;

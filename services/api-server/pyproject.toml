@@ -1,0 +1,122 @@
+[tool.poetry]
+name = "link-ai-core"
+version = "2.2.0"
+description = "AI-powered MCP (Model Context Protocol) Orchestrator with RAG and Notion integration"
+authors = ["Chonost Team <team@chonost.ai>"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+fastapi = "0.104.1"
+uvicorn = {extras = ["standard"], version = "0.24.0"}
+pydantic = "2.5.0"
+pyyaml = "6.0.1"
+aiofiles = "23.2.1"
+python-dotenv = "1.0.0"
+websockets = "12.0"
+python-multipart = "0.0.18"
+jinja2 = "3.1.6"
+pyjwt = "2.8.0"
+cryptography = "43.0.1"
+pytest = "7.4.4"
+httpx = "0.25.2"
+sqlalchemy = "2.0.23"
+alembic = "1.12.1"
+psycopg2-binary = "2.9.9"
+notion-client = "2.2.1"
+openai = "1.3.8"
+ollama = "0.1.7"
+
+[tool.poetry.group.dev.dependencies]
+black = "23.10.1"
+isort = "5.12.0"
+flake8 = "6.1.0"
+mypy = "1.6.1"
+pytest-cov = "4.1.0"
+pytest-asyncio = "0.21.1"
+bandit = "1.7.5"
+safety = "2.3.5"
+
+[tool.poetry.group.test.dependencies]
+pytest = "7.4.4"
+pytest-asyncio = "0.21.1"
+httpx = "0.25.2"
+pytest-mock = "3.11.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+start = "main:run_app"
+test = "pytest"
+lint = "flake8 src tests"
+format = "black src tests"
+typecheck = "mypy src"
+security-scan = "safety check"
+
+[tool.black]
+line-length = 88
+target-version = ['py39']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 88
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_if_statements = true
+skip = [".venv", "__pycache__"]
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+strict_equality = true
+warn_redundant_casts = true
+warn_unused_ignores = false
+no_implicit_optional = true
+warn_no_return = true
+warn_unreachable = true
+
+[[tool.mypy.overrides]]
+module = ["fastapi.*", "uvicorn.*", "pydantic.*", "sqlalchemy.*", "notion_client.*", "openai.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra --strict-markers --strict-config --tb=short"
+testpaths = [
+    "tests",
+]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+markers = [
+    "slow: marks tests as slow",
+    "security: marks security-related tests",
+    "integration: marks integration tests",
+    "unit: marks unit tests",
+]
+asyncio_mode = "auto"

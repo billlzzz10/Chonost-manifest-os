@@ -31,6 +31,7 @@ function getRepoRoot() {
     ? path.resolve(process.env.MCP_PROJECT_ROOT)
     : process.cwd();
 }
+
   const configPath = path.resolve(getRepoRoot(), CONFIG_FILENAME);
 
   let stat;

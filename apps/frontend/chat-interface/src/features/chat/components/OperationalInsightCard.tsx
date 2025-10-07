@@ -167,8 +167,10 @@ const getInitialMermaidPreviewState = (layout: CardLayout) => {
     case 'code':
       return false
     default:
+      // Provide explicit fallback for unknown view modes
       return block.autoRender ?? false
   }
+}
 }
 
 const buildInitialCardState = (layout: CardLayout): CardState =>

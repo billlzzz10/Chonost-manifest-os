@@ -2,9 +2,12 @@ import React from 'react';
 import * as Lucide from "lucide-react";
 import * as SI from "simple-icons/icons";
 
+type IconSize = number | 'sm' | 'md' | 'lg';
+const ICON_SIZE_MAP: Record<'sm' | 'md' | 'lg', number> = { sm: 16, md: 20, lg: 24 };
+
 interface IconProps {
   name: string;
-  size?: number;
+  size?: IconSize;
   color?: string;
   strokeWidth?: number;
   className?: string;
@@ -12,33 +15,35 @@ interface IconProps {
 
 export const Icon: React.FC<IconProps> = ({
   name,
-  size = 20,
+  size = 'md',
   color = "currentColor",
   strokeWidth = 2,
   className = ""
 }) => {
-  // ‡∏£‡∏π‡∏õ‡πÅ‡∏ö‡∏ö‡∏ä‡∏∑‡πà‡∏≠:
+  const resolvedSize = typeof size === 'number' ? size : ICON_SIZE_MAP[size] ?? ICON_SIZE_MAP.md;
+
+  // √Ÿª·∫∫°“√‡√’¬°„™Èß“π:
   // "lucide:edit-3", "lucide:eraser", ...
   // "logo:github", "logo:figma", ...
   if (name.startsWith("lucide:")) {
     const key = name.split(":")[1];
     const Cmp = (Lucide as any)[pascal(key)];
     if (typeof Cmp === "undefined") {
-      return <Lucide.HelpCircle size={size} strokeWidth={strokeWidth} color={color} className={className} />;
+      return <Lucide.HelpCircle size={resolvedSize} strokeWidth={strokeWidth} color={color} className={className} />;
     }
-    return <Cmp size={size} strokeWidth={strokeWidth} color={color} className={className} />;
+    return <Cmp size={resolvedSize} strokeWidth={strokeWidth} color={color} className={className} />;
   }
-  
+
   if (name.startsWith("logo:")) {
-    const slug = name.split(":")[1]; // ‡πÄ‡∏ä‡πà‡∏ô github, figma, notion
+    const slug = name.split(":")[1]; // ‡™Ëπ github, figma, notion
     const icon = (SI as any)[`si${slugToKey(slug)}`];
-    if (!icon) return <Lucide.HelpCircle size={size} className={className} />;
+    if (!icon) return <Lucide.HelpCircle size={resolvedSize} className={className} />;
     return (
-      <svg 
-        width={size} 
-        height={size} 
-        viewBox="0 0 24 24" 
-        role="img" 
+      <svg
+        width={resolvedSize}
+        height={resolvedSize}
+        viewBox="0 0 24 24"
+        role="img"
         aria-label={icon.title}
         className={className}
       >
@@ -46,8 +51,8 @@ export const Icon: React.FC<IconProps> = ({
       </svg>
     );
   }
-  
-  return <Lucide.HelpCircle size={size} className={className} />;
+
+  return <Lucide.HelpCircle size={resolvedSize} className={className} />;
 };
 
 function pascal(k: string): string {

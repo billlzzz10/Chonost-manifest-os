@@ -115,21 +115,51 @@ const sanitizeSvg = (raw: string) => {
 }
 
 const MermaidPreview = ({ config, previewMode }: { config: MermaidConfig; previewMode: boolean }) => {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [error, setError] = useState<string | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!previewMode) return
-    if (!containerRef.current) return
+    if (!previewMode || !containerRef.current) return;
 
     const renderDiagram = async () => {
       try {
-        mermaid.initialize({ startOnLoad: false, securityLevel: 'strict' })
-        const { svg } = await mermaid.render(`mermaid-${Math.random().toString(36).slice(2)}`, config.syntax)
-        const sanitized = sanitizeSvg(svg)
-        containerRef.current!.innerHTML = sanitized
-        setError(null)
+        mermaid.initialize({ startOnLoad: false, securityLevel: 'strict' });
+        const { svg } = await mermaid.render(
+          `mermaid-${Math.random().toString(36).slice(2)}`,
+          config.syntax
+        );
+        const sanitized = sanitizeSvg(svg);
+        const parsed = new DOMParser().parseFromString(sanitized, 'image/svg+xml');
+        const svgElement = parsed.documentElement;
+
+        containerRef.current.innerHTML = '';
+        containerRef.current.appendChild(svgElement);
+        setError(null);
       } catch (err) {
+        const message = err instanceof Error ? err.message : 'Unable to render Mermaid diagram.';
+        if (config.errorHandling?.showErrors !== false) {
+          setError(message);
+        }
+        if (config.errorHandling?.fallbackToCode !== false && containerRef.current) {
+          containerRef.current.innerHTML = '';
+        }
+      }
+    };
+
+    renderDiagram();
+  }, [config, previewMode]);
+
+  return (
+    <div className="space-y-2" data-testid="mermaid-preview">
+      <div
+        ref={containerRef}
+        className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900"
+      />
+      {error ? <p className="text-sm text-rose-600">{error}</p> : null}
+    </div>
+  );
+};
+
         const message = err instanceof Error ? err.message : 'Unable to render Mermaid diagram.'
         if (config.errorHandling?.showErrors !== false) {
           setError(message)

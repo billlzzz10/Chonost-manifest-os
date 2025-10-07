@@ -4,7 +4,13 @@ import { OperationalInsightCard } from '../OperationalInsightCard'
 
 jest.mock('mermaid', () => ({
   initialize: jest.fn(),
-  render: jest.fn().mockResolvedValue({ svg: '<svg><g></g></svg>' }),
+  render: jest.fn().mockImplementation((id, definition) => {
+    // Simulate different behaviors based on input
+    if (definition.includes('invalid')) {
+      return Promise.reject(new Error('Invalid mermaid syntax'))
+    }
+    return Promise.resolve({ svg: `<svg data-testid="mermaid-svg"><g>${definition}</g></svg>` })
+  }),
 }))
 
 const createLayout = (

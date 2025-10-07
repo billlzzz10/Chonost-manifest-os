@@ -29,7 +29,8 @@ async function callFetch(url, options) {
 function getRepoRoot() {
   return process.env.MCP_PROJECT_ROOT
     ? path.resolve(process.env.MCP_PROJECT_ROOT)
-async function loadConfig() {
+    : process.cwd();
+}
   const configPath = path.resolve(getRepoRoot(), CONFIG_FILENAME);
 
   let stat;

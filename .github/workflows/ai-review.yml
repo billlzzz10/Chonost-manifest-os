@@ -1,4 +1,4 @@
-name: AI Code Review with GitHub Models
+name: AI Code Review via MANUS API
 
 on:
   issue_comment:
@@ -9,7 +9,7 @@ on:
 jobs:
   ai-review:
     if: |
-      contains(github.event.comment.body, '@llama4') &&
+      contains(github.event.comment.body, '@manus') &&
       github.event.comment.user.login == 'billzzz10' &&
       (github.event.issue.pull_request != null || github.event.pull_request != null)
 
@@ -68,17 +68,17 @@ jobs:
 
               if (file.patch) {
                 const patch = file.patch.length > maxPatchSize 
-                  ? file.patch.substring(0, maxPatchSize) + '\n... (truncated)'
+                  ? file.patch.substring(0, maxPatchSize) + '\n... (ตัดเนื้อหาเกินขนาด)'
                   : file.patch;
                 diffContent += `${patch}\n\n`;
               } else {
-                diffContent += '(Binary file or too large to display)\n\n';
+                diffContent += '(ไฟล์ไบนารีหรือมีขนาดใหญ่เกินไป)\n\n';
               }
               diffContent += '---\n\n';
             }
 
             if (files.length > maxFiles) {
-              diffContent += `Note: Showing first ${maxFiles} of ${files.length} files\n`;
+              diffContent += `หมายเหตุ: แสดงเฉพาะ ${maxFiles} จากทั้งหมด ${files.length} ไฟล์\n`;
             }
 
             const fs = require('fs');
@@ -87,7 +87,7 @@ jobs:
             core.setOutput('pr_title', pr.title);
             core.setOutput('files_count', files.length);
 
-      - name: Post Processing Comment
+      - name: แจ้งเริ่มรีวิว
         uses: actions/github-script@v7
         with:
           script: |
@@ -95,60 +95,52 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: ${{ steps.pr-info.outputs.pr_number }},
-              body: '🤖 **AI Code Review Starting...**\n\n⏳ Analyzing ${{ steps.pr-details.outputs.files_count }} file(s) with Llama 4 Maverick 17B...'
+              body: '🤖 **เริ่มต้นการรีวิวโค้ดด้วย MANUS API...**\n\n⏳ กำลังวิเคราะห์ไฟล์จำนวน ${{ steps.pr-details.outputs.files_count }} ไฟล์'
             });
 
-      - name: Call GitHub Models API
+      - name: เรียก MANUS API
         id: ai-review
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MANUS_API_KEY: ${{ secrets.MANUS_API_KEY }}
         run: |
           DIFF_CONTENT=$(cat pr_diff.txt)
 
-          SYSTEM_PROMPT="You are an expert code reviewer. Analyze pull requests thoroughly and provide constructive feedback."
+          USER_PROMPT="กรุณารีวิว pull request นี้และตอบกลับเป็นภาษาไทย โดยมีหัวข้อดังนี้:
 
-          USER_PROMPT="Please review this pull request and provide:
+          1. **สรุปโดยรวม**: อธิบายว่าโค้ดนี้แก้ไขอะไร
+          2. **คุณภาพโค้ด**: โครงสร้าง ความอ่านง่าย ความดูแลรักษา
+          3. **ปัญหาที่อาจเกิดขึ้น**: bug, logic ผิด, edge case
+          4. **ความปลอดภัย**: ช่องโหว่หรือความเสี่ยง
+          5. **ประสิทธิภาพ**: จุดที่ควรปรับปรุงให้เร็วขึ้น
+          6. **แนวทางที่ดี**: มาตรฐานการเขียนโค้ด
+          7. **ข้อเสนอแนะเฉพาะจุด**: บรรทัดไหนควรแก้หรือปรับ
 
-          1. **Summary**: Brief overview of the changes
-          2. **Code Quality**: Assessment of code structure, readability, and maintainability
-          3. **Potential Issues**: Bugs, logic errors, edge cases, or code smells
-          4. **Security Concerns**: Any security vulnerabilities or risks
-          5. **Performance**: Performance implications and optimization opportunities
-          6. **Best Practices**: Adherence to coding standards and suggestions for improvement
-          7. **Specific Feedback**: Detailed line-by-line comments where needed
+          กรุณาตอบกลับเป็นภาษาไทยทั้งหมด และใช้ markdown พร้อม emoji เพื่อให้อ่านง่าย
 
-          Format your response in clear markdown with sections and use emojis for better readability.
-
-          Here are the changes:
+          นี่คือรายละเอียดของโค้ดที่เปลี่ยนแปลง:
 
           $DIFF_CONTENT"
 
-          SYSTEM_JSON=$(jq -n --arg content "$SYSTEM_PROMPT" '{role: "system", content: $content}')
-          USER_JSON=$(jq -n --arg content "$USER_PROMPT" '{role: "user", content: $content}')
+          JSON_PAYLOAD=$(jq -n \
+            --arg key "$MANUS_API_KEY" \
+            --arg input "$USER_PROMPT" \
+            '{api_key: $key, input: $input}')
 
           RESPONSE=$(curl -s -X POST \
-            "https://models.inference.ai.azure.com/chat/completions" \
+            https://api.manus.ai/review \
             -H "Content-Type: application/json" \
-            -H "Authorization: Bearer $GITHUB_TOKEN" \
-            -d "{
-              \"messages\": [$SYSTEM_JSON, $USER_JSON],
-              \"model\": \"llama-4-maverick-17b-128e-instruct-fp8\",
-              \"temperature\": 0.8,
-              \"max_tokens\": 4096,
-              \"top_p\": 0.1,
-              \"presence_penalty\": 0
-            }")
+            -d "$JSON_PAYLOAD")
 
           echo "API Response received"
 
-          REVIEW_CONTENT=$(echo "$RESPONSE" | jq -r '.choices[0].message.content // empty')
+          REVIEW_CONTENT=$(echo "$RESPONSE" | jq -r '.content // empty')
 
           if [ -z "$REVIEW_CONTENT" ]; then
             echo "Error: No content in response"
             ERROR_MSG=$(echo "$RESPONSE" | jq -r '.error.message // "Unknown error"')
             echo "Error message: $ERROR_MSG"
 
-            echo "review_result=❌ **Error**: Failed to get AI review. Error: $ERROR_MSG" >> $GITHUB_OUTPUT
+            echo "review_result=❌ **เกิดข้อผิดพลาด**: ไม่สามารถรับผลรีวิวจาก AI ได้\n\nข้อผิดพลาด: $ERROR_MSG" >> $GITHUB_OUTPUT
             exit 1
           fi
 
@@ -156,33 +148,33 @@ jobs:
           echo "$REVIEW_CONTENT" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-          echo "✅ Review completed successfully"
+          echo "✅ การรีวิวเสร็จสมบูรณ์"
 
-      - name: Post Review Results
+      - name: โพสต์ผลรีวิว
         if: always()
         uses: actions/github-script@v7
         with:
           script: |
             const reviewResult = `${{ steps.ai-review.outputs.review_result }}`;
 
-            let body = '## 🤖 AI Code Review Results\n\n';
+            let body = '## 🤖 ผลการรีวิวโค้ดโดย AI\n\n';
 
-            if (reviewResult && reviewResult.trim() !== '' && !reviewResult.includes('Error:')) {
+            if (reviewResult && reviewResult.trim() !== '' && !reviewResult.includes('เกิดข้อผิดพลาด')) {
               body += reviewResult;
               body += '\n\n---\n';
-              body += '**Model:** Llama 4 Maverick 17B 128E Instruct FP8\n';
-              body += '**Platform:** GitHub Models\n';
-              body += '\n💡 *Mention `@llama4` to request another review*';
-            } else if (reviewResult && reviewResult.includes('Error:')) {
+              body += '**โมเดลที่ใช้:** MANUS API\n';
+              body += '**แพลตฟอร์ม:** External API\n';
+              body += '\n💡 *พิมพ์ `@manus` เพื่อขอรีวิวใหม่อีกครั้ง*';
+            } else if (reviewResult && reviewResult.includes('เกิดข้อผิดพลาด')) {
               body += reviewResult;
               body += '\n\n---\n';
-              body += '**Troubleshooting:**\n';
-              body += '- Ensure GitHub Models is enabled for this repository\n';
-              body += '- Check if you have access to the model\n';
-              body += '- Try mentioning the bot again\n';
+              body += '**แนวทางแก้ไข:**\n';
+              body += '- ตรวจสอบว่า API Key ถูกต้องและยังไม่หมดโควต้า\n';
+              body += '- ตรวจสอบว่าเซิร์ฟเวอร์ MANUS ยังออนไลน์\n';
+              body += '- ลองพิมพ์ `@manus` อีกครั้ง';
             } else {
-              body += '⚠️ **Unexpected Error**\n\n';
-              body += 'The AI review could not be completed. Please check the workflow logs or try again.';
+              body += '⚠️ **เกิดข้อผิดพลาดไม่ทราบสาเหตุ**\n\n';
+              body += 'ไม่สามารถรีวิวโค้ดได้ กรุณาตรวจสอบ log หรือลองใหม่อีกครั้ง';
             }
 
             await github.rest.issues.createComment({

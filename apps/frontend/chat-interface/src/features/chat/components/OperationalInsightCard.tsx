@@ -426,24 +426,25 @@ export function OperationalInsightCard({ layout, onExecuteCli }: OperationalInsi
 
   // Determine visibility based on view mode
   const getMermaidVisibility = () => {
-    if (!mermaidBlock) return { preview: false, code: false }
-    
-    switch (mermaidViewMode) {
-      case 'split':
-        return { preview: true, code: true }
-      case 'preview':
+    if (!mermaidBlock) {
+      return { preview: false, code: false }
+    }
+
+    if (mermaidViewMode === 'split') {
+      return { preview: true, code: true }
+    }
+
+    if (!showMermaidToggle) {
+      if (mermaidViewMode === 'preview') {
         return { preview: true, code: false }
-      case 'code':
-        return { preview: false, code: true }
-      default:
-        // For editable blocks with toggle, use state
-        if (showMermaidToggle) {
-          return {
-            preview: cardState.showingMermaidPreview,
-            code: !cardState.showingMermaidPreview,
-          }
-        }
-        return { preview: false, code: true }
+      }
+
+      return { preview: false, code: true }
+    }
+
+    return {
+      preview: cardState.showingMermaidPreview,
+      code: !cardState.showingMermaidPreview,
     }
   }
 

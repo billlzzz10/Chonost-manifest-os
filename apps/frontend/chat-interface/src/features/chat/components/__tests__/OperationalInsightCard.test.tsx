@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import type { CardLayout } from '../../card-system/cardSchemas'
 import { OperationalInsightCard } from '../OperationalInsightCard'
 
@@ -153,5 +154,29 @@ describe('OperationalInsightCard mermaid view modes', () => {
     expect(screen.getByTestId('mermaid-code')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /preview diagram/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /show code/i })).not.toBeInTheDocument()
+  })
+
+  it('allows toggling from preview to code when a toggle is available', async () => {
+    const user = userEvent.setup()
+
+    render(<OperationalInsightCard layout={createLayout({ viewMode: 'preview' })} />)
+
+    await user.click(screen.getByRole('button', { name: /show code/i }))
+
+    await waitFor(() => expect(screen.getByTestId('mermaid-code')).toBeInTheDocument())
+    expect(screen.queryByTestId('mermaid-preview')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /preview diagram/i })).toBeInTheDocument()
+  })
+
+  it('allows toggling from code to preview when a toggle is available', async () => {
+    const user = userEvent.setup()
+
+    render(<OperationalInsightCard layout={createLayout({ viewMode: 'code' })} />)
+
+    await user.click(screen.getByRole('button', { name: /preview diagram/i }))
+
+    await waitFor(() => expect(screen.getByTestId('mermaid-preview')).toBeInTheDocument())
+    expect(screen.queryByTestId('mermaid-code')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /show code/i })).toBeInTheDocument()
   })
 })

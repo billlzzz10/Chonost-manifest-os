@@ -76,7 +76,7 @@ async def create_manuscript(
 
 @router.get("/manuscripts", response_model=List[ManuscriptResponse], summary="Get a list of manuscripts")
 async def get_manuscripts(
-    is_archived: Optional[bool] = False,
+    is_archived: Optional[bool] = None,
     user_id: Optional[str] = None,
     limit: int = 100,
     offset: int = 0,
@@ -85,6 +85,11 @@ async def get_manuscripts(
     """
     Gets a list of manuscripts with optional filtering.
     """
+    # Basic parameter validation to avoid unexpected DB behaviour or abuse
+    if limit < 1 or limit > 1000:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="`limit` must be between 1 and 1000")
+    if offset < 0:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="`offset` must be >= 0")
     try:
         query = select(Manuscript)
         if is_archived is not None:

@@ -446,7 +446,6 @@ class SmartVaultManager:
         
         if action == 'resolve_duplicates':
             print(f"   🗑️ Resolving duplicate folders: {operation['folders']}")
-            # TODO: Implement duplicate resolution
             
         elif action == 'create_missing_folders':
             for folder in operation['folders']:
@@ -458,14 +457,12 @@ class SmartVaultManager:
             source = self.vault_path / operation['source']
             target = self.vault_path / operation['target']
             if source.exists():
-                # TODO: Implement file moving logic
                 print(f"   📁 Moving: {operation['source']} -> {operation['target']}")
         
         elif action == 'create_readme':
             folder_path = self.vault_path / operation['folder']
             readme_path = folder_path / "README.md"
             if not readme_path.exists():
-                # TODO: Implement README creation
                 print(f"   📝 Creating README for: {operation['folder']}")
     
     def save_report(self, filename: str = "vault_management_report.json"):

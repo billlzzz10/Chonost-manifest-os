@@ -1,9 +1,4 @@
 // src/components/EditorWhiteboard.tsx
-// TODO: Replace textarea with Monaco Editor for better code editing experience
-// TODO: Add support for Mermaid diagram rendering in Reading View
-// TODO: Implement more advanced canvas tools (shapes, text, arrows)
-// TODO: Add file system integration via Tauri
-
 import { useEffect, useRef, useState } from "react";
 import { useAppStore } from "@/state/store";
 import { mockHandleBigPaste, mockImportUrl } from "@/lib/mockApi";

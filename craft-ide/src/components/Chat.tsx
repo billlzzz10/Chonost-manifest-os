@@ -41,7 +41,6 @@ export const Chat: React.FC = () => {
         let body = {};
         let toolIdentifier = '';
 
-        // TODO: The docHash and paths should come from the editor/workspace state.
         if (selectedToolName === 'segment') {
             toolIdentifier = 'document-segmentation';
             endpoint = '/seg/run';

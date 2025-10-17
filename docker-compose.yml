@@ -1,10 +1,10 @@
 version: '3.8'
 
 services:
-  # Backend API Service
+  # Main Backend Service (MCP AI Orchestrator)
   backend:
     build:
-      context: ./services/backend
+      context: ./core-services/link-ai-core
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
@@ -12,31 +12,28 @@ services:
       - DATABASE_URL=postgresql://postgres:password@postgres:5432/chonost
       - REDIS_URL=redis://redis:6379
       - QDRANT_URL=http://qdrant:6333
+      - PORT=8000
     depends_on:
       - postgres
       - redis
       - qdrant
     volumes:
-      - ./services/backend:/app
+      - ./core-services/link-ai-core:/app
       - ./data:/app/data
     networks:
       - chonost-network
 
-  # Frontend Web Application
+  # Frontend Web Application (Craft IDE)
   frontend:
     build:
-      context: ./services/frontend
+      context: ./craft-ide
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "3000:80"
     environment:
       - REACT_APP_API_URL=http://backend:8000
-      - REACT_APP_WS_URL=ws://backend:8000/ws
     depends_on:
       - backend
-    volumes:
-      - ./services/frontend:/app
-      - /app/node_modules
     networks:
       - chonost-network
 

@@ -1,19 +1,20 @@
 """
-MCP AI Orchestrator - Main Entry Point.
+Chonost Manuscript OS - Main API Entry Point
 """
 
-import asyncio
 import uvicorn
-from typing import Optional
-from pathlib import Path
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-# Create FastAPI app for MCP orchestrator
+from config import Settings
+from database import create_db_and_tables
+from api import manuscript_routes, node_routes, edge_routes
+
+# Create FastAPI app
 app = FastAPI(
-    title="MCP AI Orchestrator",
-    description="AI-powered MCP (Model Context Protocol) Orchestrator",
-    version="2.2.0"
+    title="Chonost Manuscript OS API",
+    description="The core API for managing manuscripts, nodes, relationships, and AI interactions.",
+    version="3.0.0"
 )
 
 # Add CORS middleware
@@ -25,25 +26,25 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Import MCP components from unified backend
-try:
-    from .mcp.registry import MCPRegistry
-    from .mcp.client import MCPClient
-    from .config import Settings
+# Initialize settings
+settings = Settings()
 
-    # Initialize MCP components
-    settings = Settings()
-    mcp_registry = MCPRegistry()
-    mcp_client = MCPClient()  # Unified client that handles server selection automatically
+@app.on_event("startup")
+async def on_startup():
+    """
+    Event handler for application startup.
+    Creates database tables if they don't exist.
+    """
+    print("Creating database and tables...")
+    await create_db_and_tables()
+    print("Database and tables created successfully.")
 
-except ImportError as e:
-    print(f"Warning: MCP components not available: {e}")
-    mcp_registry = None
-    mcp_client = None
-    settings = None
+# Include the API routers
+app.include_router(manuscript_routes.router, prefix="/api/v1", tags=["Manuscripts"])
+app.include_router(node_routes.router, prefix="/api/v1", tags=["Nodes"])
+app.include_router(edge_routes.router, prefix="/api/v1", tags=["Edges"])
 
-# API Endpoints for MCP Orchestrator
-
+# Core health check endpoint
 @app.get("/health")
 async def health_check():
     """
@@ -51,98 +52,30 @@ async def health_check():
     """
     return {
         "status": "healthy",
-        "service": "mcp-orchestrator",
-        "version": "2.2.0"
+        "service": "Chonost Manuscript OS API",
+        "version": "3.0.0"
     }
 
-@app.get("/mcp/servers")
-async def list_servers():
+def run_app(host: str = "0.0.0.0", port: int = 8000, reload: bool = True) -> None:
     """
-    Lists the available MCP servers.
-    """
-    if not mcp_registry:
-        raise HTTPException(status_code=503, detail="MCP registry not available")
-
-    try:
-        servers = await mcp_registry.list_servers()
-        return {"servers": servers}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to list servers: {str(e)}")
-
-@app.get("/mcp/tools")
-async def list_tools():
-    """
-    Lists the available MCP tools.
-    """
-    if not mcp_registry:
-        raise HTTPException(status_code=503, detail="MCP registry not available")
-
-    try:
-        tools = await mcp_registry.list_tools()
-        return {"tools": tools}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to list tools: {str(e)}")
-
-@app.post("/mcp/call")
-async def call_tool(tool_call: dict):
-    """
-    Executes an MCP tool.
-    """
-    if not mcp_client:
-        raise HTTPException(status_code=503, detail="MCP client not available")
-
-    try:
-        tool_name = tool_call.get("tool")
-        parameters = tool_call.get("parameters", {})
-
-        if not tool_name:
-            raise HTTPException(status_code=400, detail="Tool name is required")
-
-        result = await mcp_client.call_tool(tool_name, parameters)
-        return {
-            "success": True,
-            "result": result,
-            "tool": tool_name
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Tool execution failed: {str(e)}")
-
-@app.get("/mcp/status")
-async def get_status():
-    """
-    Gets the status of the MCP orchestrator.
-    """
-    return {
-        "status": "operational" if mcp_registry and mcp_client else "degraded",
-        "registry": "available" if mcp_registry else "unavailable",
-        "client": "available" if mcp_client else "unavailable",
-        "settings": settings.dict() if settings else None
-    }
-
-def run_app(host: str = "0.0.0.0", port: int = 8765, reload: bool = True) -> None:
-    """
-    Run the MCP AI Orchestrator application.
+    Run the Chonost Manuscript OS API application.
     
     Args:
         host: Host to bind to
         port: Port to bind to
         reload: Enable auto-reload for development
     """
-    print("🚀 Starting MCP AI Orchestrator...")
+    print("🚀 Starting Chonost Manuscript OS API...")
     print(f"📍 Server will be available at: http://{host}:{port}")
-    print(f"🔧 MCP Orchestrator endpoint: http://{host}:{port}/mcp")
+    print(f"📚 API Docs available at: http://{host}:{port}/docs")
     
     uvicorn.run(
-        "backend.mcp.main:app",
+        "main:app",
         host=host,
         port=port,
         reload=reload,
         log_level="info"
     )
-
-def run_mcp_server() -> None:
-    """Run the MCP Server specifically."""
-    run_app()
 
 if __name__ == "__main__":
     run_app()

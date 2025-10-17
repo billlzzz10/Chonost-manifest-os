@@ -4,6 +4,7 @@ Configuration settings for the MCP Orchestrator.
 
 import os
 from pydantic import BaseModel, Field
+from typing import Optional
 
 class Settings(BaseModel):
     """
@@ -17,6 +18,8 @@ class Settings(BaseModel):
         port (int): The port to bind the server to.
         environment (str): The environment (development, staging, production).
         debug (bool): A flag indicating whether to enable debug mode.
+        database_url (str): The database connection string.
+        db_echo_log (bool): A flag indicating whether to echo database logs.
     """
     
     # Logging
@@ -57,6 +60,16 @@ class Settings(BaseModel):
     debug: bool = Field(
         default=os.getenv("DEBUG", "false").lower() == "true",
         description="Enable debug mode"
+    )
+
+    # Database Settings
+    database_url: str = Field(
+        default=os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./chonost_manuscript.db"),
+        description="Database connection string"
+    )
+    db_echo_log: bool = Field(
+        default=os.getenv("DB_ECHO_LOG", "false").lower() == "true",
+        description="Echo database logs"
     )
 
     # AI Provider API Keys

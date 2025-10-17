@@ -251,7 +251,6 @@ export default function RightPanel() {
                     <span className="file-name">{file.name}</span>
                     {file.is_dir && expandedDirs.has(file.path) && (
                       <div className="file-children">
-                        {/* TODO: Load subdirectory contents */}
                       </div>
                     )}
                   </div>

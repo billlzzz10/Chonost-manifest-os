@@ -55,7 +55,7 @@ async def create_node(
     Creates a new node in the database.
     """
     try:
-        node = Node(**node_data.dict())
+        node = Node(**node_data.dict(exclude_none=True))
         db.add(node)
         await db.commit()
         await db.refresh(node)

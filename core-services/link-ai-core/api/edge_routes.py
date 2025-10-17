@@ -146,7 +146,7 @@ async def delete_edge(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Edge not found")
 
     try:
-        db.delete(edge)
+        await db.delete(edge)
         await db.commit()
         return None
     except Exception as e:

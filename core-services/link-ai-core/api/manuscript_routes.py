@@ -64,8 +64,7 @@ async def create_manuscript(
     Creates a new manuscript in the database.
     """
     try:
-        manuscript_payload = manuscript_data.dict(exclude_unset=True)
-        manuscript = Manuscript(**manuscript_payload)
+        manuscript = Manuscript(**manuscript_data.dict())
         db.add(manuscript)
         await db.commit()
         await db.refresh(manuscript)
@@ -76,7 +75,7 @@ async def create_manuscript(
 
 @router.get("/manuscripts", response_model=List[ManuscriptResponse], summary="Get a list of manuscripts")
 async def get_manuscripts(
-    is_archived: Optional[bool] = None,
+    is_archived: Optional[bool] = False,
     user_id: Optional[str] = None,
     limit: int = 100,
     offset: int = 0,
@@ -85,11 +84,6 @@ async def get_manuscripts(
     """
     Gets a list of manuscripts with optional filtering.
     """
-    # Basic parameter validation to avoid unexpected DB behaviour or abuse
-    if limit < 1 or limit > 1000:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="`limit` must be between 1 and 1000")
-    if offset < 0:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="`offset` must be >= 0")
     try:
         query = select(Manuscript)
         if is_archived is not None:

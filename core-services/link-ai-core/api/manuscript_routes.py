@@ -64,7 +64,8 @@ async def create_manuscript(
     Creates a new manuscript in the database.
     """
     try:
-        manuscript = Manuscript(**manuscript_data.dict())
+        manuscript_payload = manuscript_data.dict(exclude_unset=True)
+        manuscript = Manuscript(**manuscript_payload)
         db.add(manuscript)
         await db.commit()
         await db.refresh(manuscript)

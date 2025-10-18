@@ -75,7 +75,8 @@ app.post('/seg/run', async (req: Request<{ docHash?: string }>, res: Response) =
     const { docHash } = req.body;
     // Use environment variable for default, fallback to a hardcoded value if not set
     const docId = docHash || process.env.DEFAULT_DOC_ID || 'fallback-doc-id';
-    console.log(`[API] /seg/run called for doc: ${docId}`);
+    const sanitizedDocId = typeof docId === 'string' ? docId.replace(/\r?\n/g, "") : String(docId);
+    console.log(`[API] /seg/run called for doc: ${sanitizedDocId}`);
 
     const segTool = toolRegistry.get('document-segmentation')!;
     const inputText = doc.read(docId);

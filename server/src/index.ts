@@ -56,7 +56,8 @@ app.use(express.json());
 app.post('/mcp/run', async (req: Request<{ tool: string, args: Record<string, unknown> }>, res: Response) => {
   try {
     const { tool, args } = req.body;
-    console.log(`[API] /mcp/run called for tool: ${tool}`);
+    const sanitizedTool = typeof tool === 'string' ? tool.replace(/\r?\n/g, "") : String(tool);
+    console.log(`[API] /mcp/run called for tool: "${sanitizedTool}"`);
     if (!toolRegistry.has(tool)) {
       return res.status(404).json({ error: `Tool '${tool}' not found.` });
     }

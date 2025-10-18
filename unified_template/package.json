@@ -1,0 +1,29 @@
+{
+  "name": "chonost-unified-template",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.12.3",
+  "scripts": {
+    "build": "pnpm -r run build",
+    "dev:backend": "pnpm --filter backend dev",
+    "dev:frontend": "pnpm --filter frontend dev",
+    "agent": "pnpm --filter agent-cli start",
+    "test": "pnpm -r run test",
+    "lint": "pnpm -r run lint",
+    "format": "pnpm -r run format",
+    "clean": "rimraf \"**/dist\" \"**/build\" \"**/.turbo\""
+  },
+  "devDependencies": {
+    "@types/node": "20.17.12",
+    "eslint": "9.13.0",
+    "@eslint/js": "9.13.0",
+    "typescript": "5.6.3",
+    "tsx": "4.19.1",
+    "vitest": "1.6.0",
+    "rimraf": "5.0.7"
+  },
+  "engines": {
+    "node": ">=18.18.0"
+  }
+}

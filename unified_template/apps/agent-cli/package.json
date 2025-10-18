@@ -1,0 +1,29 @@
+{
+  "name": "agent-cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "agent": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "tsx src/index.ts",
+    "lint": "eslint src --max-warnings 0"
+  },
+  "dependencies": {
+    "@unified/agent-core": "workspace:*",
+    "@unified/ai-runtime": "workspace:*",
+    "commander": "12.1.0",
+    "chalk": "5.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "20.17.12",
+    "@types/commander": "11.0.3",
+    "eslint": "9.13.0",
+    "@eslint/js": "9.13.0",
+    "tsx": "4.19.1",
+    "typescript": "5.6.3"
+  }
+}
+

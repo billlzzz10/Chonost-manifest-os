@@ -1,0 +1,15 @@
+[project]
+name = "unified-backend"
+version = "0.1.0"
+description = "Local-first FastAPI service for the unified template"
+requires-python = ">=3.10"
+dependencies = [
+  "fastapi==0.115.0",
+  "uvicorn[standard]==0.30.3",
+  "pydantic-settings==2.6.0",
+  "aiosqlite==0.20.0",
+  "httpx==0.27.0"
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

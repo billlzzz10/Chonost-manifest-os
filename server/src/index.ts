@@ -98,7 +98,11 @@ app.post('/seg/run', async (req: Request<{ docHash?: string }>, res: Response) =
 app.post('/code-index/run', async (req: Request<{ paths: string[] }>, res: Response) => {
   try {
     const { paths } = req.body;
-    console.log(`[API] /code-index/run called for paths:`, paths);
+    // Sanitize each path to remove newlines and carriage returns from user input before logging
+    const sanitizedPaths = Array.isArray(paths)
+      ? paths.map(p => typeof p === 'string' ? p.replace(/[\r\n]/g, '') : p)
+      : [];
+    console.log(`[API] /code-index/run called for paths:`, sanitizedPaths);
 
     const indexerTool = toolRegistry.get('code-reference-indexer')!;
     const result = await indexerTool.run({ paths });

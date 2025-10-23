@@ -56,8 +56,7 @@ app.use(express.json());
 app.post('/mcp/run', async (req: Request<{ tool: string, args: Record<string, unknown> }>, res: Response) => {
   try {
     const { tool, args } = req.body;
-    const sanitizedTool = typeof tool === 'string' ? tool.replace(/\r?\n/g, "") : String(tool);
-    console.log(`[API] /mcp/run called for tool: "${sanitizedTool}"`);
+    console.log(`[API] /mcp/run called for tool: ${tool}`);
     if (!toolRegistry.has(tool)) {
       return res.status(404).json({ error: `Tool '${tool}' not found.` });
     }
@@ -75,8 +74,7 @@ app.post('/seg/run', async (req: Request<{ docHash?: string }>, res: Response) =
     const { docHash } = req.body;
     // Use environment variable for default, fallback to a hardcoded value if not set
     const docId = docHash || process.env.DEFAULT_DOC_ID || 'fallback-doc-id';
-    const sanitizedDocId = typeof docId === 'string' ? docId.replace(/\r?\n/g, "") : String(docId);
-    console.log(`[API] /seg/run called for doc: ${sanitizedDocId}`);
+    console.log(`[API] /seg/run called for doc: ${docId}`);
 
     const segTool = toolRegistry.get('document-segmentation')!;
     const inputText = doc.read(docId);
@@ -98,11 +96,7 @@ app.post('/seg/run', async (req: Request<{ docHash?: string }>, res: Response) =
 app.post('/code-index/run', async (req: Request<{ paths: string[] }>, res: Response) => {
   try {
     const { paths } = req.body;
-    // Sanitize each path to remove newlines and carriage returns from user input before logging
-    const sanitizedPaths = Array.isArray(paths)
-      ? paths.map(p => typeof p === 'string' ? p.replace(/[\r\n]/g, '') : p)
-      : [];
-    console.log(`[API] /code-index/run called for paths:`, sanitizedPaths);
+    console.log(`[API] /code-index/run called for paths:`, paths);
 
     const indexerTool = toolRegistry.get('code-reference-indexer')!;
     const result = await indexerTool.run({ paths });

@@ -6,10 +6,10 @@ This module provides a connection pool for MCP servers, supporting various trans
 import asyncio
 import time
 from collections import OrderedDict
-from typing import Dict, Optional, Tuple
+from typing import Callable, Dict, Optional, Tuple
 
 from models import MCPServer
-from mcp.client import MCPClient
+from mcp.client import MCPClientOriginal
 from config import Settings
 from utils.log import get_logger
 
@@ -24,14 +24,27 @@ class MCPPool:
     a new client for every request. It also handles client expiration and eviction.
     """
     
-    def __init__(self, maxsize: int = None, ttl_seconds: int = None):
+    def __init__(
+        self,
+        maxsize: int = None,
+        ttl_seconds: int = None,
+        client_factory: Optional[Callable[[MCPServer], MCPClientOriginal]] = None,
+    ):
         """
         Initializes the MCP pool.
+
+        Args:
+            maxsize: Maximum number of active clients retained by the pool.
+            ttl_seconds: Time-to-live in seconds for cached clients before re-creation.
+            client_factory: Optional factory for creating MCP clients. Mainly used for
+                dependency injection in tests so the pool can be verified without
+                booting real MCP transports.
         """
         self.maxsize = maxsize or settings.mcp_pool_max
         self.ttl_seconds = ttl_seconds or settings.mcp_ttl_seconds
-        
-        self._pool: OrderedDict[str, Tuple[MCPClient, float, float]] = OrderedDict()
+        self._client_factory = client_factory or MCPClientOriginal
+
+        self._pool: OrderedDict[str, Tuple[MCPClientOriginal, float, float]] = OrderedDict()
         self._lock = asyncio.Lock()
         self._stats = {
             "total_connections": 0,
@@ -41,7 +54,7 @@ class MCPPool:
             "pool_misses": 0
         }
 
-    async def get(self, key: str, server: MCPServer) -> MCPClient:
+    async def get(self, key: str, server: MCPServer) -> MCPClientOriginal:
         """
         Gets an MCP client from the pool or creates a new one.
         """
@@ -62,7 +75,7 @@ class MCPPool:
                     self._stats["active_connections"] -= 1
             
             try:
-                client = MCPClient(server)
+                client = self._client_factory(server)
                 await client.start()
                 
                 self._pool[key] = (client, now, now)

@@ -33,7 +33,7 @@ This is the main user-facing application. It is a desktop app built with **Tauri
 The `/packages/` directory contains shared code intended to be used across different parts of the application. This is key to our code reuse strategy.
 
 -   **`packages/ui`**: A centralized library of shared React UI components (e.g., buttons, cards, dialogs). When you need a standard UI element, check here first. If you build a new, reusable component, add it here.
--   **`packages/ai-clients`**: Contains the unified client for interacting with various Large Language Models (LLMs) and embedding providers. All AI-related communication should go through this package.
+-   **`packages/ai_clients`**: Contains the unified client for interacting with various Large Language Models (LLMs) and embedding providers. All AI-related communication should go through this package.
 -   **`packages/rag-pipeline`**: The powerful, unified Retrieval-Augmented Generation (RAG) system. It includes an `IntelligentFileProcessor` for deep-scanning local directories and ingesting various file types into a vector database.
 
 ### 4. Containerization with Docker

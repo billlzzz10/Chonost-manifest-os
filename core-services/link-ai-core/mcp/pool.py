@@ -6,7 +6,7 @@ This module provides a connection pool for MCP servers, supporting various trans
 import asyncio
 import time
 from collections import OrderedDict
-from typing import Callable, Dict, Optional, Tuple
+from typing import Any, Callable, Dict, Optional, Tuple
 
 from models import MCPServer
 from mcp.client import MCPClientOriginal

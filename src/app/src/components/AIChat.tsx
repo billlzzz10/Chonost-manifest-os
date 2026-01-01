@@ -4,6 +4,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { Send, Bot, User, Settings, RefreshCw, Loader2 } from "lucide-react";
+import ChatMessage from "./ChatMessage"; // ⚡ Import the memoized component
 import {
   aiProviderManager,
   generateText,
@@ -296,23 +297,9 @@ You can also just chat normally with me!`,
 
       {/* Messages */}
       <div className="messages-container">
+        {/* ⚡ Use the memoized ChatMessage component to prevent re-renders */}
         {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`message ${message.role} ${
-              message.isError ? "error" : ""
-            }`}
-          >
-            <div className="message-avatar">
-              {message.role === "user" ? <User size={16} /> : <Bot size={16} />}
-            </div>
-            <div className="message-content">
-              <div className="message-text">{message.content}</div>
-              <div className="message-timestamp">
-                {message.timestamp.toLocaleTimeString()}
-              </div>
-            </div>
-          </div>
+          <ChatMessage key={message.id} message={message} />
         ))}
 
         {isLoading && (

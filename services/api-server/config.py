@@ -4,15 +4,10 @@ Configuration settings for the MCP Orchestrator.
 
 import os
 from typing import Optional
+
 from pydantic import BaseModel, Field
 
-
-def _env_bool(name: str, default: bool) -> bool:
-    """Return a boolean environment variable with a safe fallback."""
-    raw_value = os.getenv(name)
-    if raw_value is None:
-        return default
-    return raw_value.lower() in {"1", "true", "yes", "on"}
+from utils.env import env_bool
 
 
 class Settings(BaseModel):
@@ -71,7 +66,7 @@ class Settings(BaseModel):
     )
 
     reload: bool = Field(
-        default=_env_bool("API_RELOAD", True),
+        default=env_bool("API_RELOAD", True),
         description="Enable auto-reload for development",
     )
 
@@ -83,7 +78,7 @@ class Settings(BaseModel):
 
     # Debug mode
     debug: bool = Field(
-        default=_env_bool("DEBUG", False),
+        default=env_bool("DEBUG", False),
         description="Enable debug mode",
     )
 

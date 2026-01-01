@@ -1,7 +1,22 @@
 import { useAppStore } from "../state/store";
+import { shallow } from "zustand/shallow";
+import TaskProgress from "./TaskProgress";
 
 export default function TopBar() {
-  const { setMode, tasks, enqueue, updateTask } = useAppStore();
+  // ⚡ Bolt: Optimized `useAppStore` selector.
+  // By selecting only the functions (`setMode`, `enqueue`, `updateTask`),
+  // this component will not re-render when the `tasks` array changes.
+  // The `shallow` comparison function prevents re-renders if the selected
+  // object is shallowly equal.
+  const { setMode, enqueue, updateTask } = useAppStore(
+    (state) => ({
+      setMode: state.setMode,
+      enqueue: state.enqueue,
+      updateTask: state.updateTask,
+    }),
+    shallow
+  );
+
   const startIngest = () => {
     const id = "ing-" + Date.now();
     enqueue({ id, title: "Index RAG", progress: 0, status: "running" });
@@ -30,11 +45,8 @@ export default function TopBar() {
       <button className="btn primary" onClick={startIngest}>
         สร้างดัชนี RAG
       </button>
-      {tasks.slice(-1).map((t) => (
-        <span key={t.id} className="badge" style={{ marginLeft: 8 }}>
-          {t.title}: {t.progress}%
-        </span>
-      ))}
+      {/* ⚡ Bolt: Re-rendering is now isolated to the TaskProgress component. */}
+      <TaskProgress />
     </div>
   );
 }

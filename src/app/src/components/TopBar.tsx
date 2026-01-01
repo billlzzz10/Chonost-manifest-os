@@ -1,8 +1,10 @@
 import { useAppStore } from "../state/store";
 
 export default function TopBar() {
-  const { setMode, tasks, enqueue, updateTask } = useAppStore();
+  const { setMode, tasks, enqueue, updateTask, setIsIngesting, isIngesting } =
+    useAppStore();
   const startIngest = () => {
+    setIsIngesting(true);
     const id = "ing-" + Date.now();
     enqueue({ id, title: "Index RAG", progress: 0, status: "running" });
     let p = 0;
@@ -11,6 +13,7 @@ export default function TopBar() {
       if (p >= 100) {
         updateTask(id, { progress: 100, status: "done" });
         clearInterval(t);
+        setIsIngesting(false);
       } else updateTask(id, { progress: p });
     }, 250);
   };
@@ -27,8 +30,12 @@ export default function TopBar() {
         อ่าน
       </button>
       <div style={{ marginLeft: "auto" }} />
-      <button className="btn primary" onClick={startIngest}>
-        สร้างดัชนี RAG
+      <button
+        className="btn primary"
+        onClick={startIngest}
+        disabled={isIngesting}
+      >
+        {isIngesting ? "Ingesting..." : "สร้างดัชนี RAG"}
       </button>
       {tasks.slice(-1).map((t) => (
         <span key={t.id} className="badge" style={{ marginLeft: 8 }}>

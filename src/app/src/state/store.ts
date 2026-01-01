@@ -79,6 +79,9 @@ interface AppState {
     topKeywords: { keyword: string; weight: number }[];
   };
 
+  // RAG Ingestion state
+  isIngesting: boolean;
+
   // Actions
   setTheme: (theme: 'light' | 'dark') => void;
   setCurrentFile: (file: string | null) => void;
@@ -94,6 +97,7 @@ interface AppState {
   updateNote: (id: string, updates: Partial<Note>) => void;
   removeNote: (id: string) => void;
   setData: (data: any) => void;
+  setIsIngesting: (isIngesting: boolean) => void;
 
   // Canvas actions
   addCanvasObject: (obj: Omit<CanvasObject, 'id'>) => void;
@@ -179,6 +183,7 @@ gantt
     wordCount: 0,
     topKeywords: []
   },
+  isIngesting: false,
 
   setTheme: (theme) => set({ theme }),
   setCurrentFile: (file) => set({ currentFile: file }),
@@ -207,6 +212,7 @@ gantt
     notes: state.notes.filter(n => n.id !== id)
   })),
   setData: (data) => set({ data }),
+  setIsIngesting: (isIngesting) => set({ isIngesting }),
 
   // Canvas actions
   addCanvasObject: (obj) => set((state) => ({

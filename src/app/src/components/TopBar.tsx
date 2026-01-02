@@ -1,7 +1,14 @@
 import { useAppStore } from "../state/store";
+import React from "react";
 
-export default function TopBar() {
-  const { setMode, tasks, enqueue, updateTask } = useAppStore();
+// ⚡ Bolt: Memoize TopBar and use a specific selector for the last task
+// to prevent re-renders when other tasks in the list change.
+export default React.memo(function TopBar() {
+  const setMode = useAppStore((s) => s.setMode);
+  const enqueue = useAppStore((s) => s.enqueue);
+  const updateTask = useAppStore((s) => s.updateTask);
+  const lastTask = useAppStore((s) => s.tasks.at(-1));
+
   const startIngest = () => {
     const id = "ing-" + Date.now();
     enqueue({ id, title: "Index RAG", progress: 0, status: "running" });
@@ -30,11 +37,11 @@ export default function TopBar() {
       <button className="btn primary" onClick={startIngest}>
         สร้างดัชนี RAG
       </button>
-      {tasks.slice(-1).map((t) => (
-        <span key={t.id} className="badge" style={{ marginLeft: 8 }}>
-          {t.title}: {t.progress}%
+      {lastTask && (
+        <span key={lastTask.id} className="badge" style={{ marginLeft: 8 }}>
+          {lastTask.title}: {lastTask.progress}%
         </span>
-      ))}
+      )}
     </div>
   );
-}
+});

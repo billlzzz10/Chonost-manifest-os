@@ -18,6 +18,34 @@ interface ChatMessage extends AIMessage {
   isError?: boolean;
 }
 
+// Performance Optimization: Memoize the ChatMessage component to prevent re-rendering every message on state changes.
+// By wrapping the message component in React.memo, we ensure that it only re-renders if its props (the message object) have changed.
+// This is particularly effective in a chat application where new messages are frequently added, preventing the entire list from re-rendering.
+const MemoizedChatMessage = React.memo(
+  ({ message }: { message: ChatMessage }) => {
+    return (
+      <div
+        className={`message ${message.role} ${message.isError ? "error" : ""}`}
+      >
+        <div className="message-avatar">
+          {message.role === "user" ? (
+            <User size={16} />
+          ) : (
+            <Bot size={16} />
+          )}
+        </div>
+        <div className="message-content">
+          <div className="message-text">{message.content}</div>
+          <div className="message-timestamp">
+            {message.timestamp.toLocaleTimeString()}
+          </div>
+        </div>
+      </div>
+    );
+  }
+);
+
+
 export default function AIChat() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -297,22 +325,7 @@ You can also just chat normally with me!`,
       {/* Messages */}
       <div className="messages-container">
         {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`message ${message.role} ${
-              message.isError ? "error" : ""
-            }`}
-          >
-            <div className="message-avatar">
-              {message.role === "user" ? <User size={16} /> : <Bot size={16} />}
-            </div>
-            <div className="message-content">
-              <div className="message-text">{message.content}</div>
-              <div className="message-timestamp">
-                {message.timestamp.toLocaleTimeString()}
-              </div>
-            </div>
-          </div>
+          <MemoizedChatMessage key={message.id} message={message} />
         ))}
 
         {isLoading && (

@@ -349,7 +349,11 @@ You can also just chat normally with me!`,
           className="send-button"
           title="Send message"
         >
-          <Send size={16} />
+          {isLoading ? (
+            <Loader2 size={16} className="animate-spin" />
+          ) : (
+            <Send size={16} />
+          )}
         </button>
       </div>
     </div>

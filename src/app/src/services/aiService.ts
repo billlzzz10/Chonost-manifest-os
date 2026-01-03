@@ -80,11 +80,23 @@ class AnthropicService {
   }
 }
 
+// ⚡ Bolt: Cache AI service instances to avoid redundant instantiation.
+const serviceCache: Record<string, any> = {};
+
 let currentService: any = null;
 let currentProvider: AIProvider = AIProvider.GOOGLE;
 
 export const initializeAIService = (config: AIConfig): void => {
   const { provider, apiKey, model } = config;
+  const cacheKey = `${provider}-${apiKey}-${model || ''}`;
+
+  // ⚡ Bolt: Reuse cached service if available.
+  if (serviceCache[cacheKey]) {
+    currentService = serviceCache[cacheKey];
+    currentProvider = provider;
+    return;
+  }
+
   currentProvider = provider;
 
   switch (provider) {
@@ -103,6 +115,9 @@ export const initializeAIService = (config: AIConfig): void => {
     default:
       throw new Error('Unsupported provider');
   }
+
+  // ⚡ Bolt: Store the new service instance in the cache.
+  serviceCache[cacheKey] = currentService;
 };
 
 export const getAIService = (): any => {

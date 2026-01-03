@@ -29,14 +29,32 @@ class GoogleAIService {
     this.model = this.genAI.getGenerativeModel({ model });
   }
 
+  async generateResponse(prompt: string): Promise<string> {
+    try {
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      return response.text();
+    } catch (error) {
+      console.error('Google AI Error:', error);
+      throw new Error(`Google AI request failed: ${error}`);
+    }
+  }
+
+  async analyzeText(text: string, instruction?: string): Promise<string> {
+    const prompt = instruction
+      ? `${instruction}\n\nข้อความที่ต้องการวิเคราะห์:\n${text}`
+      : `กรุณาวิเคราะห์ข้อความต่อไปนี้และให้ข้อมูลสรุปที่เป็นประโยชน์:\n\n${text}`;
+
+    return this.generateResponse(prompt);
+  }
+
   async chat(messages: Message[]): Promise<string> {
     const conversation = messages.map(msg =>
       `${msg.role === 'user' ? 'ผู้ใช้' : 'AI'}: ${msg.content}`
     ).join('\n\n');
+
     const prompt = `สนทนาต่อไปนี้:\n\n${conversation}\n\nAI: `;
-    const result = await this.model.generateContent(prompt);
-    const response = await result.response;
-    return response.text();
+    return this.generateResponse(prompt);
   }
 }
 
@@ -121,4 +139,29 @@ export const chatWithAI = async (messages: Message[]): Promise<string> => {
 
 export const setProvider = (provider: AIProvider, apiKey: string, model?: string): void => {
   initializeAIService({ provider, apiKey, model });
+};
+
+let googleAIService: GoogleAIService | null = null;
+
+export const initializeGoogleAI = (apiKey: string): GoogleAIService => {
+  googleAIService = new GoogleAIService(apiKey);
+  return googleAIService;
+};
+
+export const getGoogleAIService = (): GoogleAIService | null => {
+  return googleAIService;
+};
+
+export const analyzeWithGoogleAI = async (text: string): Promise<string> => {
+  if (!googleAIService) {
+    throw new Error('Google AI service not initialized. Please set GOOGLE_AI_API_KEY');
+  }
+  return googleAIService.analyzeText(text);
+};
+
+export const chatWithGoogleAI = async (messages: Message[]): Promise<string> => {
+  if (!googleAIService) {
+    throw new Error('Google AI service not initialized. Please set GOOGLE_AI_API_KEY');
+  }
+  return googleAIService.chat(messages);
 };

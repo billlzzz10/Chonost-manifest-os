@@ -4,6 +4,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { Send, Bot, User, Settings, RefreshCw, Loader2 } from "lucide-react";
+import ChatMessageComponent from "./ChatMessage";
 import {
   aiProviderManager,
   generateText,
@@ -297,22 +298,7 @@ You can also just chat normally with me!`,
       {/* Messages */}
       <div className="messages-container">
         {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`message ${message.role} ${
-              message.isError ? "error" : ""
-            }`}
-          >
-            <div className="message-avatar">
-              {message.role === "user" ? <User size={16} /> : <Bot size={16} />}
-            </div>
-            <div className="message-content">
-              <div className="message-text">{message.content}</div>
-              <div className="message-timestamp">
-                {message.timestamp.toLocaleTimeString()}
-              </div>
-            </div>
-          </div>
+          <ChatMessageComponent key={message.id} {...message} />
         ))}
 
         {isLoading && (

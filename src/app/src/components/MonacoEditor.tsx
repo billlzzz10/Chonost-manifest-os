@@ -1,5 +1,5 @@
 // src/components/MonacoEditor.tsx
-import { useEffect, useRef } from "react";
+import { memo, useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 import Editor from "@monaco-editor/react";
 
@@ -11,7 +11,7 @@ interface MonacoEditorProps {
   height?: string;
 }
 
-export default function MonacoEditor({
+function MonacoEditor({
   value,
   onChange,
   language = "markdown",
@@ -142,3 +142,9 @@ export default function MonacoEditor({
     </div>
   );
 }
+
+// ⚡ Bolt: Memoize MonacoEditor to prevent unnecessary re-renders.
+// This is a heavy component, and its parent `EditorWhiteboard` re-renders frequently
+// during user interactions (e.g., drawing on the canvas). Memoization ensures
+// the editor only re-renders when its specific props (value, onChange, etc.) change.
+export default memo(MonacoEditor);

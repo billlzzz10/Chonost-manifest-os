@@ -667,6 +667,11 @@ export default function EditorWhiteboard() {
       {editorMode === "monaco" ? (
         <MonacoEditor
           value={content}
+          // ⚡ Bolt: No useCallback needed here.
+          // `setContent` is destructured from the `useAppStore` (Zustand) hook.
+          // Zustand guarantees that action functions have stable references,
+          // so this prop won't cause unnecessary re-renders in the memoized
+          // `MonacoEditor` component.
           onChange={setContent}
           language="markdown"
           height="calc(100% - 40px)"

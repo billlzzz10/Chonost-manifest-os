@@ -1,6 +1,7 @@
 // src/components/ChatBox.tsx
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAppStore as useStore } from "../state/store";
+import { ChatMessage as MemoizedChatMessage } from "./ChatMessage";
 import { mockStreamChat } from "../lib/mockApi";
 import { CraftFileManager } from "../lib/tauri";
 import { LargeFileHandler } from "../lib/largeFileHandler";
@@ -327,21 +328,7 @@ export default function ChatBox() {
           </div>
         )}
         {messages.map((msg, i) => (
-          <div key={i} className="chat-message">
-            <div className="row" style={{ marginBottom: "4px" }}>
-              <div style={{ fontSize: "11px", color: "var(--muted)" }}>
-                {msg.role === "user" ? "You" : "AI"}
-              </div>
-              {msg.context && (
-                <div style={{ fontSize: "9px", color: "var(--brand)" }}>
-                  with context
-                </div>
-              )}
-            </div>
-            <div style={{ whiteSpace: "pre-wrap", fontSize: "12px" }}>
-              {msg.content}
-            </div>
-          </div>
+          <MemoizedChatMessage key={i} msg={msg} />
         ))}
         {isLoading && (
           <div className="chat-message">

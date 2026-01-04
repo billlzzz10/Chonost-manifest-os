@@ -29,14 +29,30 @@ class GoogleAIService {
     this.model = this.genAI.getGenerativeModel({ model });
   }
 
+  private async _generateResponse(prompt: string): Promise<string> {
+    try {
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      return response.text();
+    } catch (error) {
+      console.error('Google AI Error:', error);
+      throw new Error(`Google AI request failed: ${error}`);
+    }
+  }
+
   async chat(messages: Message[]): Promise<string> {
     const conversation = messages.map(msg =>
       `${msg.role === 'user' ? 'ผู้ใช้' : 'AI'}: ${msg.content}`
     ).join('\n\n');
     const prompt = `สนทนาต่อไปนี้:\n\n${conversation}\n\nAI: `;
-    const result = await this.model.generateContent(prompt);
-    const response = await result.response;
-    return response.text();
+    return this._generateResponse(prompt);
+  }
+
+  async analyzeText(text: string, instruction?: string): Promise<string> {
+    const prompt = instruction
+      ? `${instruction}\n\nข้อความที่ต้องการวิเคราะห์:\n${text}`
+      : `กรุณาวิเคราะห์ข้อความต่อไปนี้และให้ข้อมูลสรุปที่เป็นประโยชน์:\n\n${text}`;
+    return this._generateResponse(prompt);
   }
 }
 
@@ -117,6 +133,16 @@ export const chatWithAI = async (messages: Message[]): Promise<string> => {
     throw new Error('AI service not initialized');
   }
   return currentService.chat(messages);
+};
+
+export const analyzeTextWithAI = async (text: string, instruction?: string): Promise<string> => {
+  if (!currentService) {
+    throw new Error('AI service not initialized');
+  }
+  if (typeof currentService.analyzeText !== 'function') {
+    throw new Error(`The current AI provider (${currentProvider}) does not support text analysis.`);
+  }
+  return currentService.analyzeText(text, instruction);
 };
 
 export const setProvider = (provider: AIProvider, apiKey: string, model?: string): void => {

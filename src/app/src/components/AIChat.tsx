@@ -3,7 +3,8 @@
 // Provides chat interface with AI providers (Ollama, OpenRouter, etc.)
 
 import React, { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, Settings, RefreshCw, Loader2 } from "lucide-react";
+import { Send, Bot, Settings, RefreshCw, Loader2 } from "lucide-react";
+import ChatMessageItem from "./ChatMessageItem"; // ⚡ Bolt: Import the memoized component
 import {
   aiProviderManager,
   generateText,
@@ -296,23 +297,11 @@ You can also just chat normally with me!`,
 
       {/* Messages */}
       <div className="messages-container">
+        {/* ⚡ Bolt: Using the memoized ChatMessageItem component here prevents
+            the entire list from re-rendering on every parent state change (e.g., input typing).
+            This is a significant performance boost for long chat histories. */}
         {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`message ${message.role} ${
-              message.isError ? "error" : ""
-            }`}
-          >
-            <div className="message-avatar">
-              {message.role === "user" ? <User size={16} /> : <Bot size={16} />}
-            </div>
-            <div className="message-content">
-              <div className="message-text">{message.content}</div>
-              <div className="message-timestamp">
-                {message.timestamp.toLocaleTimeString()}
-              </div>
-            </div>
-          </div>
+          <ChatMessageItem key={message.id} message={message} />
         ))}
 
         {isLoading && (

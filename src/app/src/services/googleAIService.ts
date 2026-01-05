@@ -1,4 +1,8 @@
+// 🛡️ Guardian: Consolidated `GoogleAIService` into a single canonical file.
+// This file is now the single source of truth for all Google AI interactions.
+// It removes the duplicate implementation from `aiService.ts` and exports a feature-complete class.
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { Message } from './aiService';
 
 export interface GoogleAIServiceConfig {
   apiKey: string;
@@ -16,7 +20,7 @@ export class GoogleAIService {
     });
   }
 
-  async generateResponse(prompt: string): Promise<string> {
+  private async generateResponse(prompt: string): Promise<string> {
     try {
       const result = await this.model.generateContent(prompt);
       const response = await result.response;
@@ -35,7 +39,7 @@ export class GoogleAIService {
     return this.generateResponse(prompt);
   }
 
-  async chat(messages: Array<{role: string, content: string}>): Promise<string> {
+  async chat(messages: Message[]): Promise<string> {
     const conversation = messages.map(msg =>
       `${msg.role === 'user' ? 'ผู้ใช้' : 'AI'}: ${msg.content}`
     ).join('\n\n');
@@ -44,28 +48,3 @@ export class GoogleAIService {
     return this.generateResponse(prompt);
   }
 }
-
-let googleAIService: GoogleAIService | null = null;
-
-export const initializeGoogleAI = (apiKey: string): GoogleAIService => {
-  googleAIService = new GoogleAIService({ apiKey });
-  return googleAIService;
-};
-
-export const getGoogleAIService = (): GoogleAIService | null => {
-  return googleAIService;
-};
-
-export const analyzeWithGoogleAI = async (text: string): Promise<string> => {
-  if (!googleAIService) {
-    throw new Error('Google AI service not initialized. Please set GOOGLE_AI_API_KEY');
-  }
-  return googleAIService.analyzeText(text);
-};
-
-export const chatWithGoogleAI = async (messages: Array<{role: string, content: string}>): Promise<string> => {
-  if (!googleAIService) {
-    throw new Error('Google AI service not initialized. Please set GOOGLE_AI_API_KEY');
-  }
-  return googleAIService.chat(messages);
-};

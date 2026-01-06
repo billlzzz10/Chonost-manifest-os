@@ -32,7 +32,18 @@ function Wheel({ side, labels }: { side: "left" | "right"; labels: string[] }) {
               {labels[i] || ("label" in it ? it.label : String(i))}
             </button>
           ))}
-        <div style={{ opacity: 0.6, fontSize: 12 }}>Alt+{side === "left" ? "Q" : "W"}</div>
+        <div
+          style={{
+            opacity: 0.9,
+            fontSize: 14,
+            backgroundColor: "rgba(255, 255, 255, 0.1)",
+            padding: "2px 6px",
+            borderRadius: "4px",
+            border: "1px solid rgba(255, 255, 255, 0.2)"
+          }}
+        >
+          Alt+{side === "left" ? "Q" : "W"}
+        </div>
       </div>
     </div>
   );

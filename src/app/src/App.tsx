@@ -1,4 +1,3 @@
-import React, { Suspense } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { useTranslation } from 'react-i18next';
 import i18n from './i18n';
@@ -9,7 +8,8 @@ import EditorWhiteboard from "./components/EditorWhiteboard";
 import ReadingView from "./components/ReadingView";
 import StickyNotes from "./components/StickyNotes";
 import RotaryPalette from "./components/RotaryPalette";
-import VisualDashboard from "./components/VisualDashboard";
+import { lazy, Suspense } from 'react';
+const VisualDashboard = lazy(() => import("./components/VisualDashboard"));
 
 // Language switcher component (floating button)
 function LanguageSwitcher() {
@@ -88,7 +88,9 @@ function AppContent() {
         <RotaryPalette />
         <ReadingView content="" />
         <StickyNotes />
-        <VisualDashboard />
+        <Suspense fallback={<div>Loading...</div>}>
+          <VisualDashboard />
+        </Suspense>
       </div>
       
       {/* Language switcher - always visible */}

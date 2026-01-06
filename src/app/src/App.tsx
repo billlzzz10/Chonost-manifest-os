@@ -9,7 +9,7 @@ import EditorWhiteboard from "./components/EditorWhiteboard";
 import ReadingView from "./components/ReadingView";
 import StickyNotes from "./components/StickyNotes";
 import RotaryPalette from "./components/RotaryPalette";
-import VisualDashboard from "./components/VisualDashboard";
+const VisualDashboard = React.lazy(() => import('./components/VisualDashboard'));
 
 // Language switcher component (floating button)
 function LanguageSwitcher() {
@@ -88,7 +88,14 @@ function AppContent() {
         <RotaryPalette />
         <ReadingView content="" />
         <StickyNotes />
-        <VisualDashboard />
+        {/*
+          ⚡ Bolt: Lazily load the VisualDashboard component.
+          This component and its heavy dependencies (chart.js) are moved out of the main bundle.
+          It will be loaded on-demand, significantly improving the initial load time.
+        */}
+        <Suspense fallback={<div>Loading charts...</div>}>
+          <VisualDashboard />
+        </Suspense>
       </div>
       
       {/* Language switcher - always visible */}

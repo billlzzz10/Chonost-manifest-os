@@ -22,7 +22,7 @@
     "i18next-browser-languagedetector": "^7.1.0",
     "lucide-react": "^0.263.1",
     "mermaid": "^10.9.4",
-    "monaco-editor": "^0.44.0",
+    "monaco-editor": "^0.55.1",
     "openai": "^5.19.1",
     "react": "^18.2.0",
     "react-chartjs-2": "^5.2.0",

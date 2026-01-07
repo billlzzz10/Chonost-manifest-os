@@ -1,6 +1,9 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+// 🛡️ Guardian: Consolidated from internal class to canonical GoogleAIService
+// This file was refactored to remove the internal, duplicate `GoogleAIService` class.
+// It now imports the canonical service from `./googleAIService.ts` to ensure a single source of truth.
 import OpenAI from 'openai';
 import { Anthropic } from '@anthropic-ai/sdk';
+import { GoogleAIService } from './googleAIService';
 
 export enum AIProvider {
   GOOGLE = 'google',
@@ -20,25 +23,7 @@ export interface Message {
   content: string;
 }
 
-class GoogleAIService {
-  private genAI: GoogleGenerativeAI;
-  private model: any;
-
-  constructor(apiKey: string, model = 'gemini-1.5-flash') {
-    this.genAI = new GoogleGenerativeAI(apiKey);
-    this.model = this.genAI.getGenerativeModel({ model });
-  }
-
-  async chat(messages: Message[]): Promise<string> {
-    const conversation = messages.map(msg =>
-      `${msg.role === 'user' ? 'ผู้ใช้' : 'AI'}: ${msg.content}`
-    ).join('\n\n');
-    const prompt = `สนทนาต่อไปนี้:\n\n${conversation}\n\nAI: `;
-    const result = await this.model.generateContent(prompt);
-    const response = await result.response;
-    return response.text();
-  }
-}
+// 🛡️ Guardian: Removed duplicate GoogleAIService class.
 
 class OpenAIService {
   private openai: OpenAI;
@@ -89,7 +74,8 @@ export const initializeAIService = (config: AIConfig): void => {
 
   switch (provider) {
     case AIProvider.GOOGLE:
-      currentService = new GoogleAIService(apiKey, model);
+      // 🛡️ Guardian: Updated instantiation to match canonical service's constructor.
+      currentService = new GoogleAIService({ apiKey, model });
       break;
     case AIProvider.OPENAI:
       currentService = new OpenAIService(apiKey, undefined, model);

@@ -240,6 +240,7 @@ You can also just chat normally with me!`,
             className="icon-button"
             onClick={testConnection}
             title="Test Connections"
+            aria-label="Test AI provider connections"
           >
             <RefreshCw size={16} />
           </button>
@@ -247,6 +248,7 @@ You can also just chat normally with me!`,
             className="icon-button"
             onClick={() => setShowSettings(!showSettings)}
             title="Settings"
+            aria-label="Toggle AI settings panel"
           >
             <Settings size={16} />
           </button>
@@ -348,6 +350,7 @@ You can also just chat normally with me!`,
           disabled={!input.trim() || isLoading}
           className="send-button"
           title="Send message"
+          aria-label="Send message"
         >
           <Send size={16} />
         </button>

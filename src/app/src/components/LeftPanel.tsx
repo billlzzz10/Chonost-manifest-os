@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useAppStore } from "../state/store";
-import VisualDashboard from "./VisualDashboard";
+const VisualDashboard = lazy(() => import("./VisualDashboard"));
 import { runAnalyzeOrSidecar } from "../lib/platform";
 import { AIProvider, initializeAIService, chatWithAI, setProvider } from "../services/aiService";
 
@@ -81,7 +81,9 @@ export default function LeftPanel() {
   return (
     <div className="panel" style={{ padding: 8 }}>
       <h3>แดชบอร์ด</h3>
-      <VisualDashboard />
+      <Suspense fallback={<div>Loading...</div>}>
+        <VisualDashboard />
+      </Suspense>
       <div className="card" style={{ marginTop: 8 }}>
         <h4 style={{ margin: "0 0 8px" }}>
           แชท AI {isAIReady && <span style={{ color: '#10b981', fontSize: '12px' }}>● {selectedProvider} พร้อม</span>}

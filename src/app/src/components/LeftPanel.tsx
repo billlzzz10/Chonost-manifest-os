@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useAppStore } from "../state/store";
-import VisualDashboard from "./VisualDashboard";
 import { runAnalyzeOrSidecar } from "../lib/platform";
+import LazyVisualDashboard from "./LazyVisualDashboard";
 import { AIProvider, initializeAIService, chatWithAI, setProvider } from "../services/aiService";
 
 export default function LeftPanel() {
@@ -81,7 +81,7 @@ export default function LeftPanel() {
   return (
     <div className="panel" style={{ padding: 8 }}>
       <h3>แดชบอร์ด</h3>
-      <VisualDashboard />
+      <LazyVisualDashboard />
       <div className="card" style={{ marginTop: 8 }}>
         <h4 style={{ margin: "0 0 8px" }}>
           แชท AI {isAIReady && <span style={{ color: '#10b981', fontSize: '12px' }}>● {selectedProvider} พร้อม</span>}

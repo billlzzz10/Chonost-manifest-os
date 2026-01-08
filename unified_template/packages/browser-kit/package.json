@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@puppeteer/browsers": "2.1.1",
-    "puppeteer-core": "23.8.0"
+    "puppeteer-core": "23.11.1"
   },
   "devDependencies": {
     "@types/node": "20.17.12",

@@ -2,7 +2,7 @@
 // This file is now the single source of truth for all Google AI interactions.
 // It removes the duplicate implementation from `aiService.ts` and exports a feature-complete class.
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { Message } from './aiService';
+import { Message } from './aiTypes';
 
 export interface GoogleAIServiceConfig {
   apiKey: string;

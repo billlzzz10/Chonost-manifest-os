@@ -1,69 +1,15 @@
-// 🛡️ Guardian: Consolidated from internal class to canonical GoogleAIService
-// This file was refactored to remove the internal, duplicate `GoogleAIService` class.
-// It now imports the canonical service from `./googleAIService.ts` to ensure a single source of truth.
-import OpenAI from 'openai';
-import { Anthropic } from '@anthropic-ai/sdk';
+// 🛡️ Guardian: Refactored to extract service classes into dedicated files.
+// This file now acts as a pure factory, responsible for initializing and providing the correct AI service.
+// It imports the canonical services from their respective modules to ensure a single source of truth.
 import { GoogleAIService } from './googleAIService';
+import { OpenAIService } from './openAIService';
+import { AnthropicService } from './anthropicService';
+import { AIProvider, AIConfig, Message } from './aiTypes';
 
-export enum AIProvider {
-  GOOGLE = 'google',
-  OPENAI = 'openai',
-  ANTHROPIC = 'anthropic',
-  XAI = 'xai'
-}
+// 🛡️ Guardian: Moved AIProvider, AIConfig, and Message to aiTypes.ts
 
-export interface AIConfig {
-  provider: AIProvider;
-  apiKey: string;
-  model?: string;
-}
-
-export interface Message {
-  role: 'user' | 'assistant';
-  content: string;
-}
-
-// 🛡️ Guardian: Removed duplicate GoogleAIService class.
-
-class OpenAIService {
-  private openai: OpenAI;
-  private model: string;
-
-  constructor(apiKey: string, baseURL?: string, model = 'gpt-3.5-turbo') {
-    this.model = model;
-    this.openai = new OpenAI({
-      apiKey,
-      baseURL: baseURL || 'https://api.openai.com/v1',
-    });
-  }
-
-  async chat(messages: Message[]): Promise<string> {
-    const response = await this.openai.chat.completions.create({
-      model: this.model,
-      messages: messages.map(m => ({ role: m.role, content: m.content })),
-    });
-    return response.choices[0].message?.content || '';
-  }
-}
-
-class AnthropicService {
-  private anthropic: Anthropic;
-  private model: string;
-
-  constructor(apiKey: string, model = 'claude-3-sonnet-20240229') {
-    this.model = model;
-    this.anthropic = new Anthropic({ apiKey });
-  }
-
-  async chat(messages: Message[]): Promise<string> {
-    const response = await this.anthropic.messages.create({
-      model: this.model,
-      max_tokens: 1000,
-      messages: messages.map(m => ({ role: m.role, content: m.content })),
-    });
-    return (response.content[0] as any).text || '';
-  }
-}
+// 🛡️ Guardian: Removed OpenAIService and AnthropicService classes.
+// Their implementations are now located in `openAIService.ts` and `anthropicService.ts`.
 
 let currentService: any = null;
 let currentProvider: AIProvider = AIProvider.GOOGLE;

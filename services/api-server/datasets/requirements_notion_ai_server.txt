@@ -55,3 +55,4 @@ ujson>=5.8.0
 
 # Development tools
 pre-commit>=3.5.0
+urllib3>=2.6.3 # not directly required, pinned by Snyk to avoid a vulnerability

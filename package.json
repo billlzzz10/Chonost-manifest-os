@@ -1,6 +1,6 @@
 {
   "name": "chonost-manuscript-os-unified",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "private": true,
   "description": "An Intelligent Manuscript Management System with a unified architecture.",
   "author": "billlzzz10",
@@ -11,15 +11,14 @@
   },
   "workspaces": [
     "apps/*",
-    "packages/*",
-    "services/api-server"
+    "packages/*"
   ],
   "scripts": {
-    "dev": "npm run dev --workspace=craft-ide",
-    "dev:api": "npm run dev --workspace=api-server",
-    "build": "npm run build --workspace=craft-ide",
-    "tauri": "npm run tauri --workspace=craft-ide",
-    "test": "cd services/api-server && python -m pytest",
+    "dev:web": "npm run dev --workspace=@chonost/web",
+    "dev:backend": "cd apps/backend && uvicorn main:app --reload",
+    "build:web": "npm run build --workspace=@chonost/web",
+    "tauri": "npm run tauri --workspace=@chonost/web",
+    "test:backend": "cd apps/backend && python -m pytest",
     "docker:up": "docker-compose up -d --build",
     "docker:down": "docker-compose down",
     "prepare": "husky install",

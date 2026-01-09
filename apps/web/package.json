@@ -1,5 +1,5 @@
 {
-  "name": "craft-ide",
+  "name": "@chonost/web",
   "version": "0.1.0",
   "description": "A modern IDE with AI integration, Monaco Editor, multi-mode interface, and Thai/English i18n support",
   "type": "module",
@@ -8,7 +8,8 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "i18n:extract": "i18next-scanner --config i18n.config.js"
+    "i18n:extract": "i18next-scanner --config i18n.config.js",
+    "tauri": "tauri"
   },
   "dependencies": {
     "@chonost/ui": "2.1.0",

@@ -18,7 +18,7 @@ from dotenv import load_dotenv
 # Add parent directory to path for imports
 sys.path.append(str(Path(__file__).parent.parent))
 
-from client.notion_ai_client import NotionAIHelper
+from core.llm.notion_ai_client import NotionAIHelper
 
 # Load environment variables
 load_dotenv()

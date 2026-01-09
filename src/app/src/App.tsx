@@ -9,7 +9,8 @@ import EditorWhiteboard from "./components/EditorWhiteboard";
 import ReadingView from "./components/ReadingView";
 import StickyNotes from "./components/StickyNotes";
 import RotaryPalette from "./components/RotaryPalette";
-import VisualDashboard from "./components/VisualDashboard";
+
+const LazyVisualDashboard = React.lazy(() => import('./components/VisualDashboard'));
 
 // Language switcher component (floating button)
 function LanguageSwitcher() {
@@ -88,7 +89,9 @@ function AppContent() {
         <RotaryPalette />
         <ReadingView content="" />
         <StickyNotes />
-        <VisualDashboard />
+        <Suspense fallback={<div>Loading dashboard...</div>}>
+          <LazyVisualDashboard />
+        </Suspense>
       </div>
       
       {/* Language switcher - always visible */}

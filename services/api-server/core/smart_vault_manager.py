@@ -458,8 +458,29 @@ class SmartVaultManager:
             source = self.vault_path / operation['source']
             target = self.vault_path / operation['target']
             if source.exists():
-                # TODO: Implement file moving logic
-                print(f"   📁 Moving: {operation['source']} -> {operation['target']}")
+                try:
+                    # Ensure target directory exists
+                    target.mkdir(parents=True, exist_ok=True)
+
+                    # Check if destination already exists to avoid errors
+                    destination = target / source.name
+                    if destination.exists():
+                        # If destination exists, append a timestamp to the folder name
+                        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                        new_source_name = f"{source.name}_{timestamp}"
+                        destination = target / new_source_name
+                        print(f"   ⚠️ Destination exists. Renaming to: {new_source_name}")
+
+                        # We need to move to the new name, so we rename source first or move then rename?
+                        # shutil.move(src, dst_dir) moves to dst_dir/src.name
+                        # shutil.move(src, full_dst_path) renames.
+                        shutil.move(str(source), str(destination))
+                    else:
+                        shutil.move(str(source), str(target))
+
+                    print(f"   📁 Moved: {operation['source']} -> {operation['target']}")
+                except Exception as e:
+                    print(f"   ❌ Error moving {operation['source']}: {e}")
         
         elif action == 'create_readme':
             folder_path = self.vault_path / operation['folder']

@@ -465,7 +465,10 @@ class SmartVaultManager:
             folder_path = self.vault_path / operation['folder']
             readme_path = folder_path / "README.md"
             if not readme_path.exists():
-                # TODO: Implement README creation
+                folder_name = operation['folder'].split('/')[-1]
+                content = f"# {folder_name}\n\nDescription for {folder_name}.\n"
+                with open(readme_path, 'w', encoding='utf-8') as f:
+                    f.write(content)
                 print(f"   📝 Creating README for: {operation['folder']}")
     
     def save_report(self, filename: str = "vault_management_report.json"):

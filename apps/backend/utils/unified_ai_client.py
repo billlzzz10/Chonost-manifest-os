@@ -15,7 +15,7 @@ import openai
 from abc import ABC, abstractmethod
 from typing import Dict, Any, List, Optional
 
-from ..config import get_config
+from ..config import settings
 
 # --- Setup Logging ---
 logging.basicConfig(level=logging.INFO)
@@ -201,11 +201,57 @@ class OpenRouterStrategy(AIProviderStrategy):
     def embed(self, text: str, model: Optional[str] = None) -> Dict[str, Any]:
         return {'success': False, 'error': 'Not implemented'}
 
+
+# 🛡️ Guardian: Implemented GoogleStrategy by porting logic from the frontend.
+# This implementation mirrors the capabilities of the TypeScript GoogleAIService,
+# ensuring consistent behavior and consolidating AI logic in the backend.
 class GoogleStrategy(AIProviderStrategy):
+    """Strategy for interacting with Google's Generative AI models."""
+    def __init__(self, api_key: str, model: str = "gemini-1.5-flash"):
+        try:
+            import google.generativeai as genai
+            genai.configure(api_key=api_key)
+            self.model = genai.GenerativeModel(model)
+            logger.info(f"GoogleStrategy initialized for model {model}")
+        except ImportError:
+            logger.error("google.generativeai package not found. Please install it with 'pip install google-generativeai'")
+            raise
+        except Exception as e:
+            logger.error(f"Failed to initialize GoogleStrategy: {e}")
+            raise
+
     def generate_response(self, messages: List[Dict[str, str]], **kwargs) -> Dict[str, Any]:
-        return {"provider": "google", "content": "Not implemented yet"}
+        """Generates a response using the Google Generative AI API."""
+        try:
+            # Gemini requires a specific format for conversational history.
+            # The role for the model is 'model', not 'assistant'.
+            gemini_messages = [
+                {
+                    "role": "model" if msg["role"] == "assistant" else "user",
+                    "parts": [msg["content"]]
+                }
+                for msg in messages
+            ]
+
+            response = self.model.generate_content(gemini_messages)
+
+            return {
+                'success': True,
+                'provider': 'google',
+                'content': response.text,
+                'metadata': {
+                    'model': self.model.model_name
+                }
+            }
+        except Exception as e:
+            logger.error(f"❌ Google AI error: {str(e)}")
+            return {'success': False, 'error': str(e)}
+
     def embed(self, text: str, model: Optional[str] = None) -> Dict[str, Any]:
+        """Embedding is not yet supported in the original FE implementation."""
+        logger.warning("GoogleStrategy 'embed' method is not implemented.")
         return {'success': False, 'error': 'Not implemented'}
+
 
 class AnthropicStrategy(AIProviderStrategy):
     def generate_response(self, messages: List[Dict[str, str]], **kwargs) -> Dict[str, Any]:
@@ -236,7 +282,7 @@ class UnifiedAIClient:
         Initializes the client by loading configuration and setting up strategies.
         """
         self._strategies: Dict[str, AIProviderStrategy] = {}
-        self.config = get_config()
+        self.config = settings
         self._init_strategies()
 
     def _init_strategies(self):
@@ -250,9 +296,12 @@ class UnifiedAIClient:
         # Ollama
         self._strategies['ollama'] = OllamaStrategy(base_url=self.config.ollama_base_url)
 
+        # Google
+        if self.config.google_api_key:
+            self._strategies['google'] = GoogleStrategy(api_key=self.config.google_api_key)
+
         # Add other strategies here as they are implemented
         self._strategies['openrouter'] = OpenRouterStrategy()
-        self._strategies['google'] = GoogleStrategy()
         self._strategies['anthropic'] = AnthropicStrategy()
         self._strategies['deepseek'] = DeepSeekStrategy()
         self._strategies['mistral'] = MistralStrategy()

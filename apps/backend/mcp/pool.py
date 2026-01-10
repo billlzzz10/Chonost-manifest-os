@@ -21,7 +21,7 @@ try:
 except ImportError:
     # Fallback for standalone usage
     from models import MCPServer
-    from client import MCPClient
+    from mcp.client import MCPClient
 
     # Simple settings fallback
     class SimpleSettings:

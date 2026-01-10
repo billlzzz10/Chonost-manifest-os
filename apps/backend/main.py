@@ -36,7 +36,7 @@ try:
     from .mcp.registry import MCPRegistry
     from .mcp.client import MCPClient
     from .config import Settings
-    from src.api.handlers import router as api_router
+    from api.handlers import router as api_router
 
     # Initialize MCP components
     settings = Settings()

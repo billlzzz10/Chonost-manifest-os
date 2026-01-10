@@ -4,7 +4,7 @@ services:
   # Unified API Server (Backend + AI)
   api-server:
     build:
-      context: ./services/api-server
+      context: ./apps/backend
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
@@ -19,15 +19,15 @@ services:
       - redis
       - qdrant
     volumes:
-      - ./services/api-server:/app
+      - ./apps/backend:/app
       - ./data:/app/data
     networks:
       - chonost-network
 
-  # Craft IDE Frontend
-  craft-ide:
+  # Web/Desktop Frontend
+  web:
     build:
-      context: ./craft-ide
+      context: ./apps/web
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
@@ -37,7 +37,7 @@ services:
     depends_on:
       - api-server
     volumes:
-      - ./craft-ide:/app
+      - ./apps/web:/app
       - /app/node_modules
     networks:
       - chonost-network
@@ -53,7 +53,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./services/api-server/configs:/docker-entrypoint-initdb.d
+      - ./apps/backend/configs:/docker-entrypoint-initdb.d
     networks:
       - chonost-network
 
@@ -92,24 +92,6 @@ services:
       - prometheus
     networks:
       - chonost-network
-
-  # Testing Service
-  testing:
-    build:
-      context: ./services/api-server
-      dockerfile: Dockerfile
-    environment:
-      - DATABASE_URL=postgresql://postgres:password@postgres:5432/chonost_test
-      - REDIS_URL=redis://redis:6379
-    depends_on:
-      - postgres
-      - redis
-    volumes:
-      - ./services/api-server:/app
-    networks:
-      - chonost-network
-    profiles:
-      - testing
 
 volumes:
   postgres_data:

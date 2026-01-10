@@ -9,7 +9,7 @@ import EditorWhiteboard from "./components/EditorWhiteboard";
 import ReadingView from "./components/ReadingView";
 import StickyNotes from "./components/StickyNotes";
 import RotaryPalette from "./components/RotaryPalette";
-import VisualDashboard from "./components/VisualDashboard";
+import LazyVisualDashboard from "./components/LazyVisualDashboard";
 
 // Language switcher component (floating button)
 function LanguageSwitcher() {
@@ -88,7 +88,7 @@ function AppContent() {
         <RotaryPalette />
         <ReadingView content="" />
         <StickyNotes />
-        <VisualDashboard />
+        <LazyVisualDashboard />
       </div>
       
       {/* Language switcher - always visible */}

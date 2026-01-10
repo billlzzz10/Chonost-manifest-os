@@ -57,7 +57,7 @@ class ChonostIntegrationTest:
 
         try:
             # Import backend components
-            from backend.main import app  # type: ignore
+            from apps.backend.main import app  # type: ignore
 
             # Test health endpoint
             from fastapi.testclient import TestClient  # type: ignore

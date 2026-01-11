@@ -12,10 +12,11 @@ import requests
 import json
 import logging
 import openai
+import google.generativeai as genai
 from abc import ABC, abstractmethod
 from typing import Dict, Any, List, Optional
 
-from ..config import get_config
+from ..config import settings
 
 # --- Setup Logging ---
 logging.basicConfig(level=logging.INFO)
@@ -201,11 +202,50 @@ class OpenRouterStrategy(AIProviderStrategy):
     def embed(self, text: str, model: Optional[str] = None) -> Dict[str, Any]:
         return {'success': False, 'error': 'Not implemented'}
 
+
 class GoogleStrategy(AIProviderStrategy):
+    """Strategy for interacting with Google's Generative AI models."""
+    def __init__(self, api_key: str, model: str = "gemini-1.5-flash"):
+        try:
+            genai.configure(api_key=api_key)
+            self.model = genai.GenerativeModel(model)
+            self.model_name = model
+            logger.info(f"GoogleStrategy initialized for model {self.model_name}")
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize GoogleStrategy: {str(e)}")
+            raise
+
     def generate_response(self, messages: List[Dict[str, str]], **kwargs) -> Dict[str, Any]:
-        return {"provider": "google", "content": "Not implemented yet"}
+        """Generates a response using the Google Generative AI API."""
+        try:
+            # 🛡️ Guardian: Translated conversation history logic from frontend.
+            # The prompt format, including the Thai language, is preserved.
+            conversation = "\n\n".join(
+                f"{'ผู้ใช้' if msg['role'] == 'user' else 'AI'}: {msg['content']}"
+                for msg in messages
+            )
+            prompt = f"สนทนาต่อไปนี้:\n\n{conversation}\n\nAI: "
+
+            response = self.model.generate_content(prompt)
+
+            return {
+                'success': True,
+                'provider': 'google',
+                'content': response.text,
+                'metadata': {
+                    'model': self.model_name,
+                    'finish_reason': response.prompt_feedback.block_reason.name if response.prompt_feedback else 'UNKNOWN',
+                }
+            }
+        except Exception as e:
+            logger.error(f"❌ Google AI API error: {str(e)}")
+            return {'success': False, 'error': str(e)}
+
     def embed(self, text: str, model: Optional[str] = None) -> Dict[str, Any]:
+        """Generates an embedding (not implemented for Google)."""
+        logger.warning("GoogleStrategy 'embed' method is not implemented.")
         return {'success': False, 'error': 'Not implemented'}
+
 
 class AnthropicStrategy(AIProviderStrategy):
     def generate_response(self, messages: List[Dict[str, str]], **kwargs) -> Dict[str, Any]:
@@ -250,9 +290,12 @@ class UnifiedAIClient:
         # Ollama
         self._strategies['ollama'] = OllamaStrategy(base_url=self.config.ollama_base_url)
 
+        # Google
+        if self.config.google_api_key:
+            self._strategies['google'] = GoogleStrategy(api_key=self.config.google_api_key)
+
         # Add other strategies here as they are implemented
         self._strategies['openrouter'] = OpenRouterStrategy()
-        self._strategies['google'] = GoogleStrategy()
         self._strategies['anthropic'] = AnthropicStrategy()
         self._strategies['deepseek'] = DeepSeekStrategy()
         self._strategies['mistral'] = MistralStrategy()

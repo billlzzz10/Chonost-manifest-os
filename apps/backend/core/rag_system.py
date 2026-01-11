@@ -119,7 +119,7 @@ class EmbeddingProvider:
             return False
         try:
             # A simple embedding call to test the connection.
-            result = self.ai_client.embed(self.provider_type, "test", model=self.model_name)
+            result = await self.ai_client.embed(self.provider_type, "test", model=self.model_name)
             return result.get('success', False)
         except Exception as e:
             logger.error(f"❌ Connection test failed for {self.provider_type}: {e}")
@@ -140,7 +140,7 @@ class EmbeddingProvider:
             return None
 
         try:
-            result = self.ai_client.embed(self.provider_type, text, model=self.model_name)
+            result = await self.ai_client.embed(self.provider_type, text, model=self.model_name)
             if result and result.get('success'):
                 return result.get('embedding')
             else:
@@ -959,25 +959,29 @@ class RAGSystem:
                 cached_result = self.cache.get(cache_key)
                 if cached_result:
                     logger.info("✅ Using result from cache")
-                    return [SearchResult(**json.loads(item)) for item in json.loads(cached_result)]
-            
+                    # Deserialize the cached JSON back into SearchResult objects
+                    cached_data = json.loads(cached_result)
+                    return [SearchResult(document=Document(**item['document']), **{k: v for k, v in item.items() if k != 'document'}) for item in cached_data]
+
             # Create query embedding
             query_embedding = await self.embedding_provider.get_embedding(query)
             if not query_embedding:
                 logger.error("❌ Could not create query embedding")
                 return []
-            
+
             # Search in vector database
             results = await self.vector_db.search(query_embedding, top_k)
-            
+
             # Cache results
             if use_cache and results:
                 cache_key = f"search:{hashlib.md5(query.encode()).hexdigest()}"
-                cache_data = json.dumps([asdict(result) for result in results])
+                # Note: Caching complex objects requires a custom serializer
+                # For simplicity, we'll just cache the raw data here.
+                cache_data = json.dumps([asdict(res) for res in results])
                 self.cache.setex(cache_key, 1800, cache_data)  # Cache for 30 minutes
-            
+
             return results
-            
+
         except Exception as e:
             logger.error(f"❌ Error during search: {e}")
             return []
@@ -1096,7 +1100,7 @@ Answer:
             # Use a default model from config if available, otherwise let the strategy decide
             model = self.config.get(f"{provider}_model")
             
-            result = self.ai_client.generate_response(provider, messages, model=model)
+            result = await self.ai_client.generate_response(provider, messages, model=model)
 
             if result and result.get('success'):
                 return result.get('content', 'No content received.')

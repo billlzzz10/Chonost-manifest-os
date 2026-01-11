@@ -65,6 +65,24 @@ class UnifiedAIClientLangChainAdapter(LLM):
         Raises:
             ValueError: If the API call is unsuccessful.
         """
+        # This synchronous wrapper is safe to use with libraries like CrewAI,
+        # which execute tools in separate threads. Calling asyncio.run() from a
+        # worker thread is acceptable as it won't conflict with a main event
+        # loop (e.g., from a FastAPI server).
+        # WARNING: Do not call this method directly from within an existing
+        # async event loop, as it will raise a RuntimeError.
+        import asyncio
+        return asyncio.run(self._acall(prompt, stop, **kwargs))
+
+    async def _acall(
+        self,
+        prompt: str,
+        stop: Optional[List[str]] = None,
+        **kwargs: Any,
+    ) -> str:
+        """
+        Asynchronously makes a call to the UnifiedAIClient.
+        """
         messages = [{"role": "user", "content": prompt}]
 
         # Pass the model if it's specified for this instance
@@ -72,7 +90,7 @@ class UnifiedAIClientLangChainAdapter(LLM):
         if self.model:
             api_kwargs['model'] = self.model
 
-        response = self.client.generate_response(self.provider, messages, **api_kwargs)
+        response = await self.client.generate_response(self.provider, messages, **api_kwargs)
 
         if response and response.get('success'):
             return response.get('content', '')

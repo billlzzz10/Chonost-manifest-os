@@ -32,11 +32,13 @@ app.add_middleware(
 )
 
 # Import MCP components from unified backend
+from typing import List, Dict
+from pydantic import BaseModel
+from .utils.unified_ai_client import get_client
 try:
     from .mcp.registry import MCPRegistry
     from .mcp.client import MCPClient
     from .config import Settings
-    from api.handlers import router as api_router
 
     # Initialize MCP components
     settings = Settings()
@@ -44,9 +46,8 @@ try:
     mcp_client = (
         MCPClient()
     )  # Unified client that handles server selection automatically
+    ai_client = get_client()
 
-    # Include API router
-    app.include_router(api_router, prefix="/api", tags=["api"])
 
 except ImportError as e:
     print(f"Warning: MCP components not available: {e}")
@@ -115,6 +116,36 @@ async def call_tool(tool_call: dict):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Tool execution failed: {str(e)}")
 
+
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+
+class ChatRequest(BaseModel):
+    provider: str
+    messages: List[ChatMessage]
+    model: str = None
+    temperature: float = 0.7
+
+@app.post("/api/v1/chat")
+async def chat(request: ChatRequest):
+    """
+    Handles a chat request by routing it to the specified AI provider.
+    """
+    try:
+        response = ai_client.generate_response(
+            provider=request.provider,
+            messages=[msg.dict() for msg in request.messages],
+            model=request.model,
+            temperature=request.temperature
+        )
+        if not response.get('success'):
+            raise HTTPException(status_code=500, detail=response.get('error', 'Unknown error'))
+        return response
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
 
 @app.get("/mcp/status")
 async def get_status():

@@ -12,10 +12,12 @@ import requests
 import json
 import logging
 import openai
+import google.generativeai as genai
+import anthropic
 from abc import ABC, abstractmethod
 from typing import Dict, Any, List, Optional
 
-from ..config import get_config
+from ..config import settings
 
 # --- Setup Logging ---
 logging.basicConfig(level=logging.INFO)
@@ -202,15 +204,96 @@ class OpenRouterStrategy(AIProviderStrategy):
         return {'success': False, 'error': 'Not implemented'}
 
 class GoogleStrategy(AIProviderStrategy):
+    """Strategy for interacting with Google's Generative AI models."""
+    def __init__(self, api_key: str, model: str = "gemini-1.5-flash"):
+        genai.configure(api_key=api_key)
+        self.model = genai.GenerativeModel(model)
+        self.model_name = model
+        logger.info(f"GoogleStrategy initialized for model {self.model_name}")
+
     def generate_response(self, messages: List[Dict[str, str]], **kwargs) -> Dict[str, Any]:
-        return {"provider": "google", "content": "Not implemented yet"}
+        """Generates a response using the Google Generative AI API."""
+        try:
+            # Gemini API uses 'model' for the assistant's role.
+            history = [
+                {'role': 'user' if msg['role'] == 'user' else 'model', 'parts': [msg['content']]}
+                for msg in messages
+            ]
+
+            # The last message is the new prompt.
+            *chat_history, latest_prompt = history
+
+            chat = self.model.start_chat(history=chat_history)
+            response = chat.send_message(latest_prompt['parts'])
+
+            return {
+                'success': True,
+                'provider': 'google',
+                'content': response.text,
+                'metadata': {
+                    'model': self.model_name,
+                }
+            }
+        except Exception as e:
+            logger.error(f"❌ Google AI API error: {str(e)}")
+            return {'success': False, 'error': str(e)}
+
     def embed(self, text: str, model: Optional[str] = None) -> Dict[str, Any]:
-        return {'success': False, 'error': 'Not implemented'}
+        """Generates an embedding using the Google Generative AI API."""
+        try:
+            model_to_use = model or "models/embedding-001"
+            result = genai.embed_content(
+                model=model_to_use,
+                content=text,
+                task_type="retrieve_document"
+            )
+            return {
+                'success': True,
+                'provider': 'google',
+                'embedding': result['embedding'],
+                'metadata': {'model': model_to_use}
+            }
+        except Exception as e:
+            logger.error(f"❌ Google AI embedding error: {str(e)}")
+            return {'success': False, 'error': str(e)}
 
 class AnthropicStrategy(AIProviderStrategy):
+    """Strategy for interacting with Anthropic's models."""
+    def __init__(self, api_key: str, model: str = "claude-3-sonnet-20240229"):
+        self.client = anthropic.Anthropic(api_key=api_key)
+        self.model = model
+        logger.info(f"AnthropicStrategy initialized for model {self.model}")
+
     def generate_response(self, messages: List[Dict[str, str]], **kwargs) -> Dict[str, Any]:
-        return {"provider": "anthropic", "content": "Not implemented yet"}
+        """Generates a response using the Anthropic API."""
+        try:
+            # Anthropic API requires the messages to be alternating between user and assistant
+            response = self.client.messages.create(
+                model=kwargs.get('model', self.model),
+                max_tokens=kwargs.get('max_tokens', 2000),
+                messages=messages
+            )
+            return {
+                'success': True,
+                'provider': 'anthropic',
+                'content': response.content[0].text,
+                'metadata': {
+                    'model': response.model,
+                    'usage': {
+                        'prompt_tokens': response.usage.input_tokens,
+                        'completion_tokens': response.usage.output_tokens,
+                        'total_tokens': response.usage.input_tokens + response.usage.output_tokens,
+                    },
+                    'finish_reason': response.stop_reason
+                }
+            }
+        except Exception as e:
+            logger.error(f"❌ Anthropic API error: {str(e)}")
+            return {'success': False, 'error': str(e)}
+
     def embed(self, text: str, model: Optional[str] = None) -> Dict[str, Any]:
+        """Embedding is not directly supported by this strategy."""
+        logger.warning("Anthropic API does not support embeddings.")
         return {'success': False, 'error': 'Not implemented'}
 
 class DeepSeekStrategy(AIProviderStrategy):
@@ -236,7 +319,7 @@ class UnifiedAIClient:
         Initializes the client by loading configuration and setting up strategies.
         """
         self._strategies: Dict[str, AIProviderStrategy] = {}
-        self.config = get_config()
+        self.config = settings
         self._init_strategies()
 
     def _init_strategies(self):
@@ -248,12 +331,19 @@ class UnifiedAIClient:
                 base_url=self.config.openai_base_url
             )
         # Ollama
-        self._strategies['ollama'] = OllamaStrategy(base_url=self.config.ollama_base_url)
+        if self.config.ollama_base_url:
+            self._strategies['ollama'] = OllamaStrategy(base_url=self.config.ollama_base_url)
+
+        # Google
+        if self.config.google_api_key:
+            self._strategies['google'] = GoogleStrategy(api_key=self.config.google_api_key)
+
+        # Anthropic
+        if self.config.anthropic_api_key:
+            self._strategies['anthropic'] = AnthropicStrategy(api_key=self.config.anthropic_api_key)
 
         # Add other strategies here as they are implemented
         self._strategies['openrouter'] = OpenRouterStrategy()
-        self._strategies['google'] = GoogleStrategy()
-        self._strategies['anthropic'] = AnthropicStrategy()
         self._strategies['deepseek'] = DeepSeekStrategy()
         self._strategies['mistral'] = MistralStrategy()
 

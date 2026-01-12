@@ -19,6 +19,7 @@ transformers>=4.45.0
 torch>=2.4.0
 openai>=1.50.0
 anthropic>=0.40.0
+google-generativeai>=0.5.4
 
 # Configuration and validation
 pydantic>=2.9.0

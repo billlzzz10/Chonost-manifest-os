@@ -1,19 +1,13 @@
-// 🛡️ Guardian: Consolidated `GoogleAIService` into a single canonical file.
 // This file is now the single source of truth for all Google AI interactions.
 // It removes the duplicate implementation from `aiService.ts` and exports a feature-complete class.
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { Message } from './aiService';
-
-export interface GoogleAIServiceConfig {
-  apiKey: string;
-  model?: string;
-}
+import { AIConfig, Message } from './aiTypes';
 
 export class GoogleAIService {
   private genAI: GoogleGenerativeAI;
   private model: any;
 
-  constructor(config: GoogleAIServiceConfig) {
+  constructor(config: AIConfig) {
     this.genAI = new GoogleGenerativeAI(config.apiKey);
     this.model = this.genAI.getGenerativeModel({
       model: config.model || 'gemini-1.5-flash'

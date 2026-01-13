@@ -8,6 +8,7 @@ import tkinter as tk
 from tkinter import ttk, scrolledtext, filedialog, messagebox
 import json
 import threading
+import asyncio
 import time
 import subprocess
 import os
@@ -757,7 +758,7 @@ TASK: Analyze the file system data above and answer the user's question. Be spec
                 {"role": "user", "content": user_prompt}
             ]
 
-            response = self.ai_client.generate_response(self.ai_provider, messages)
+            response = asyncio.run(self.ai_client.generate_response(self.ai_provider, messages))
 
             if response and response.get('success'):
                 ai_response = response.get('content', 'Could not process')

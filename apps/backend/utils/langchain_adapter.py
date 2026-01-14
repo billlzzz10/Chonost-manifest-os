@@ -35,6 +35,9 @@ class UnifiedAIClientLangChainAdapter(LLM):
         self.provider = provider
         self.model = model
 
+import asyncio
+from langchain_core.callbacks import CallbackManagerForLLMRun
+
     @property
     def _llm_type(self) -> str:
         """Return the type of LLM."""
@@ -44,10 +47,41 @@ class UnifiedAIClientLangChainAdapter(LLM):
         self,
         prompt: str,
         stop: Optional[List[str]] = None,
+        run_manager: Optional[CallbackManagerForLLMRun] = None,
         **kwargs: Any,
     ) -> str:
         """
-        Makes a call to the UnifiedAIClient.
+        Makes a synchronous call to the UnifiedAIClient.
+
+        This is a wrapper around the async _acall method. It should only be used
+        in scenarios where the event loop is not already running.
+
+        Raises:
+            RuntimeError: If an event loop is already running.
+        """
+        # This is a synchronous-only adapter for now.
+        # If an event loop is running, it's better to use the async version.
+        try:
+            loop = asyncio.get_running_loop()
+            if loop.is_running():
+                raise RuntimeError(
+                    "The synchronous `_call` method cannot be used when an asyncio event loop is running. "
+                    "Please use `_acall` instead."
+                )
+        except RuntimeError:  # No event loop is running
+            pass
+
+        return asyncio.run(self._acall(prompt, stop=stop, run_manager=run_manager, **kwargs))
+
+    async def _acall(
+        self,
+        prompt: str,
+        stop: Optional[List[str]] = None,
+        run_manager: Optional[CallbackManagerForLLMRun] = None,
+        **kwargs: Any,
+    ) -> str:
+        """
+        Makes an asynchronous call to the UnifiedAIClient.
 
         This method is the core of the LangChain integration. It takes a prompt,
         sends it to the configured provider via the UnifiedAIClient, and returns
@@ -56,7 +90,6 @@ class UnifiedAIClientLangChainAdapter(LLM):
         Args:
             prompt (str): The input prompt.
             stop (Optional[List[str]]): A list of strings to stop generation at.
-                                        (Note: Not all unified client strategies may support this).
             **kwargs: Additional keyword arguments.
 
         Returns:
@@ -72,10 +105,16 @@ class UnifiedAIClientLangChainAdapter(LLM):
         if self.model:
             api_kwargs['model'] = self.model
 
-        response = self.client.generate_response(self.provider, messages, **api_kwargs)
+        # Merge kwargs passed to the method
+        api_kwargs.update(kwargs)
+
+        response = await self.client.generate_response(self.provider, messages, **api_kwargs)
 
         if response and response.get('success'):
-            return response.get('content', '')
+            content = response.get('content', '')
+            if run_manager:
+                run_manager.on_llm_new_token(content)
+            return content
         else:
             error_message = response.get('error', 'Unknown error from UnifiedAIClient')
             raise ValueError(f"API call failed: {error_message}")

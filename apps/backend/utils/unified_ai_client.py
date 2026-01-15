@@ -295,46 +295,62 @@ class MistralStrategy(AIProviderStrategy):
 class UnifiedAIClient:
     """
     A unified client for interacting with multiple AI providers.
-    It loads its configuration and initializes the appropriate strategies.
+    It uses lazy initialization for its provider strategies.
     """
-    def __init__(self):
+    def __init__(self, settings_override: Optional[Any] = None):
         """
-        Initializes the client by loading configuration and setting up strategies.
+        Initializes the client with a cache for provider strategies.
+        An optional settings object can be injected for testing purposes.
         """
         self._strategies: Dict[str, AIProviderStrategy] = {}
-        self.config = get_config()
-        self._init_strategies()
-
-    def _init_strategies(self):
-        """Initializes all available strategies based on the loaded configuration."""
-        # OpenAI
-        if self.config.openai_api_key:
-            self._strategies['openai'] = OpenAIStrategy(
-                api_key=self.config.openai_api_key,
-                base_url=self.config.openai_base_url
-            )
-        # Ollama
-        self._strategies['ollama'] = OllamaStrategy(base_url=self.config.ollama_base_url)
-
-        # Add other strategies here as they are implemented
-        self._strategies['openrouter'] = OpenRouterStrategy()
-        self._strategies['google'] = GoogleStrategy()
-        self._strategies['anthropic'] = AnthropicStrategy()
-        self._strategies['deepseek'] = DeepSeekStrategy()
-        self._strategies['mistral'] = MistralStrategy()
-
+        self.settings = settings_override or settings
 
     def get_provider(self, provider_name: str) -> Optional[AIProviderStrategy]:
         """
-        Gets the strategy for a given provider.
+        Gets the strategy for a given provider, initializing it on first use.
 
         Args:
             provider_name (str): The name of the provider.
 
         Returns:
-            Optional[AIProviderStrategy]: The provider strategy, or None if not found.
+            Optional[AIProviderStrategy]: The provider strategy, or None if not configured.
         """
-        return self._strategies.get(provider_name.lower())
+        provider_name = provider_name.lower()
+        if provider_name in self._strategies:
+            return self._strategies[provider_name]
+
+        strategy: Optional[AIProviderStrategy] = None
+        # 🛡️ Guardian: Lazily initialize strategies to improve startup time and resilience.
+        if provider_name == 'openai':
+            if self.settings.openai_api_key:
+                strategy = OpenAIStrategy(
+                    api_key=self.settings.openai_api_key,
+                    base_url=getattr(self.settings, 'openai_base_url', None)
+                )
+        elif provider_name == 'ollama':
+            # Ollama doesn't require an API key, so it's always available.
+            strategy = OllamaStrategy(base_url=getattr(self.settings, 'ollama_base_url', 'http://localhost:11434'))
+        elif provider_name == 'google':
+            if self.settings.google_api_key:
+                strategy = GoogleStrategy(api_key=self.settings.google_api_key)
+        # --- Restore all providers with lazy initialization ---
+        elif provider_name == 'openrouter':
+            if getattr(self.settings, 'openrouter_api_key', None):
+                strategy = OpenRouterStrategy()
+        elif provider_name == 'anthropic':
+            if getattr(self.settings, 'anthropic_api_key', None):
+                strategy = AnthropicStrategy()
+        elif provider_name == 'deepseek':
+            if getattr(self.settings, 'deepseek_api_key', None):
+                strategy = DeepSeekStrategy()
+        elif provider_name == 'mistral':
+            if getattr(self.settings, 'mistral_api_key', None):
+                strategy = MistralStrategy()
+
+        if strategy:
+            self._strategies[provider_name] = strategy
+
+        return strategy
 
     def generate_response(self, provider: str, messages: List[Dict[str, str]], **kwargs) -> Dict[str, Any]:
         """

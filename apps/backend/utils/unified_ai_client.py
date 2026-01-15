@@ -302,23 +302,26 @@ class UnifiedAIClient:
         Initializes the client by loading configuration and setting up strategies.
         """
         self._strategies: Dict[str, AIProviderStrategy] = {}
-        self.config = get_config()
         self._init_strategies()
 
     def _init_strategies(self):
         """Initializes all available strategies based on the loaded configuration."""
         # OpenAI
-        if self.config.openai_api_key:
+        if settings.openai_api_key:
             self._strategies['openai'] = OpenAIStrategy(
-                api_key=self.config.openai_api_key,
-                base_url=self.config.openai_base_url
+                api_key=settings.openai_api_key,
+                base_url=settings.openai_base_url
             )
         # Ollama
-        self._strategies['ollama'] = OllamaStrategy(base_url=self.config.ollama_base_url)
+        self._strategies['ollama'] = OllamaStrategy(base_url=settings.ollama_base_url)
 
-        # Add other strategies here as they are implemented
+        # Google
+        if settings.google_api_key:
+            self._strategies['google'] = GoogleStrategy(api_key=settings.google_api_key)
+
+        # Placeholders for other strategies
+        # These will be fully wired once their configs are added to the global settings
         self._strategies['openrouter'] = OpenRouterStrategy()
-        self._strategies['google'] = GoogleStrategy()
         self._strategies['anthropic'] = AnthropicStrategy()
         self._strategies['deepseek'] = DeepSeekStrategy()
         self._strategies['mistral'] = MistralStrategy()

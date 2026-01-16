@@ -32,3 +32,17 @@ async def chat_with_provider(request: ChatRequest):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/providers")
+async def get_providers():
+    """
+    Returns a list of available AI providers.
+    """
+    try:
+        client = get_client()
+        # 🛡️ Guardian: Retrieves provider names via a public method.
+        # This makes the backend the single source of truth for available providers.
+        providers = client.get_available_providers()
+        return {"providers": providers}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to load providers: {str(e)}")

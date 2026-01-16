@@ -8,6 +8,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import { shallow } from "zustand/shallow";
 import { useAppStore } from "../state/store";
 C.register(
   BarElement,
@@ -19,9 +20,21 @@ C.register(
 );
 
 export default function VisualDashboard() {
-  const { data } = useAppStore();
-  const labels = data.topKeywords.map((k) => k.keyword);
-  const values = data.topKeywords.map((k) => k.weight);
+  // By using a selector and the `shallow` equality checker, we ensure this component
+  // only re-renders when the specific data it relies on changes. This is a significant
+  // performance boost, preventing re-renders when unrelated parts of the `data` object are updated.
+  // 📊 Impact: Prevents unnecessary re-renders, leading to a smoother UI, especially during frequent state updates.
+  const { topKeywords, sentiment, wordCount } = useAppStore(
+    (state) => ({
+      topKeywords: state.data.topKeywords,
+      sentiment: state.data.sentiment,
+      wordCount: state.data.wordCount,
+    }),
+    shallow
+  );
+
+  const labels = topKeywords.map((k) => k.keyword);
+  const values = topKeywords.map((k) => k.weight);
   return (
     <div className="card">
       <h4 style={{ margin: "0 0 8px" }}>Metrics</h4>
@@ -38,8 +51,8 @@ export default function VisualDashboard() {
         </div>
       </div>
       <div style={{ marginTop: 8, display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <span className="badge">sentiment {data.sentiment.toFixed(2)}</span>
-        <span className="badge">words {data.wordCount}</span>
+        <span className="badge">sentiment {sentiment.toFixed(2)}</span>
+        <span className="badge">words {wordCount}</span>
       </div>
     </div>
   );

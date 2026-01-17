@@ -3,14 +3,14 @@
 // Provides chat interface with AI providers (Ollama, OpenRouter, etc.)
 
 import React, { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, Settings, RefreshCw, Loader2 } from "lucide-react";
+import { Send, Bot, User, Settings, Loader2 } from "lucide-react";
 import {
-  aiProviderManager,
-  generateText,
-  generateCode,
-  analyzeContent,
-  type AIMessage,
-} from "../lib/aiProviders";
+  getAIProviders,
+  getAIModels,
+  setProvider,
+  chatWithAI,
+  type Message as AIMessage,
+} from "../../services/aiService";
 
 interface ChatMessage extends AIMessage {
   id: string;
@@ -22,9 +22,10 @@ export default function AIChat() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedModel, setSelectedModel] = useState("llama3.1:8b");
-  const [selectedProvider, setSelectedProvider] = useState("ollama");
-  const [providers, setProviders] = useState<any[]>([]);
+  const [selectedProvider, setSelectedProvider] = useState("");
+  const [selectedModel, setSelectedModel] = useState("");
+  const [providers, setProviders] = useState<string[]>([]);
+  const [models, setModels] = useState<string[]>([]);
   const [showSettings, setShowSettings] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -49,30 +50,20 @@ export default function AIChat() {
   }, [messages]);
 
   const loadProviders = async () => {
-    const availableProviders = aiProviderManager.getAvailableProviders();
-    setProviders(availableProviders);
+    try {
+      const availableProviders = await getAIProviders();
+      setProviders(availableProviders);
 
-    // Set default provider
-    if (availableProviders.length > 0) {
-      const defaultProvider = aiProviderManager.getDefaultProvider();
-      if (defaultProvider) {
-        setSelectedProvider(defaultProvider.name.toLowerCase());
-
-        // Get available models for the provider
-        if (defaultProvider.name.toLowerCase() === "ollama") {
-          try {
-            const ollamaProvider = aiProviderManager.getProvider("ollama");
-            if (ollamaProvider) {
-              const models = await (ollamaProvider as any).getAvailableModels();
-              if (models.length > 0) {
-                setSelectedModel(models[0]);
-              }
-            }
-          } catch (error) {
-            console.error("Failed to load Ollama models:", error);
-          }
-        }
+      if (availableProviders.length > 0) {
+        const defaultProvider = availableProviders[0];
+        const defaultModel = "gpt-4o-mini";
+        setSelectedProvider(defaultProvider);
+        setSelectedModel(defaultModel);
+        setProvider(defaultProvider, "", defaultModel);
       }
+    } catch (error) {
+      console.error("Failed to load AI providers:", error);
+      // Optionally, set an error message in the chat
     }
   };
 
@@ -91,33 +82,25 @@ export default function AIChat() {
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    const currentChatHistory = [...messages, userMessage].map(
+      ({ role, content }) => ({ role, content })
+    );
+
     setInput("");
     setIsLoading(true);
 
     try {
-      // Check if it's a special command
-      const response = await handleSpecialCommands(input.trim());
+      const aiResponse = await chatWithAI(currentChatHistory);
 
-      if (!response) {
-        // Regular AI chat
-        const aiResponse = await generateText(
-          input.trim(),
-          selectedModel,
-          selectedProvider
-        );
-
-        const assistantMessage: ChatMessage = {
-          id: (Date.now() + 1).toString(),
-          role: "assistant",
-          content: aiResponse,
-          timestamp: new Date(),
-        };
-
-        setMessages((prev) => [...prev, assistantMessage]);
-      }
+      const assistantMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: aiResponse,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
       console.error("AI chat error:", error);
-
       const errorMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
@@ -127,74 +110,10 @@ export default function AIChat() {
         timestamp: new Date(),
         isError: true,
       };
-
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleSpecialCommands = async (input: string): Promise<boolean> => {
-    const lowerInput = input.toLowerCase();
-
-    if (lowerInput.startsWith("/code ")) {
-      const description = input.substring(6);
-      const code = await generateCode(
-        description,
-        "typescript",
-        selectedModel,
-        selectedProvider
-      );
-
-      const codeMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: `Here's the TypeScript code:\n\n\`\`\`typescript\n${code}\n\`\`\``,
-        timestamp: new Date(),
-      };
-
-      setMessages((prev) => [...prev, codeMessage]);
-      return true;
-    }
-
-    if (lowerInput.startsWith("/analyze ")) {
-      const content = input.substring(9);
-      const analysis = await analyzeContent(
-        content,
-        "improvements",
-        selectedModel,
-        selectedProvider
-      );
-
-      const analysisMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: `Content Analysis:\n\n${analysis}`,
-        timestamp: new Date(),
-      };
-
-      setMessages((prev) => [...prev, analysisMessage]);
-      return true;
-    }
-
-    if (lowerInput === "/help") {
-      const helpMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: `Available commands:
-- /code <description> - Generate TypeScript code
-- /analyze <content> - Analyze and improve content
-- /help - Show this help message
-
-You can also just chat normally with me!`,
-        timestamp: new Date(),
-      };
-
-      setMessages((prev) => [...prev, helpMessage]);
-      return true;
-    }
-
-    return false;
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -202,6 +121,31 @@ You can also just chat normally with me!`,
       e.preventDefault();
       handleSend();
     }
+  };
+
+  const handleProviderChange = async (newProvider: string) => {
+    setSelectedProvider(newProvider);
+    try {
+      const modelList = await getAIModels(newProvider);
+      setModels(modelList);
+      if (modelList.length > 0) {
+        const newModel = modelList[0];
+        setSelectedModel(newModel);
+        setProvider(newProvider, "", newModel);
+      } else {
+        setSelectedModel("");
+        setProvider(newProvider, "", "");
+      }
+    } catch (error) {
+      console.error("Failed to load AI models:", error);
+      setModels([]);
+      setSelectedModel("");
+    }
+  };
+
+  const handleModelChange = (newModel: string) => {
+    setSelectedModel(newModel);
+    setProvider(selectedProvider, "", newModel);
   };
 
   const clearChat = () => {
@@ -215,18 +159,6 @@ You can also just chat normally with me!`,
     ]);
   };
 
-  const testConnection = async () => {
-    try {
-      const results = await aiProviderManager.testAllConnections();
-      console.log("Connection test results:", results);
-
-      // Reload providers after testing
-      loadProviders();
-    } catch (error) {
-      console.error("Connection test failed:", error);
-    }
-  };
-
   return (
     <div className="ai-chat-container">
       {/* Header */}
@@ -236,13 +168,6 @@ You can also just chat normally with me!`,
           <span>AI Assistant</span>
         </div>
         <div className="header-right">
-          <button
-            className="icon-button"
-            onClick={testConnection}
-            title="Test Connections"
-          >
-            <RefreshCw size={16} />
-          </button>
           <button
             className="icon-button"
             onClick={() => setShowSettings(!showSettings)}
@@ -260,34 +185,31 @@ You can also just chat normally with me!`,
             <label>Provider:</label>
             <select
               value={selectedProvider}
-              onChange={(e) => setSelectedProvider(e.target.value)}
+              onChange={(e) => handleProviderChange(e.target.value)}
               title="Select AI Provider"
             >
               {providers.map((provider) => (
-                <option key={provider.name} value={provider.name.toLowerCase()}>
-                  {provider.name}
+                <option key={provider} value={provider}>
+                  {provider}
                 </option>
               ))}
             </select>
           </div>
-
           <div className="setting-group">
             <label>Model:</label>
             <select
               value={selectedModel}
-              onChange={(e) => setSelectedModel(e.target.value)}
+              onChange={(e) => handleModelChange(e.target.value)}
               title="Select AI Model"
+              disabled={models.length === 0}
             >
-              {providers
-                .find((p) => p.name.toLowerCase() === selectedProvider)
-                ?.models?.map((model: string) => (
-                  <option key={model} value={model}>
-                    {model}
-                  </option>
-                )) || []}
+              {models.map((model) => (
+                <option key={model} value={model}>
+                  {model}
+                </option>
+              ))}
             </select>
           </div>
-
           <button className="clear-button" onClick={clearChat}>
             Clear Chat
           </button>

@@ -336,6 +336,10 @@ class UnifiedAIClient:
         """
         return self._strategies.get(provider_name.lower())
 
+    def get_available_providers(self) -> List[str]:
+        """Returns a list of the names of available providers."""
+        return list(self._strategies.keys())
+
     def generate_response(self, provider: str, messages: List[Dict[str, str]], **kwargs) -> Dict[str, Any]:
         """
         Generates a response using a specified provider.

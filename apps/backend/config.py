@@ -110,6 +110,14 @@ class Settings(BaseModel):
         default=os.getenv("OPENAI_API_KEY"),
         description="API key for OpenAI",
     )
+    openai_base_url: Optional[str] = Field(
+        default=os.getenv("OPENAI_BASE_URL"),
+        description="Base URL for OpenAI compatible APIs",
+    )
+    ollama_base_url: str = Field(
+        default=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
+        description="Base URL for Ollama API",
+    )
     anthropic_api_key: Optional[str] = Field(
         default=os.getenv("ANTHROPIC_API_KEY"),
         description="API key for Anthropic",

@@ -3,6 +3,7 @@ MCP AI Orchestrator - Main Entry Point.
 """
 
 import uvicorn
+import logging
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -38,6 +39,7 @@ try:
     from .config import Settings
     from api.handlers import router as api_router
     from api.chat_routes import router as chat_router
+    from .utils.unified_ai_client import get_client as get_ai_client
 
     # Initialize MCP components
     settings = Settings()
@@ -65,6 +67,21 @@ async def health_check():
     A health check endpoint for the service.
     """
     return {"status": "healthy", "service": "mcp-orchestrator", "version": "2.2.0"}
+
+
+@app.get("/api/v1/providers")
+async def get_available_providers():
+    """
+    Returns a list of the names of all configured and available AI providers.
+    """
+    try:
+        ai_client = get_ai_client()
+        providers = ai_client.get_available_providers()
+        return {"providers": providers}
+    except Exception:
+        # This is a server-side issue, so we should log it
+        logging.exception("Failed to get available providers")
+        raise HTTPException(status_code=500, detail="Could not retrieve AI providers.")
 
 
 @app.get("/mcp/servers")

@@ -295,46 +295,109 @@ class MistralStrategy(AIProviderStrategy):
 class UnifiedAIClient:
     """
     A unified client for interacting with multiple AI providers.
-    It loads its configuration and initializes the appropriate strategies.
+    It uses a lazy initialization pattern to create provider strategies only when
+    they are first requested.
     """
     def __init__(self):
         """
-        Initializes the client by loading configuration and setting up strategies.
+        Initializes the client.
         """
-        self._strategies: Dict[str, AIProviderStrategy] = {}
-        self.config = get_config()
-        self._init_strategies()
+        self._strategies_cache: Dict[str, AIProviderStrategy] = {}
+        self.config = settings  # Use the global settings instance
+        self._provider_factory = {
+            'openai': self._create_openai_strategy,
+            'google': self._create_google_strategy,
+            'ollama': self._create_ollama_strategy,
+            'openrouter': self._create_openrouter_strategy,
+            'anthropic': self._create_anthropic_strategy,
+            'deepseek': self._create_deepseek_strategy,
+            'mistral': self._create_mistral_strategy,
+        }
 
-    def _init_strategies(self):
-        """Initializes all available strategies based on the loaded configuration."""
-        # OpenAI
+    def _create_openai_strategy(self) -> Optional[OpenAIStrategy]:
         if self.config.openai_api_key:
-            self._strategies['openai'] = OpenAIStrategy(
+            # Use getattr for base_url as it might not be in all configs
+            return OpenAIStrategy(
                 api_key=self.config.openai_api_key,
-                base_url=self.config.openai_base_url
+                base_url=getattr(self.config, 'openai_base_url', None)
             )
-        # Ollama
-        self._strategies['ollama'] = OllamaStrategy(base_url=self.config.ollama_base_url)
+        return None
 
-        # Add other strategies here as they are implemented
-        self._strategies['openrouter'] = OpenRouterStrategy()
-        self._strategies['google'] = GoogleStrategy()
-        self._strategies['anthropic'] = AnthropicStrategy()
-        self._strategies['deepseek'] = DeepSeekStrategy()
-        self._strategies['mistral'] = MistralStrategy()
+    def _create_google_strategy(self) -> Optional[GoogleStrategy]:
+        if self.config.google_api_key:
+            return GoogleStrategy(api_key=self.config.google_api_key)
+        return None
 
+    def _create_ollama_strategy(self) -> OllamaStrategy:
+        # Ollama is always considered available; it doesn't require a key.
+        return OllamaStrategy(base_url=getattr(self.config, 'ollama_base_url', "http://localhost:11434"))
+
+    def _create_openrouter_strategy(self) -> Optional[OpenRouterStrategy]:
+        if self.config.openrouter_api_key:
+            return OpenRouterStrategy()
+        return None
+
+    def _create_anthropic_strategy(self) -> Optional[AnthropicStrategy]:
+        if self.config.anthropic_api_key:
+            return AnthropicStrategy()
+        return None
+
+    def _create_deepseek_strategy(self) -> Optional[DeepSeekStrategy]:
+        if self.config.deepseek_api_key:
+            return DeepSeekStrategy()
+        return None
+
+    def _create_mistral_strategy(self) -> Optional[MistralStrategy]:
+        if self.config.mistral_api_key:
+            return MistralStrategy()
+        return None
+
+    def get_available_providers(self) -> List[str]:
+        """
+        Returns a list of all providers that are configured and available.
+        """
+        available = []
+        if self.config.openai_api_key:
+            available.append('openai')
+        if self.config.google_api_key:
+            available.append('google')
+        if self.config.anthropic_api_key:
+            available.append('anthropic')
+        if self.config.deepseek_api_key:
+            available.append('deepseek')
+        if self.config.mistral_api_key:
+            available.append('mistral')
+        if self.config.openrouter_api_key:
+            available.append('openrouter')
+
+        # Ollama is always available as it runs locally without a key
+        available.append('ollama')
+
+        return sorted(list(set(available)))
 
     def get_provider(self, provider_name: str) -> Optional[AIProviderStrategy]:
         """
-        Gets the strategy for a given provider.
+        Gets the strategy for a given provider, creating it if it doesn't exist.
 
         Args:
             provider_name (str): The name of the provider.
 
         Returns:
-            Optional[AIProviderStrategy]: The provider strategy, or None if not found.
+            Optional[AIProviderStrategy]: The provider strategy, or None if not configured or found.
         """
-        return self._strategies.get(provider_name.lower())
+        provider_name = provider_name.lower()
+
+        if provider_name in self._strategies_cache:
+            return self._strategies_cache[provider_name]
+
+        creator = self._provider_factory.get(provider_name)
+        if creator:
+            strategy = creator()
+            if strategy:
+                self._strategies_cache[provider_name] = strategy
+                return strategy
+
+        return None
 
     def generate_response(self, provider: str, messages: List[Dict[str, str]], **kwargs) -> Dict[str, Any]:
         """

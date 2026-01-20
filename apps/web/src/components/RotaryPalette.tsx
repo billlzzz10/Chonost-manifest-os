@@ -28,6 +28,7 @@ function Wheel({ side, labels }: { side: "left" | "right"; labels: string[] }) {
               }}
               onClick={() => runPaletteItem(it)}
               title={`${it.kind}: ${"label" in it ? it.label : ""}`}
+              aria-label={`${it.kind}: ${"label" in it ? it.label : ""}`}
             >
               {labels[i] || ("label" in it ? it.label : String(i))}
             </button>

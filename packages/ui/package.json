@@ -22,7 +22,6 @@
   "devDependencies": {
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
-    "jscpd": "^4.0.7",
     "typescript": "^5.0.0"
   },
   "peerDependencies": {

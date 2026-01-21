@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-const fs = require("fs");
-const path = require("path");
+const fs = require('fs');
+const path = require('path');
 
 /**
  * Phase 2: Decide (Keep/Remove)
@@ -10,14 +10,10 @@ const path = require("path");
 function main() {
   // Basic command-line argument parsing
   const args = process.argv.slice(2);
-  const reportPath =
-    args.find((arg) => arg.startsWith("--report="))?.split("=")[1] ||
-    ".duplicate-report.json";
-  const strategy =
-    args.find((arg) => arg.startsWith("--strategy="))?.split("=")[1] ||
-    "test-coverage-first";
+  const reportPath = args.find(arg => arg.startsWith('--report='))?.split('=')[1] || '.duplicate-report.json';
+  const strategy = args.find(arg => arg.startsWith('--strategy='))?.split('=')[1] || 'test-coverage-first';
 
-  console.log("Phase 2: Deciding which duplicates to keep or remove...");
+  console.log('Phase 2: Deciding which duplicates to keep or remove...');
   console.log(`Using report: ${reportPath}`);
   console.log(`Decision strategy: ${strategy}`);
 
@@ -27,17 +23,14 @@ function main() {
   }
 
   // Read the report from the detection phase
-  const report = JSON.parse(fs.readFileSync(reportPath, "utf-8"));
+  const report = JSON.parse(fs.readFileSync(reportPath, 'utf-8'));
 
   // Placeholder for the decision-making process
   const decisionMap = makeDecision(report, strategy);
 
   // Write the output to .keep-remove-map.json
-  fs.writeFileSync(
-    ".keep-remove-map.json",
-    JSON.stringify(decisionMap, null, 2),
-  );
-  console.log("Decision map saved to .keep-remove-map.json");
+  fs.writeFileSync('.keep-remove-map.json', JSON.stringify(decisionMap, null, 2));
+  console.log('Decision map saved to .keep-remove-map.json');
 }
 
 /**
@@ -52,7 +45,7 @@ function makeDecision(report, strategy) {
     keep: [],
     remove: [],
     strategy,
-    summary: "Placeholder decision map from decide.js",
+    summary: 'Placeholder decision map from decide.js'
   };
 
   // Placeholder logic:
@@ -64,9 +57,7 @@ function makeDecision(report, strategy) {
   // 4. Naming Convention
   // The file with the highest score in each set is added to 'keep', others to 'remove'.
 
-  console.log(
-    "[DECIDE] Placeholder: Assuming first file in any duplicate set is kept.",
-  );
+  console.log('[DECIDE] Placeholder: Assuming first file in any duplicate set is kept.');
 
   if (report.duplicates && report.duplicates.length > 0) {
     // This is a simplified example

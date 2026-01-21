@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
-const { exec } = require("child_process");
-const path = require("path");
-const fs = require("fs");
+const { exec } = require('child_process');
+const path = require('path');
+const fs = require('fs');
 
 /**
  * Phase 1: Detect Duplicates
@@ -11,14 +11,12 @@ const fs = require("fs");
 function main() {
   // Basic command-line argument parsing
   const args = process.argv.slice(2);
-  const projectRoot = args[0] || ".";
-  const format = args.includes("--format=json") ? "json" : "console";
-  const minTokensArg = args.find((arg) => arg.startsWith("--min-tokens="));
-  const minTokens = minTokensArg
-    ? parseInt(minTokensArg.split("=")[1], 10)
-    : 50;
+  const projectRoot = args[0] || '.';
+  const format = args.includes('--format=json') ? 'json' : 'console';
+  const minTokensArg = args.find(arg => arg.startsWith('--min-tokens='));
+  const minTokens = minTokensArg ? parseInt(minTokensArg.split('=')[1], 10) : 50;
 
-  console.log("Phase 1: Detecting duplicates...");
+  console.log('Phase 1: Detecting duplicates...');
   console.log(`Project Root: ${projectRoot}`);
   console.log(`Format: ${format}`);
   console.log(`Minimum Tokens: ${minTokens}`);
@@ -35,22 +33,15 @@ function main() {
   // Placeholder for AST analysis
   analyzeAst(projectRoot);
 
-  console.log("Detection phase scaffolding complete.");
-  console.log("Output will be saved to .duplicate-report.json");
+  console.log('Detection phase scaffolding complete.');
+  console.log('Output will be saved to .duplicate-report.json');
 
   // Create a placeholder report
-  fs.writeFileSync(
-    ".duplicate-report.json",
-    JSON.stringify(
-      {
-        files: [],
-        duplicates: [],
-        summary: "Placeholder report from detect.js",
-      },
-      null,
-      2,
-    ),
-  );
+  fs.writeFileSync('.duplicate-report.json', JSON.stringify({
+    files: [],
+    duplicates: [],
+    summary: 'Placeholder report from detect.js'
+  }, null, 2));
 }
 
 /**

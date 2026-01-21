@@ -1,4 +1,7 @@
 {
   "name": "mcp-toolbox",
-  "type": "commonjs"
+  "type": "commonjs",
+  "devDependencies": {
+    "jscpd": "^4.0.7"
+  }
 }

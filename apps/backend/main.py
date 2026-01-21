@@ -36,7 +36,8 @@ try:
     from .mcp.registry import MCPRegistry
     from .mcp.client import MCPClient
     from .config import Settings
-    from src.api.handlers import router as api_router
+    from api.handlers import router as api_router
+    from api.chat_routes import router as chat_router
 
     # Initialize MCP components
     settings = Settings()
@@ -47,6 +48,7 @@ try:
 
     # Include API router
     app.include_router(api_router, prefix="/api", tags=["api"])
+    app.include_router(chat_router, prefix="/api/v1", tags=["v1"])
 
 except ImportError as e:
     print(f"Warning: MCP components not available: {e}")

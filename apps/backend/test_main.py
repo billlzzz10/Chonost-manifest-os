@@ -11,7 +11,7 @@ class TestMainAPI:
 
     def test_health_check_endpoint(self):
         """Test health check endpoint returns correct status"""
-        from apps.backend.main import app
+        from main import app
 
         client = TestClient(app)
         response = client.get("/health")
@@ -24,7 +24,7 @@ class TestMainAPI:
 
     def test_cors_configuration(self):
         """Test CORS configuration is properly set"""
-        from apps.backend.main import app
+        from main import app
 
         # Check that CORS middleware is configured
         assert len(app.user_middleware) > 0
@@ -49,7 +49,7 @@ class TestMainAPI:
     )
     def test_environment_variables_loaded(self):
         """Test that environment variables are properly loaded"""
-        from apps.backend.config import Settings
+        from config import Settings
 
         settings = Settings()
 
@@ -58,7 +58,7 @@ class TestMainAPI:
 
     def test_mcp_status_endpoint_when_components_unavailable(self):
         """Test MCP status endpoint when components are not available"""
-        from apps.backend.main import app
+        from main import app
 
         client = TestClient(app)
         response = client.get("/mcp/status")
@@ -73,7 +73,7 @@ class TestMainAPI:
 
     def test_list_servers_endpoint_without_registry(self):
         """Test list servers endpoint when registry is not available"""
-        from apps.backend.main import app
+        from main import app
 
         client = TestClient(app)
         response = client.get("/mcp/servers")
@@ -83,7 +83,7 @@ class TestMainAPI:
 
     def test_call_tool_endpoint_without_client(self):
         """Test call tool endpoint when client is not available"""
-        from apps.backend.main import app
+        from main import app
 
         client = TestClient(app)
         response = client.post("/mcp/call", json={"tool": "test"})
@@ -93,7 +93,7 @@ class TestMainAPI:
 
     def test_call_tool_endpoint_missing_tool_name(self):
         """Test call tool endpoint with missing tool name"""
-        from apps.backend.main import app
+        from main import app
 
         client = TestClient(app)
         response = client.post("/mcp/call", json={})

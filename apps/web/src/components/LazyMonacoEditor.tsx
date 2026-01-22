@@ -8,9 +8,9 @@ const MonacoEditor = React.lazy(() => import("./MonacoEditor"));
 // improving initial page load performance. The user will see a "Loading..."
 // fallback while the component is being fetched.
 export default function LazyMonacoEditor(props: MonacoEditorProps) {
-    return (
-        <Suspense fallback={<div>Loading...</div>}>
-            <MonacoEditor {...props} />
-        </Suspense>
-    );
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <MonacoEditor {...props} />
+    </Suspense>
+  );
 }

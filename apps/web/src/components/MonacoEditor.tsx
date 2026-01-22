@@ -11,7 +11,7 @@ export interface MonacoEditorProps {
   height?: string;
 }
 
-export default function MonacoEditor({
+export const MonacoEditor = ({
   value,
   onChange,
   language = "markdown",

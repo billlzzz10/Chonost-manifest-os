@@ -76,7 +76,7 @@ function Show-Help {
         @("advanced", "เปิดแอปแชตขั้นสูง", "advanced_chat_app.py")
         @("ai", "เปิดแอปแชตที่รวม AI", "ai_enhanced_chat_app.py")
         @("unified", "เปิดแอป Unified Chat ที่รวมทุกอย่าง", "unified_chat_app.py")
-        @("dataset", "สร้างชุดข้อมูลฝึก AI", "dataset_generator.py")
+        @("dataset", "สร้างชุดข้อมูลฝึก AI", "utils/filesystem_dataset_generator.py")
         @("test", "ทดสอบ AI connection ผ่าน Unified App", "unified_chat_app.py")
         @("ollama", "ทดสอบ AI connection (alias)", "unified_chat_app.py")
     )
@@ -133,7 +133,7 @@ function Test-Requirements {
         "file_system_analyzer.py",
         "desktop_chat_app.py",
         "advanced_chat_app.py",
-        "dataset_generator.py"
+        "utils/filesystem_dataset_generator.py"
     )
     
     $missingFiles = @()
@@ -243,9 +243,9 @@ function Main {
             Write-ColorText "📊 สร้างชุดข้อมูลฝึก AI..." "Info"
             if (Test-Path "venv\Scripts\Activate.ps1") {
                 & venv\Scripts\Activate.ps1
-                python dataset_generator.py
+                python utils/filesystem_dataset_generator.py
             } else {
-                python dataset_generator.py
+                python utils/filesystem_dataset_generator.py
             }
         }
         "unified" {

@@ -119,7 +119,7 @@ class EmbeddingProvider:
             return False
         try:
             # A simple embedding call to test the connection.
-            result = self.ai_client.embed(self.provider_type, "test", model=self.model_name)
+            result = await self.ai_client.embed(self.provider_type, "test", model=self.model_name)
             return result.get('success', False)
         except Exception as e:
             logger.error(f"❌ Connection test failed for {self.provider_type}: {e}")
@@ -140,7 +140,7 @@ class EmbeddingProvider:
             return None
 
         try:
-            result = self.ai_client.embed(self.provider_type, text, model=self.model_name)
+            result = await self.ai_client.embed(self.provider_type, text, model=self.model_name)
             if result and result.get('success'):
                 return result.get('embedding')
             else:
@@ -910,30 +910,33 @@ class RAGSystem:
         try:
             # Process the document
             documents = self.document_processor.process_document(content, metadata, source)
-            
+
             if not documents:
                 return False
-            
-            # Create embeddings
-            for doc in documents:
-                doc.embedding = await self.embedding_provider.get_embedding(doc.content)
-            
+
+            # Create embeddings concurrently
+            embedding_tasks = [self.embedding_provider.get_embedding(doc.content) for doc in documents]
+            embeddings = await asyncio.gather(*embedding_tasks)
+
+            for doc, embedding in zip(documents, embeddings):
+                doc.embedding = embedding
+
             # Add to vector database
             success = await self.vector_db.add_documents(documents)
-            
+
             if success:
                 # Cache metadata
                 cache_key = f"doc_meta:{source}"
                 self.cache.setex(cache_key, 3600, json.dumps(metadata))
-                
+
                 logger.info(f"✅ Added document {source} successfully ({len(documents)} chunks)")
-            
+
             return success
-            
+
         except Exception as e:
             logger.error(f"❌ Error adding document: {e}")
             return False
-    
+
     async def search(self, query: str, top_k: int = 5, use_cache: bool = True) -> List[SearchResult]:
         """
         Searches for relevant documents.
@@ -959,30 +962,32 @@ class RAGSystem:
                 cached_result = self.cache.get(cache_key)
                 if cached_result:
                     logger.info("✅ Using result from cache")
+                    # Note: Deserialization remains synchronous
                     return [SearchResult(**json.loads(item)) for item in json.loads(cached_result)]
-            
+
             # Create query embedding
             query_embedding = await self.embedding_provider.get_embedding(query)
             if not query_embedding:
                 logger.error("❌ Could not create query embedding")
                 return []
-            
+
             # Search in vector database
             results = await self.vector_db.search(query_embedding, top_k)
-            
+
             # Cache results
             if use_cache and results:
                 cache_key = f"search:{hashlib.md5(query.encode()).hexdigest()}"
+                # Note: Serialization remains synchronous
                 cache_data = json.dumps([asdict(result) for result in results])
                 self.cache.setex(cache_key, 1800, cache_data)  # Cache for 30 minutes
-            
+
             return results
-            
+
         except Exception as e:
             logger.error(f"❌ Error during search: {e}")
             return []
-    
-    async def generate_response(self, query: str, context_documents: List[Document], 
+
+    async def generate_response(self, query: str, context_documents: List[Document],
                               llm_provider: str = "ollama") -> RAGResponse:
         """
         Generates a response using RAG.
@@ -1096,7 +1101,7 @@ Answer:
             # Use a default model from config if available, otherwise let the strategy decide
             model = self.config.get(f"{provider}_model")
             
-            result = self.ai_client.generate_response(provider, messages, model=model)
+            result = await self.ai_client.generate_response(provider, messages, model=model)
 
             if result and result.get('success'):
                 return result.get('content', 'No content received.')

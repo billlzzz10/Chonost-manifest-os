@@ -19,7 +19,9 @@ C.register(
 );
 
 export default function VisualDashboard() {
-  const { data } = useAppStore();
+  // ⚡ Bolt: Optimized component to only subscribe to the 'data' slice of the store.
+  // This prevents re-renders when other state (e.g., editor content, theme) changes.
+  const data = useAppStore((state) => state.data);
   const labels = data.topKeywords.map((k) => k.keyword);
   const values = data.topKeywords.map((k) => k.weight);
   return (

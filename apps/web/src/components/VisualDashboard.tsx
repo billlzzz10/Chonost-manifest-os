@@ -8,6 +8,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import { shallow } from "zustand/shallow";
 import { useAppStore } from "../state/store";
 C.register(
   BarElement,
@@ -19,9 +20,21 @@ C.register(
 );
 
 export default function VisualDashboard() {
-  const { data } = useAppStore();
-  const labels = data.topKeywords.map((k) => k.keyword);
-  const values = data.topKeywords.map((k) => k.weight);
+  // ⚡ Bolt: Optimized subscription to prevent unnecessary re-renders.
+  // By selecting only the specific properties needed by this component and using
+  // the `shallow` equality checker, we ensure that this component only
+  // re-renders when `topKeywords`, `sentiment`, or `wordCount` change.
+  // This avoids re-renders when other parts of the global state are updated.
+  const { topKeywords, sentiment, wordCount } = useAppStore(
+    (state) => ({
+      topKeywords: state.data.topKeywords,
+      sentiment: state.data.sentiment,
+      wordCount: state.data.wordCount,
+    }),
+    shallow
+  );
+  const labels = topKeywords.map((k) => k.keyword);
+  const values = topKeywords.map((k) => k.weight);
   return (
     <div className="card">
       <h4 style={{ margin: "0 0 8px" }}>Metrics</h4>
@@ -38,8 +51,8 @@ export default function VisualDashboard() {
         </div>
       </div>
       <div style={{ marginTop: 8, display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <span className="badge">sentiment {data.sentiment.toFixed(2)}</span>
-        <span className="badge">words {data.wordCount}</span>
+        <span className="badge">sentiment {sentiment.toFixed(2)}</span>
+        <span className="badge">words {wordCount}</span>
       </div>
     </div>
   );

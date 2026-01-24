@@ -2,6 +2,9 @@ import { useAppStore } from "../state/store";
 
 export default function TopBar() {
   const { setMode, tasks, enqueue, updateTask } = useAppStore();
+  const latestTask = tasks.length > 0 ? tasks[tasks.length - 1] : null;
+  const isIndexing = latestTask ? latestTask.status === "running" : false;
+
   const startIngest = () => {
     const id = "ing-" + Date.now();
     enqueue({ id, title: "Index RAG", progress: 0, status: "running" });
@@ -27,8 +30,8 @@ export default function TopBar() {
         อ่าน
       </button>
       <div style={{ marginLeft: "auto" }} />
-      <button className="btn primary" onClick={startIngest}>
-        สร้างดัชนี RAG
+      <button className="btn primary" onClick={startIngest} disabled={isIndexing}>
+        {isIndexing ? "กำลังสร้าง..." : "สร้างดัชนี RAG"}
       </button>
       {tasks.slice(-1).map((t) => (
         <span key={t.id} className="badge" style={{ marginLeft: 8 }}>

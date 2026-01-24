@@ -205,14 +205,16 @@ You can also just chat normally with me!`,
   };
 
   const clearChat = () => {
-    setMessages([
-      {
-        id: "welcome",
-        role: "assistant",
-        content: "Chat cleared. How can I help you?",
-        timestamp: new Date(),
-      },
-    ]);
+    if (window.confirm("Are you sure you want to clear the chat history?")) {
+      setMessages([
+        {
+          id: "welcome",
+          role: "assistant",
+          content: "Chat cleared. How can I help you?",
+          timestamp: new Date(),
+        },
+      ]);
+    }
   };
 
   const testConnection = async () => {

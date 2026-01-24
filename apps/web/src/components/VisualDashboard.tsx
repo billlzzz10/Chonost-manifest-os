@@ -19,7 +19,10 @@ C.register(
 );
 
 export default function VisualDashboard() {
-  const { data } = useAppStore();
+  // ⚡ By selecting only the 'data' slice, we prevent this component
+  // from re-rendering every time other parts of the app state change (e.g., pen color, tool selection).
+  // This is a critical performance optimization.
+  const data = useAppStore((state) => state.data);
   const labels = data.topKeywords.map((k) => k.keyword);
   const values = data.topKeywords.map((k) => k.weight);
   return (

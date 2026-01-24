@@ -19,7 +19,10 @@ C.register(
 );
 
 export default function VisualDashboard() {
-  const { data } = useAppStore();
+  // ⚡ Bolt: Using a selector is a performance optimization.
+  // It ensures this component only re-renders when the `data` slice of the store changes,
+  // preventing expensive chart redraws from unrelated state updates.
+  const data = useAppStore((state) => state.data);
   const labels = data.topKeywords.map((k) => k.keyword);
   const values = data.topKeywords.map((k) => k.weight);
   return (

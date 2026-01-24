@@ -86,15 +86,15 @@ goto end
 
 :start_dataset
 echo 📊 สร้างชุดข้อมูลฝึก AI...
-if not exist "dataset_generator.py" (
-    echo ❌ ไม่พบไฟล์ dataset_generator.py
+if not exist "utils/file_system_dataset_generator.py" (
+    echo ❌ ไม่พบไฟล์ utils/file_system_dataset_generator.py
     pause
     exit /b 1
 )
 if %USE_VENV%==1 (
     call venv\Scripts\activate.bat
 )
-python dataset_generator.py
+python utils/file_system_dataset_generator.py
 echo.
 echo ✅ เสร็จสิ้น! ตรวจสอบไฟล์ที่สร้าง:
 echo   • file_system_training_dataset.json

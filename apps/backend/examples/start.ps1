@@ -110,8 +110,8 @@ switch ($App.ToLower()) {
     }
     "dataset" {
         Write-Host "📊 สร้างชุดข้อมูลฝึก AI..." -ForegroundColor Cyan
-        if (Test-FileExists "dataset_generator.py") {
-            Invoke-PythonScript "dataset_generator.py"
+        if (Test-FileExists "utils/file_system_dataset_generator.py") {
+            Invoke-PythonScript "utils/file_system_dataset_generator.py"
             Write-Host ""
             Write-Host "✅ เสร็จสิ้น! ตรวจสอบไฟล์ที่สร้าง:" -ForegroundColor Green
             Write-Host "  • file_system_training_dataset.json" -ForegroundColor Gray

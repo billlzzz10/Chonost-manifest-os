@@ -119,7 +119,7 @@ class EmbeddingProvider:
             return False
         try:
             # A simple embedding call to test the connection.
-            result = self.ai_client.embed(self.provider_type, "test", model=self.model_name)
+            result = await self.ai_client.embed(self.provider_type, "test", model=self.model_name)
             return result.get('success', False)
         except Exception as e:
             logger.error(f"❌ Connection test failed for {self.provider_type}: {e}")
@@ -140,7 +140,7 @@ class EmbeddingProvider:
             return None
 
         try:
-            result = self.ai_client.embed(self.provider_type, text, model=self.model_name)
+            result = await self.ai_client.embed(self.provider_type, text, model=self.model_name)
             if result and result.get('success'):
                 return result.get('embedding')
             else:
@@ -1096,7 +1096,7 @@ Answer:
             # Use a default model from config if available, otherwise let the strategy decide
             model = self.config.get(f"{provider}_model")
             
-            result = self.ai_client.generate_response(provider, messages, model=model)
+            result = await self.ai_client.generate_response(provider, messages, model=model)
 
             if result and result.get('success'):
                 return result.get('content', 'No content received.')

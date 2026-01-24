@@ -65,14 +65,34 @@ class UnifiedAIClientLangChainAdapter(LLM):
         Raises:
             ValueError: If the API call is unsuccessful.
         """
-        messages = [{"role": "user", "content": prompt}]
+        raise RuntimeError("This LLM can only be used in an async context.")
 
-        # Pass the model if it's specified for this instance
+    async def _acall(
+        self,
+        prompt: str,
+        stop: Optional[List[str]] = None,
+        **kwargs: Any,
+    ) -> str:
+        """
+        Asynchronously makes a call to the UnifiedAIClient.
+
+        Args:
+            prompt (str): The input prompt.
+            stop (Optional[List[str]]): Not currently used, but part of the interface.
+            **kwargs: Additional keyword arguments.
+
+        Returns:
+            str: The string response from the LLM.
+
+        Raises:
+            ValueError: If the API call is unsuccessful.
+        """
+        messages = [{"role": "user", "content": prompt}]
         api_kwargs = {}
         if self.model:
             api_kwargs['model'] = self.model
 
-        response = self.client.generate_response(self.provider, messages, **api_kwargs)
+        response = await self.client.generate_response(self.provider, messages, **api_kwargs)
 
         if response and response.get('success'):
             return response.get('content', '')

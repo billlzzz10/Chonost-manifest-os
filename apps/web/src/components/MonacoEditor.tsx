@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 import Editor from "@monaco-editor/react";
 
-interface MonacoEditorProps {
+export interface MonacoEditorProps {
   value: string;
   onChange: (value: string) => void;
   language?: string;

@@ -10,7 +10,7 @@ import { mockHandleBigPaste, mockImportUrl } from "@/lib/mockApi";
 import { analyzeText } from "@/lib/metrics";
 import StickyNotes from "./StickyNotes";
 import ReadingView from "./ReadingView";
-import MonacoEditor from "./MonacoEditor";
+import MonacoEditor from "./LazyMonacoEditor";
 import { Pen, Eraser, Ruler, Code, FileText, MousePointer, Square, Circle, Minus, ArrowRight, Type, Layers, Settings } from "lucide-react";
 
 export default function EditorWhiteboard() {

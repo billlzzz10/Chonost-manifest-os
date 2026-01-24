@@ -87,8 +87,10 @@ export default function LeftPanel() {
           แชท AI {isAIReady && <span style={{ color: '#10b981', fontSize: '12px' }}>● {selectedProvider} พร้อม</span>}
         </h4>
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <div style={{ display: "flex", gap: 6 }}>
+          <div style={{ display: "flex", gap: 6, alignItems: 'center' }}>
+            <label htmlFor="ai-provider-select" style={{ fontSize: 14, marginRight: 4 }}>AI Provider:</label>
             <select
+              id="ai-provider-select"
               value={selectedProvider}
               onChange={handleProviderChange}
               style={{ padding: 4, fontSize: 14 }}

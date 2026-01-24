@@ -27,7 +27,16 @@ export default function TopBar() {
         อ่าน
       </button>
       <div style={{ marginLeft: "auto" }} />
-      <button className="btn primary" onClick={startIngest}>
+      <button
+        className="btn primary"
+        onClick={startIngest}
+        disabled={tasks.some((t) => t.status === "running")}
+        title={
+          tasks.some((t) => t.status === "running")
+            ? "กำลังสร้างดัชนีอยู่"
+            : "สร้างดัชนี RAG"
+        }
+      >
         สร้างดัชนี RAG
       </button>
       {tasks.slice(-1).map((t) => (

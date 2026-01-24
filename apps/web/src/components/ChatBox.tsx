@@ -299,6 +299,7 @@ export default function ChatBox() {
                   className="btn-icon"
                   onClick={() => removeContext(ctx.id)}
                   title="Remove context"
+                  aria-label="Remove context"
                   style={{ padding: "2px" }}
                 >
                   <Trash2 size={10} />
@@ -367,6 +368,7 @@ export default function ChatBox() {
             className="btn-icon"
             onClick={attachCurrentEditor}
             title="Attach current editor content"
+            aria-label="Attach current editor content"
             disabled={!content.trim()}
           >
             <FileText size={14} />
@@ -375,6 +377,7 @@ export default function ChatBox() {
             className="btn-icon"
             onClick={attachSelection}
             title="Attach selected text"
+            aria-label="Attach selected text"
           >
             <Paperclip size={14} />
           </button>
@@ -382,6 +385,7 @@ export default function ChatBox() {
             className="btn-icon"
             onClick={attachCanvasState}
             title="Attach canvas state"
+            aria-label="Attach canvas state"
             disabled={mode !== "whiteboard"}
           >
             <svg
@@ -397,7 +401,12 @@ export default function ChatBox() {
               <path d="M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
             </svg>
           </button>
-          <button className="btn-icon" onClick={attachFile} title="Attach file">
+          <button
+            className="btn-icon"
+            onClick={attachFile}
+            title="Attach file"
+            aria-label="Attach file"
+          >
             <Paperclip size={14} />
           </button>
         </div>
@@ -422,6 +431,7 @@ export default function ChatBox() {
             onClick={handleSend}
             disabled={!input.trim() || isLoading}
             title="Send message"
+            aria-label="Send message"
           >
             <Send size={16} />
           </button>

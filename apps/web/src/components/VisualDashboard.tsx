@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Bar, PolarArea } from "react-chartjs-2";
 import {
   Chart as C,
@@ -20,8 +21,17 @@ C.register(
 
 export default function VisualDashboard() {
   const { data } = useAppStore();
-  const labels = data.topKeywords.map((k) => k.keyword);
-  const values = data.topKeywords.map((k) => k.weight);
+  // By wrapping the expensive data transformations in useMemo, we prevent them from
+  // re-running on every render. The calculations will only execute again if the
+  // `data.topKeywords` array changes, improving rendering performance.
+  const labels = useMemo(
+    () => data.topKeywords.map((k) => k.keyword),
+    [data.topKeywords]
+  );
+  const values = useMemo(
+    () => data.topKeywords.map((k) => k.weight),
+    [data.topKeywords]
+  );
   return (
     <div className="card">
       <h4 style={{ margin: "0 0 8px" }}>Metrics</h4>

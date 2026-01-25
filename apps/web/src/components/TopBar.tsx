@@ -14,6 +14,7 @@ export default function TopBar() {
       } else updateTask(id, { progress: p });
     }, 250);
   };
+  const isTaskRunning = tasks.some((t) => t.status === "running");
   return (
     <div className="topbar">
       <div className="title">Craft IDE</div>
@@ -27,7 +28,12 @@ export default function TopBar() {
         อ่าน
       </button>
       <div style={{ marginLeft: "auto" }} />
-      <button className="btn primary" onClick={startIngest}>
+      <button
+        className="btn primary"
+        onClick={startIngest}
+        disabled={isTaskRunning}
+        title={isTaskRunning ? "กำลังสร้างดัชนี..." : ""}
+      >
         สร้างดัชนี RAG
       </button>
       {tasks.slice(-1).map((t) => (

@@ -13,11 +13,15 @@
     "@heroicons/react": "^2.2.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "commander": "^14.0.2",
+    "glob": "^13.0.0",
+    "jscpd": "^4.0.7",
     "lucide-react": "^0.263.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "simple-icons": "^9.0.0",
-    "tailwind-merge": "^3.3.1"
+    "tailwind-merge": "^3.3.1",
+    "ts-morph": "^27.0.2"
   },
   "devDependencies": {
     "@types/react": "^18.2.0",

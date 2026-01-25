@@ -22,7 +22,15 @@
     "docker:up": "docker-compose up -d --build",
     "docker:down": "docker-compose down",
     "prepare": "husky install",
-    "ai:commit": "node scripts/ai-commit.js commit"
+    "ai:commit": "node scripts/ai-commit.js commit",
+    "fix:duplicates:daily": "node packages/auto-duplicate-fixer/scripts/pipeline.js --mode=daily",
+    "fix:duplicates:aggressive": "node packages/auto-duplicate-fixer/scripts/pipeline.js --mode=aggressive",
+    "fix:duplicates:dry-run": "node packages/auto-duplicate-fixer/scripts/pipeline.js --dry-run",
+    "check:duplicates": "node packages/auto-duplicate-fixer/scripts/detect.js",
+    "decide:duplicates": "node packages/auto-duplicate-fixer/scripts/decide.js",
+    "refactor:duplicates": "node packages/auto-duplicate-fixer/scripts/refactor.js",
+    "validate:duplicates": "bash packages/auto-duplicate-fixer/scripts/validate.sh",
+    "deploy:duplicates": "node packages/auto-duplicate-fixer/scripts/deploy.js"
   },
   "devDependencies": {
     "husky": "^8.0.3",

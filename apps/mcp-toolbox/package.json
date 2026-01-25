@@ -1,4 +1,10 @@
 {
   "name": "mcp-toolbox",
-  "type": "commonjs"
+  "type": "commonjs",
+  "dependencies": {
+    "commander": "^14.0.2",
+    "glob": "^13.0.0",
+    "jscpd": "^4.0.7",
+    "ts-morph": "^27.0.2"
+  }
 }

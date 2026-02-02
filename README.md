@@ -1,94 +1,126 @@
-# Chonost Manuscript OS
+จัดให้ครับ ✨ ผมจะเขียน README.md ใหม่ให้เป็นระเบียบตามโครงสร้างที่เราวางไว้ โดยเน้นความชัดเจนว่าโปรเจกต์นี้คืออะไร, โครงสร้างเป็นอย่างไร, วิธีติดตั้ง/ใช้งาน, และ workflow การพัฒนา  
 
-Chonost Manuscript OS is a monorepo that combines a FastAPI-based MCP orchestrator, a React/Tauri desktop client (`craft-ide`), and a reusable UI component library (`@chonost/ui`). The goal of the project is to provide a foundation for experimenting with AI-assisted manuscript tooling while keeping the codebase modular and approachable.
+---
 
-## Key Capabilities
+Chonost-manifest-os
 
-- FastAPI MCP orchestrator with endpoints for basic server discovery and tool execution.
-- React + Vite desktop interface packaged through Tauri for multi-platform use.
-- Shared component library that powers the Craft IDE experience.
-- Docker Compose stack that provisions the API server together with Postgres, Redis, and Qdrant.
+📖 Overview
+Chonost-manifest-os is a Rust + React/TypeScript project designed as a multi-crate workspace with backend, server, and desktop application support.  
+The system provides a foundation for building AI-driven applications, bots, and desktop tools with a secure, modular, and extensible architecture.
 
-## Repository Layout
+---
 
-```
-.
-|- craft-ide/              # React + Tauri desktop client
-|- packages/ui/            # Shared UI component library
-|- services/api-server/    # FastAPI MCP orchestrator
-|- services/testing/       # Testing helpers and Docker image
-|- docs/                   # Architecture, database, and roadmap documentation
-|- scripts/                # Automation helpers (e.g. ai-commit)
-`- docker-compose.yml      # Full-stack container orchestration
-```
+🏗️ Project Structure
+`plaintext
+chonost-manifest-os/
+├── crates/                # Rust workspace crates
+│   ├── backend/           # Core business logic (ACP, session, events, security, filesystem, projects, search, CLI, RPC)
+│   ├── server/            # Rocket-based REST API + WebSocket server
+│   └── tauri-app/         # Tauri desktop application wrapper
+│
+├── frontend/              # React/TypeScript frontend
+│   └── desktop-app/       # SPA for desktop/web (UI, i18n, hooks, utils, renderers, etc.)
+│
+├── docs/                  # Documentation
+│   ├── ARCHITECTURE.md
+│   ├── AGENTS.md
+│   ├── PRIVACY.md
+│   └── TERMS.md
+│
+├── Cargo.toml             # Rust workspace definition
+├── justfile               # Task runner (Just)
+├── pnpm-lock.yaml         # Frontend package lock
+└── README.md
+`
 
-## Quick Start
+---
 
-### Prerequisites
+⚙️ Technology Stack
 
-- Node.js 18+
-- Python 3.10+
-- Docker Desktop (optional, required for the compose stack)
+Backend
+- Rust (2024 Edition)  
+- Tokio – async runtime  
+- Serde – serialization  
+- Rocket – REST API framework  
+- Tauri – desktop integration  
 
-### Install Dependencies
+Frontend
+- React 19 + TypeScript 5.9  
+- Vite – build tool  
+- Tailwind CSS – styling  
+- shadcn/ui – component library  
+- CodeMirror / Monaco – code editing  
 
-```bash
-# Install JS workspaces (root package.json manages workspaces)
-npm install
+Tooling
+- Just – task runner  
+- pnpm – package manager  
+- ESLint + Prettier – linting & formatting  
+- cargo-nextest + tarpaulin – testing & coverage  
 
-# Install API server dependencies
-cd services/api-server
-pip install -r requirements.txt
-```
+---
 
-### Run the API Server
+🚀 Getting Started
 
-```bash
-cd services/api-server
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
+Prerequisites
+- Rust (latest stable)  
+- Node.js 22+  
+- pnpm 10+  
+- Just task runner  
 
-The server exposes `/health`, `/mcp/servers`, `/mcp/tools`, `/mcp/status`, and `/mcp/call`.
+Setup
+`bash
 
-### Run the Craft IDE Frontend
+Install dependencies
+just deps
 
-```bash
-cd craft-ide
-npm run dev
-```
+Desktop development (Tauri + frontend)
+just dev
 
-By default the frontend expects the API server at `http://localhost:8000`.
+Web development (frontend + backend server)
+just dev-web
+`
 
-### Run with Docker Compose
+---
 
-```bash
-# From the repo root
-docker-compose up -d
-```
+🧪 Testing
+`bash
 
-This brings up the API server together with Postgres, Redis, Qdrant, Grafana, and the Craft IDE container. Update the `.env` file before starting if you need custom secrets.
+Run all tests
+just test
+cargo nextest run
 
-## Environment Configuration
+Run with coverage
+cargo tarpaulin
+`
 
-Copy `.env.example` to `.env` and supply any API keys you intend to use. The FastAPI settings loader in `services/api-server/config.py` falls back to sensible defaults when variables are missing, making local development easy to start.
+---
 
-## Testing
+🔒 Security
+- Whitelist of safe commands  
+- Blacklist of dangerous patterns  
+- API key masking in logs  
+- SSRF protection  
+- Environment variable cleanup with RAII  
 
-```bash
-cd services/api-server
-python -m pytest
-```
+---
 
-The current test suite validates the health check, MCP endpoints, and basic configuration wiring in `main.py`.
+📑 Documentation
+- ARCHITECTURE.md – System design and structure  
+- AGENTS.md – Agent roles and communication protocol  
+- PRIVACY.md – Privacy policy  
+- TERMS.md – Terms of service  
 
-## Documentation
+---
 
-- `docs/ARCHITECTURE.md` explains the current orchestrator layout with Mermaid diagrams.
-- `docs/DATABASE_SCHEMA.md` captures the chat memory schema.
-- `docs/DEVELOPMENT_ROADMAP.md` outlines longer-term goals and technical debt.
+🛠️ Development Workflow
+- Issues drive tasks (label jules to trigger automation)  
+- Feature branches per crate/module  
+- Pull Requests with automated checks  
+- Documentation updates required for each change  
 
-Additional documentation is still work in progress. If you spot inaccuracies, feel free to open an issue or update the relevant file.
+---
 
-## Contributing
+📜 License
+Specify your license here (MIT, Apache 2.0, GPL, etc.)
 
-We welcome pull requests that clarify documentation, improve test coverage, or extend the orchestrator safely. Please open a draft PR early if you plan to make larger architectural changes so we can align on direction.
+---

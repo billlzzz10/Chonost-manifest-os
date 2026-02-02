@@ -8,6 +8,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import { shallow } from "zustand/shallow";
 import { useAppStore } from "../state/store";
 import { shallow } from "zustand/shallow";
 C.register(

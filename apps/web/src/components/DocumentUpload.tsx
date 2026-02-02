@@ -13,6 +13,7 @@ import {
   Eye,
   Trash2,
   Download,
+  Loader2,
 } from "lucide-react";
 
 const DocumentUpload = () => {
@@ -342,8 +343,13 @@ const DocumentUpload = () => {
                         files.every((f) => f.status === "completed")
                       }
                       className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                      aria-label={uploading ? "กำลังอัปโหลดเอกสาร" : "เริ่มอัปโหลดเอกสาร"}
                     >
-                      <Upload className="w-5 h-5" />
+                      {uploading ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : (
+                        <Upload className="w-5 h-5" />
+                      )}
                       <span>
                         {uploading ? "กำลังอัปโหลด..." : "เริ่มอัปโหลด"}
                       </span>
@@ -369,6 +375,8 @@ const DocumentUpload = () => {
                             <button
                               onClick={() => removeFile(file.id)}
                               className="text-gray-400 hover:text-red-500 transition-colors"
+                              aria-label={`ลบไฟล์ ${file.name} ออกจากรายการ`}
+                              title="ลบไฟล์ออกจากรายการ"
                             >
                               <X className="w-4 h-4" />
                             </button>
@@ -546,15 +554,29 @@ const DocumentUpload = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex items-center space-x-2">
-                            <button className="text-blue-600 hover:text-blue-700 p-1">
+                            <button
+                              className="text-blue-600 hover:text-blue-700 p-1"
+                              aria-label={`ดูรายละเอียด ${file.name}`}
+                              title="ดูรายละเอียด"
+                            >
                               <Eye className="w-4 h-4" />
                             </button>
-                            <button className="text-gray-600 hover:text-gray-700 p-1">
+                            <button
+                              className="text-gray-600 hover:text-gray-700 p-1"
+                              aria-label={`ดาวน์โหลด ${file.name}`}
+                              title="ดาวน์โหลด"
+                            >
                               <Download className="w-4 h-4" />
                             </button>
                             <button
-                              onClick={() => deleteExistingFile(file.id)}
+                              onClick={() => {
+                                if (window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบไฟล์ "${file.name}"?`)) {
+                                  deleteExistingFile(file.id);
+                                }
+                              }}
                               className="text-red-600 hover:text-red-700 p-1"
+                              aria-label={`ลบไฟล์ ${file.name}`}
+                              title="ลบไฟล์"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>

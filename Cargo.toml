@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "crates/backend",
+    "crates/server",
+    "crates/tauri-app",
+]

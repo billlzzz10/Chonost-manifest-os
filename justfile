@@ -11,8 +11,7 @@ dev:
 
 # Start web development (frontend + backend)
 dev-web:
-    cd crates/server && cargo run &
-    cd frontend/desktop-app && pnpm dev
+    (cd crates/server && cargo run) & cd frontend/desktop-app && pnpm dev
 
 # Build the project
 build:

@@ -13,7 +13,7 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@chonost/ui": "2.1.0",
+    "@chonost/ui": "workspace:*",
     "@anthropic-ai/sdk": "^0.61.0",
     "@google/generative-ai": "^0.21.0",
     "@monaco-editor/react": "^4.7.0",

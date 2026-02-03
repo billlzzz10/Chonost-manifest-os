@@ -10,6 +10,7 @@ import {
 } from "chart.js";
 import { shallow } from "zustand/shallow";
 import { useAppStore } from "../state/store";
+import { shallow } from "zustand/shallow";
 C.register(
   BarElement,
   CategoryScale,
@@ -20,11 +21,11 @@ C.register(
 );
 
 export default function VisualDashboard() {
-  // ⚡ Bolt: Optimized subscription.
-  // This component now only re-renders when `topKeywords`, `sentiment`, or `wordCount` change,
-  // preventing unnecessary renders when other parts of the store are updated.
   const { topKeywords, sentiment, wordCount } = useAppStore(
     (state) => ({
+      // By selecting only the specific properties needed, this component
+      // will only re-render when these values change, not on any
+      // other state update. This is a significant performance optimization.
       topKeywords: state.data.topKeywords,
       sentiment: state.data.sentiment,
       wordCount: state.data.wordCount,

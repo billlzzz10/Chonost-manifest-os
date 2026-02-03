@@ -3,7 +3,7 @@ name = "craft-ide"
 version = "0.1.0"
 description = "Craft IDE"
 authors = ["you"]
-edition = "2021"
+edition = "2024"
 
 [build-dependencies]
 tauri-build = { version = "1", features = [] }

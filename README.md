@@ -1,122 +1,30 @@
-Chonost-manifest-os
+# Chronost-manifest-os
 
-📖 Overview
-Chonost-manifest-os is a Rust + React/TypeScript project designed as a multi-crate workspace with backend, server, and desktop application support.  
-The system provides a foundation for building AI-driven applications, bots, and desktop tools with a secure, modular, and extensible architecture.
+Chronost-manifest-os is a project that provides a foundation for building desktop and web applications with a Rust backend and a React/TypeScript frontend.
 
----
+## Project Structure
 
-🏗️ Project Structure
-`plaintext
-chonost-manifest-os/
-├── crates/                # Rust workspace crates
-│   ├── backend/           # Core business logic (ACP, session, events, security, filesystem, projects, search, CLI, RPC)
-│   ├── server/            # Rocket-based REST API + WebSocket server
-│   └── tauri-app/         # Tauri desktop application wrapper
-│
-├── frontend/              # React/TypeScript frontend
-│   └── desktop-app/       # SPA for desktop/web (UI, i18n, hooks, utils, renderers, etc.)
-│
-├── docs/                  # Documentation
-│   ├── ARCHITECTURE.md
-│   ├── AGENTS.md
-│   ├── PRIVACY.md
-│   └── TERMS.md
-│
-├── Cargo.toml             # Rust workspace definition
-├── justfile               # Task runner (Just)
-├── pnpm-lock.yaml         # Frontend package lock
-└── README.md
-`
+-   `crates/`: Contains the Rust workspace crates.
+    -   `backend`: Core business logic.
+    -   `server`: Rocket-based REST API and WebSocket server.
+    -   `tauri-app`: Tauri desktop application wrapper.
+-   `frontend/`: Contains the frontend application.
+    -   `desktop-app`: React/TypeScript application built with Vite and styled with Tailwind CSS.
+-   `docs/`: Contains project documentation.
+-   `justfile`: Defines tasks for automating common development tasks.
+-   `README.md`: Provides an overview of the project.
 
----
+## Setup Instructions
 
-⚙️ Technology Stack
+1.  **Install Rust:** Follow the instructions on the [Rust website](https://www.rust-lang.org/tools/install) to install Rust.
+2.  **Install Node.js and pnpm:** Follow the instructions on the [Node.js website](https://nodejs.org/en/download/) to install Node.js, then install pnpm with `npm install -g pnpm`.
+3.  **Install just:** Follow the instructions on the [just website](https://github.com/casey/just) to install just.
+4.  **Install dependencies:** Run `just deps` to install all dependencies.
 
-Backend
-- Rust (2024 Edition)  
-- Tokio – async runtime  
-- Serde – serialization  
-- Rocket – REST API framework  
-- Tauri – desktop integration  
+## Workflow
 
-Frontend
-- React 19 + TypeScript 5.9  
-- Vite – build tool  
-- Tailwind CSS – styling  
-- shadcn/ui – component library  
-- CodeMirror / Monaco – code editing  
-
-Tooling
-- Just – task runner  
-- pnpm – package manager  
-- ESLint + Prettier – linting & formatting  
-- cargo-nextest + tarpaulin – testing & coverage  
-
----
-
-🚀 Getting Started
-
-Prerequisites
-- Rust (latest stable)  
-- Node.js 22+  
-- pnpm 10+  
-- Just task runner  
-
-Setup
-`bash
-
-Install dependencies
-just deps
-
-Desktop development (Tauri + frontend)
-just dev
-
-Web development (frontend + backend server)
-just dev-web
-`
-
----
-
-🧪 Testing
-`bash
-
-Run all tests
-just test
-cargo nextest run
-
-Run with coverage
-cargo tarpaulin
-`
-
----
-
-🔒 Security
-- Whitelist of safe commands  
-- Blacklist of dangerous patterns  
-- API key masking in logs  
-- SSRF protection  
-- Environment variable cleanup with RAII  
-
----
-
-📑 Documentation
-- ARCHITECTURE.md – System design and structure  
-- AGENTS.md – Agent roles and communication protocol  
-- PRIVACY.md – Privacy policy  
-- TERMS.md – Terms of service  
-
----
-
-🛠️ Development Workflow
-- Issues drive tasks (label jules to trigger automation)  
-- Feature branches per crate/module  
-- Pull Requests with automated checks  
-- Documentation updates required for each change  
-
----
-
-📜 License
-Specify your license here (MIT, Apache 2.0, GPL, etc.)
-
----
+-   **Desktop Development:** Run `just dev` to start the Tauri desktop application and frontend in development mode.
+-   **Web Development:** Run `just dev-web` to start the backend server and frontend in development mode.
+-   **Build:** Run `just build` to build the project for production.
+-   **Test:** Run `just test` to run the project's tests.
+-   **Lint:** Run `just lint` to lint the project's code.

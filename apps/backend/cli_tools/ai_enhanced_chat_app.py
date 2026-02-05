@@ -11,6 +11,7 @@ from tkinter import ttk, scrolledtext, filedialog, messagebox
 import json
 import threading
 import time
+import asyncio
 from datetime import datetime
 from pathlib import Path
 import os
@@ -600,7 +601,7 @@ Please analyze and answer the above question based on the file system data.
             messages.append({"role": "user", "content": analysis_prompt})
 
             # Call the unified client
-            result = self.ai_client.generate_response(self.ai_provider, messages)
+            result = asyncio.run(self.ai_client.generate_response(self.ai_provider, messages))
 
             if result and result.get('success'):
                 self.add_message("ai", result.get('content', 'No content received.'), "ai")
@@ -867,7 +868,7 @@ Task: {query}
             messages.append({"role": "user", "content": analysis_prompt})
 
             # Call unified client
-            result = self.ai_client.generate_response(self.ai_provider, messages)
+            result = asyncio.run(self.ai_client.generate_response(self.ai_provider, messages))
 
             # Update UI with result
             self.ai_display.config(state=tk.NORMAL)

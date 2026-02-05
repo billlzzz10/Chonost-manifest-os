@@ -295,46 +295,88 @@ class MistralStrategy(AIProviderStrategy):
 class UnifiedAIClient:
     """
     A unified client for interacting with multiple AI providers.
-    It loads its configuration and initializes the appropriate strategies.
+    It uses lazy initialization to create provider strategies on-demand.
     """
     def __init__(self):
         """
-        Initializes the client by loading configuration and setting up strategies.
+        Initializes the client. Provider strategies are created only when first requested.
         """
         self._strategies: Dict[str, AIProviderStrategy] = {}
-        self.config = get_config()
-        self._init_strategies()
+        # Use the imported settings object directly.
+        self.config = settings
+        # Mapping of provider names to their respective initialization methods.
+        self._strategy_builders = {
+            'openai': self._init_openai,
+            'ollama': self._init_ollama,
+            'google': self._init_google,
+            'openrouter': self._init_openrouter,
+            'anthropic': self._init_anthropic,
+            'deepseek': self._init_deepseek,
+            'mistral': self._init_mistral,
+        }
 
-    def _init_strategies(self):
-        """Initializes all available strategies based on the loaded configuration."""
-        # OpenAI
+    # --- Strategy Initializers (called on-demand) ---
+
+    def _init_openai(self) -> Optional[AIProviderStrategy]:
         if self.config.openai_api_key:
-            self._strategies['openai'] = OpenAIStrategy(
+            return OpenAIStrategy(
                 api_key=self.config.openai_api_key,
                 base_url=self.config.openai_base_url
             )
-        # Ollama
-        self._strategies['ollama'] = OllamaStrategy(base_url=self.config.ollama_base_url)
+        logger.warning("OpenAI API key not found. OpenAIStrategy not initialized.")
+        return None
 
-        # Add other strategies here as they are implemented
-        self._strategies['openrouter'] = OpenRouterStrategy()
-        self._strategies['google'] = GoogleStrategy()
-        self._strategies['anthropic'] = AnthropicStrategy()
-        self._strategies['deepseek'] = DeepSeekStrategy()
-        self._strategies['mistral'] = MistralStrategy()
+    def _init_ollama(self) -> Optional[AIProviderStrategy]:
+        return OllamaStrategy(base_url=self.config.ollama_base_url)
+
+    def _init_google(self) -> Optional[AIProviderStrategy]:
+        if self.config.google_api_key:
+            return GoogleStrategy(api_key=self.config.google_api_key)
+        logger.warning("Google API key not found. GoogleStrategy not initialized.")
+        return None
+
+    def _init_openrouter(self) -> Optional[AIProviderStrategy]:
+        return OpenRouterStrategy()
+
+    def _init_anthropic(self) -> Optional[AIProviderStrategy]:
+        return AnthropicStrategy()
+
+    def _init_deepseek(self) -> Optional[AIProviderStrategy]:
+        return DeepSeekStrategy()
+
+    def _init_mistral(self) -> Optional[AIProviderStrategy]:
+        return MistralStrategy()
 
 
     def get_provider(self, provider_name: str) -> Optional[AIProviderStrategy]:
         """
-        Gets the strategy for a given provider.
+        Gets the strategy for a given provider, creating it if it doesn't exist.
+        This is the core of the lazy initialization pattern.
 
         Args:
             provider_name (str): The name of the provider.
 
         Returns:
-            Optional[AIProviderStrategy]: The provider strategy, or None if not found.
+            Optional[AIProviderStrategy]: The provider strategy, or None if not supported or configured.
         """
-        return self._strategies.get(provider_name.lower())
+        provider_name = provider_name.lower()
+
+        # 1. Return from cache if already initialized
+        if provider_name in self._strategies:
+            return self._strategies[provider_name]
+
+        # 2. Find the builder for the provider
+        builder = self._strategy_builders.get(provider_name)
+        if not builder:
+            logger.warning(f"No strategy builder found for provider: {provider_name}")
+            return None  # Provider not supported
+
+        # 3. Build and cache the strategy instance
+        logger.info(f"Initializing strategy for provider: {provider_name}")
+        strategy = builder()
+        if strategy:
+            self._strategies[provider_name] = strategy
+        return strategy
 
     def generate_response(self, provider: str, messages: List[Dict[str, str]], **kwargs) -> Dict[str, Any]:
         """

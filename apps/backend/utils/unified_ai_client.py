@@ -273,6 +273,7 @@ class GoogleStrategy(AIProviderStrategy):
             return {'success': False, 'error': str(e)}
 
 
+
 class AnthropicStrategy(AIProviderStrategy):
     def generate_response(self, messages: List[Dict[str, str]], **kwargs) -> Dict[str, Any]:
         return {"provider": "anthropic", "content": "Not implemented yet"}
@@ -302,7 +303,7 @@ class UnifiedAIClient:
         Initializes the client by loading configuration and setting up strategies.
         """
         self._strategies: Dict[str, AIProviderStrategy] = {}
-        self.config = get_config()
+        self.config = settings
         self._init_strategies()
 
     def _init_strategies(self):
@@ -316,9 +317,12 @@ class UnifiedAIClient:
         # Ollama
         self._strategies['ollama'] = OllamaStrategy(base_url=self.config.ollama_base_url)
 
+        # Google
+        if self.config.google_api_key:
+            self._strategies['google'] = GoogleStrategy(api_key=self.config.google_api_key)
+
         # Add other strategies here as they are implemented
         self._strategies['openrouter'] = OpenRouterStrategy()
-        self._strategies['google'] = GoogleStrategy()
         self._strategies['anthropic'] = AnthropicStrategy()
         self._strategies['deepseek'] = DeepSeekStrategy()
         self._strategies['mistral'] = MistralStrategy()

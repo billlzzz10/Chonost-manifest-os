@@ -2,7 +2,13 @@
   "package": { "productName": "Craft IDE", "version": "0.1.0", "identifier": "com.craft-ide.app" },
   "tauri": {
     "windows": [{ "title": "Craft IDE", "width": 1280, "height": 800 }],
-    "bundle": { "active": false },
+    "bundle": {
+      "active": true,
+      "icon": ["icons/icon.png"]
+    },
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:"
+    },
     "allowlist": { "shell": { "all": true } }
   },
   "build": { "beforeDevCommand": "vite", "devPath": "http://localhost:5173", "distDir": "dist" }

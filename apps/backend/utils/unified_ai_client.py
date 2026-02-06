@@ -12,6 +12,7 @@ import requests
 import json
 import logging
 import openai
+import google.generativeai as genai
 from abc import ABC, abstractmethod
 from typing import Dict, Any, List, Optional
 
@@ -202,55 +203,75 @@ class OpenRouterStrategy(AIProviderStrategy):
         return {'success': False, 'error': 'Not implemented'}
 
 
-# 🛡️ Guardian: Implemented GoogleStrategy by porting logic from the frontend.
-# This implementation mirrors the capabilities of the TypeScript GoogleAIService,
-# ensuring consistent behavior and consolidating AI logic in the backend.
 class GoogleStrategy(AIProviderStrategy):
     """Strategy for interacting with Google's Generative AI models."""
     def __init__(self, api_key: str, model: str = "gemini-1.5-flash"):
         try:
-            import google.generativeai as genai
             genai.configure(api_key=api_key)
             self.model = genai.GenerativeModel(model)
-            logger.info(f"GoogleStrategy initialized for model {model}")
-        except ImportError:
-            logger.error("google.generativeai package not found. Please install it with 'pip install google-generativeai'")
-            raise
+            self.model_name = model
+            logger.info(f"GoogleStrategy initialized for model {self.model_name}")
         except Exception as e:
-            logger.error(f"Failed to initialize GoogleStrategy: {e}")
+            logger.error(f"❌ Failed to initialize GoogleStrategy: {str(e)}")
             raise
 
     def generate_response(self, messages: List[Dict[str, str]], **kwargs) -> Dict[str, Any]:
         """Generates a response using the Google Generative AI API."""
         try:
-            # Gemini requires a specific format for conversational history.
-            # The role for the model is 'model', not 'assistant'.
-            gemini_messages = [
+            model_name = kwargs.get('model', self.model_name)
+            model = genai.GenerativeModel(model_name) if model_name != self.model_name else self.model
+
+            # Convert messages to the format expected by the Google API
+            # The role for the model's response should be 'model'.
+            formatted_messages = [
                 {
-                    "role": "model" if msg["role"] == "assistant" else "user",
-                    "parts": [msg["content"]]
-                }
-                for msg in messages
+                    "role": "user" if msg["role"] == "user" else "model",
+                    "parts": [{"text": msg["content"]}]
+                } for msg in messages
             ]
 
-            response = self.model.generate_content(gemini_messages)
+            response = model.generate_content(
+                formatted_messages,
+                generation_config=genai.types.GenerationConfig(
+                    # Only one candidate is needed
+                    candidate_count=1,
+                    temperature=kwargs.get('temperature', 0.7)
+                )
+            )
 
             return {
                 'success': True,
                 'provider': 'google',
                 'content': response.text,
                 'metadata': {
-                    'model': self.model.model_name
+                    'model': model_name,
+                    'prompt_feedback': str(response.prompt_feedback) if hasattr(response, 'prompt_feedback') else 'N/A'
                 }
             }
         except Exception as e:
-            logger.error(f"❌ Google AI error: {str(e)}")
+            logger.error(f"❌ Google AI API error: {str(e)}")
             return {'success': False, 'error': str(e)}
 
+
     def embed(self, text: str, model: Optional[str] = None) -> Dict[str, Any]:
-        """Embedding is not yet supported in the original FE implementation."""
-        logger.warning("GoogleStrategy 'embed' method is not implemented.")
-        return {'success': False, 'error': 'Not implemented'}
+        """Generates an embedding using the Google Generative AI API."""
+        try:
+            model_to_use = model or "models/embedding-001"
+            result = genai.embed_content(
+                model=model_to_use,
+                content=text,
+                task_type="retrieval_document"
+            )
+            return {
+                'success': True,
+                'provider': 'google',
+                'embedding': result['embedding'],
+                'metadata': {'model': model_to_use}
+            }
+        except Exception as e:
+            logger.error(f"❌ Google embedding error: {str(e)}")
+            return {'success': False, 'error': str(e)}
+
 
 
 class AnthropicStrategy(AIProviderStrategy):

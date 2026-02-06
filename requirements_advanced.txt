@@ -14,7 +14,7 @@ redis>=5.0.0
 
 # AI/ML Libraries
 transformers>=4.35.0
-torch>=2.1.0
+torch>=2.9.0
 sentence-transformers>=2.2.0
 accelerate>=0.24.0
 
@@ -62,3 +62,8 @@ mypy>=1.6.0
 # torch>=2.1.0+cu118 -f https://download.pytorch.org/whl/torch_stable.html
 # torchvision>=0.16.0+cu118 -f https://download.pytorch.org/whl/torch_stable.html
 # torchaudio>=2.1.0+cu118 -f https://download.pytorch.org/whl/torch_stable.html
+azure-core>=1.38.0 # not directly required, pinned by Snyk to avoid a vulnerability
+filelock>=3.20.3 # not directly required, pinned by Snyk to avoid a vulnerability
+pyasn1>=0.6.2 # not directly required, pinned by Snyk to avoid a vulnerability
+urllib3>=2.6.3 # not directly required, pinned by Snyk to avoid a vulnerability
+requests>=2.32.4 # not directly required, pinned by Snyk to avoid a vulnerability

@@ -21,7 +21,7 @@
   },
   "devDependencies": {
     "@types/node": "20.17.12",
-    "@types/eventemitter3": "5.0.2",
+    "@types/eventemitter3": "2.0.4",
     "@types/uuid": "9.0.8",
     "eslint": "9.13.0",
     "@eslint/js": "9.13.0",

@@ -12,10 +12,11 @@ import requests
 import json
 import logging
 import openai
+import google.generativeai as genai
 from abc import ABC, abstractmethod
 from typing import Dict, Any, List, Optional
 
-from ..config import get_config
+from ..config import settings
 
 # --- Setup Logging ---
 logging.basicConfig(level=logging.INFO)
@@ -201,11 +202,77 @@ class OpenRouterStrategy(AIProviderStrategy):
     def embed(self, text: str, model: Optional[str] = None) -> Dict[str, Any]:
         return {'success': False, 'error': 'Not implemented'}
 
+
 class GoogleStrategy(AIProviderStrategy):
+    """Strategy for interacting with Google's Generative AI models."""
+    def __init__(self, api_key: str, model: str = "gemini-1.5-flash"):
+        try:
+            genai.configure(api_key=api_key)
+            self.model = genai.GenerativeModel(model)
+            self.model_name = model
+            logger.info(f"GoogleStrategy initialized for model {self.model_name}")
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize GoogleStrategy: {str(e)}")
+            raise
+
     def generate_response(self, messages: List[Dict[str, str]], **kwargs) -> Dict[str, Any]:
-        return {"provider": "google", "content": "Not implemented yet"}
+        """Generates a response using the Google Generative AI API."""
+        try:
+            model_name = kwargs.get('model', self.model_name)
+            model = genai.GenerativeModel(model_name) if model_name != self.model_name else self.model
+
+            # Convert messages to the format expected by the Google API
+            # The role for the model's response should be 'model'.
+            formatted_messages = [
+                {
+                    "role": "user" if msg["role"] == "user" else "model",
+                    "parts": [{"text": msg["content"]}]
+                } for msg in messages
+            ]
+
+            response = model.generate_content(
+                formatted_messages,
+                generation_config=genai.types.GenerationConfig(
+                    # Only one candidate is needed
+                    candidate_count=1,
+                    temperature=kwargs.get('temperature', 0.7)
+                )
+            )
+
+            return {
+                'success': True,
+                'provider': 'google',
+                'content': response.text,
+                'metadata': {
+                    'model': model_name,
+                    'prompt_feedback': str(response.prompt_feedback) if hasattr(response, 'prompt_feedback') else 'N/A'
+                }
+            }
+        except Exception as e:
+            logger.error(f"❌ Google AI API error: {str(e)}")
+            return {'success': False, 'error': str(e)}
+
+
     def embed(self, text: str, model: Optional[str] = None) -> Dict[str, Any]:
-        return {'success': False, 'error': 'Not implemented'}
+        """Generates an embedding using the Google Generative AI API."""
+        try:
+            model_to_use = model or "models/embedding-001"
+            result = genai.embed_content(
+                model=model_to_use,
+                content=text,
+                task_type="retrieval_document"
+            )
+            return {
+                'success': True,
+                'provider': 'google',
+                'embedding': result['embedding'],
+                'metadata': {'model': model_to_use}
+            }
+        except Exception as e:
+            logger.error(f"❌ Google embedding error: {str(e)}")
+            return {'success': False, 'error': str(e)}
+
+
 
 class AnthropicStrategy(AIProviderStrategy):
     def generate_response(self, messages: List[Dict[str, str]], **kwargs) -> Dict[str, Any]:
@@ -236,7 +303,7 @@ class UnifiedAIClient:
         Initializes the client by loading configuration and setting up strategies.
         """
         self._strategies: Dict[str, AIProviderStrategy] = {}
-        self.config = get_config()
+        self.config = settings
         self._init_strategies()
 
     def _init_strategies(self):
@@ -250,9 +317,12 @@ class UnifiedAIClient:
         # Ollama
         self._strategies['ollama'] = OllamaStrategy(base_url=self.config.ollama_base_url)
 
+        # Google
+        if self.config.google_api_key:
+            self._strategies['google'] = GoogleStrategy(api_key=self.config.google_api_key)
+
         # Add other strategies here as they are implemented
         self._strategies['openrouter'] = OpenRouterStrategy()
-        self._strategies['google'] = GoogleStrategy()
         self._strategies['anthropic'] = AnthropicStrategy()
         self._strategies['deepseek'] = DeepSeekStrategy()
         self._strategies['mistral'] = MistralStrategy()

@@ -1,12 +1,9 @@
-export enum AIProvider {
-  GOOGLE = 'google',
-  OPENAI = 'openai',
-  ANTHROPIC = 'anthropic',
-  XAI = 'xai'
-}
+// 🛡️ Guardian: The hardcoded AIProvider enum has been removed.
+// The list of available providers is now fetched dynamically from the backend
+// to ensure a single source of truth.
 
 export interface AIConfig {
-  provider: AIProvider;
+  provider: string;
   apiKey: string;
   model?: string;
 }
@@ -20,8 +17,33 @@ export interface Message {
 // This service now acts as a client for the backend, which centrally manages all AI provider interactions.
 // This change improves security by keeping API keys off the frontend and simplifies maintenance.
 
-let currentProvider: AIProvider = AIProvider.GOOGLE;
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/$/, '');
+
+let currentProvider: string = '';
 let currentModel: string | undefined = undefined;
+
+export const getAIProviders = async (): Promise<string[]> => {
+  const apiUrl = `${API_BASE_URL}/api/v1/providers`;
+  const response = await fetch(apiUrl);
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.detail || 'Failed to fetch AI providers');
+  }
+  const data = await response.json();
+  return data.providers;
+};
+
+export const getAIModels = async (provider: string): Promise<string[]> => {
+  if (!provider) return [];
+  const apiUrl = `${API_BASE_URL}/api/v1/providers/${provider}/models`;
+  const response = await fetch(apiUrl);
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.detail || 'Failed to fetch AI models');
+  }
+  const data = await response.json();
+  return data.models;
+};
 
 export const initializeAIService = (config: AIConfig): void => {
   currentProvider = config.provider;
@@ -33,7 +55,7 @@ export const chatWithAI = async (messages: Message[]): Promise<string> => {
     throw new Error('AI provider not set');
   }
 
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1/chat';
+  const apiUrl = `${API_BASE_URL}/api/v1/chat`;
 
   const response = await fetch(apiUrl, {
     method: 'POST',
@@ -56,6 +78,6 @@ export const chatWithAI = async (messages: Message[]): Promise<string> => {
   return data.content;
 };
 
-export const setProvider = (provider: AIProvider, apiKey: string, model?: string): void => {
+export const setProvider = (provider: string, apiKey: string, model?: string): void => {
   initializeAIService({ provider, apiKey, model });
 };

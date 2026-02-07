@@ -13,6 +13,7 @@ import subprocess
 import os
 import sys
 from datetime import datetime
+import asyncio
 from pathlib import Path
 
 # Ensure the project root is in the Python path
@@ -757,7 +758,7 @@ TASK: Analyze the file system data above and answer the user's question. Be spec
                 {"role": "user", "content": user_prompt}
             ]
 
-            response = self.ai_client.generate_response(self.ai_provider, messages)
+            response = asyncio.run(self.ai_client.generate_response(self.ai_provider, messages))
 
             if response and response.get('success'):
                 ai_response = response.get('content', 'Could not process')

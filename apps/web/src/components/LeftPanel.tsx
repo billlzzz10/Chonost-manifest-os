@@ -2,63 +2,46 @@ import { useState, useEffect } from "react";
 import { useAppStore } from "../state/store";
 import LazyVisualDashboard from "./LazyVisualDashboard";
 import { runAnalyzeOrSidecar } from "../lib/platform";
-import { AIProvider, initializeAIService, chatWithAI, setProvider } from "../services/aiService";
+// 🛡️ Guardian: Removed AIProvider enum and added getAIProviders to dynamically fetch providers.
+import { initializeAIService, chatWithAI, getAIProviders } from "../services/aiService";
 
 export default function LeftPanel() {
   const { content, setData } = useAppStore();
   const [q, setQ] = useState("");
   const [log, setLog] = useState<string[]>([]);
-  const [selectedProvider, setSelectedProvider] = useState<AIProvider>(AIProvider.GOOGLE);
+  // 🛡️ Guardian: State is now a list of strings fetched from the backend.
+  const [providers, setProviders] = useState<string[]>([]);
+  // 🛡️ Guardian: The selected provider is now a string, not an enum member.
+  const [selectedProvider, setSelectedProvider] = useState<string>('');
   const [isAIReady, setIsAIReady] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<string>("");
 
   useEffect(() => {
-    // Initialize default Google AI if API key is available
-    const apiKey = (import.meta as any).env?.VITE_GOOGLE_AI_API_KEY;
-    if (apiKey && apiKey !== 'your_google_ai_api_key_here') {
-      try {
-        initializeAIService({ provider: AIProvider.GOOGLE, apiKey });
+    // 🛡️ Guardian: Fetches providers and sets the first one as active. Trusts the backend implicitly.
+    const fetchAndInitialize = async () => {
+      const availableProviders = await getAIProviders();
+      setProviders(availableProviders);
+
+      if (availableProviders.length > 0) {
+        const providerToInit = availableProviders[0];
+        setSelectedProvider(providerToInit);
+        initializeAIService({ provider: providerToInit });
         setIsAIReady(true);
-        setLog((l) => [`${new Date().toLocaleTimeString()}: AI พร้อมใช้งาน (${AIProvider.GOOGLE})`, ...l]);
-      } catch (error) {
-        console.error('Failed to initialize AI:', error);
-        setLog((l) => [`${new Date().toLocaleTimeString()}: ไม่สามารถเริ่ม AI ได้`, ...l]);
+        setLog((l) => [`${new Date().toLocaleTimeString()}: AI ready with ${providerToInit}`, ...l]);
+      } else {
+        setIsAIReady(false);
+        setLog((l) => [`${new Date().toLocaleTimeString()}: No AI providers configured.`, ...l]);
       }
-    }
+    };
+    fetchAndInitialize();
   }, []);
 
+  // 🛡️ Guardian: Simplified to just set the provider. The backend handles all configuration.
   const handleProviderChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const provider = e.target.value as AIProvider;
+    const provider = e.target.value;
     setSelectedProvider(provider);
-    let apiKey = '';
-    switch (provider) {
-      case AIProvider.GOOGLE:
-        apiKey = (import.meta as any).env?.VITE_GOOGLE_AI_API_KEY || '';
-        break;
-      case AIProvider.OPENAI:
-        apiKey = (import.meta as any).env?.VITE_OPENAI_API_KEY || '';
-        break;
-      case AIProvider.ANTHROPIC:
-        apiKey = (import.meta as any).env?.VITE_ANTHROPIC_API_KEY || '';
-        break;
-      case AIProvider.XAI:
-        apiKey = (import.meta as any).env?.VITE_XAI_API_KEY || '';
-        break;
-    }
-    if (apiKey && apiKey !== `your_${provider.toLowerCase()}_api_key_here`) {
-      try {
-        initializeAIService({ provider, apiKey });
-        setIsAIReady(true);
-        setLog((l) => [`${new Date().toLocaleTimeString()}: เปลี่ยนไปใช้ ${provider} สำเร็จ`, ...l]);
-      } catch (error) {
-        console.error(`Failed to initialize ${provider}:`, error);
-        setIsAIReady(false);
-        setLog((l) => [`${new Date().toLocaleTimeString()}: ไม่สามารถเริ่ม ${provider} ได้`, ...l]);
-      }
-    } else {
-      setIsAIReady(false);
-      setLog((l) => [`${new Date().toLocaleTimeString()}: กรุณาตั้งค่า API key สำหรับ ${provider}`, ...l]);
-    }
+    initializeAIService({ provider });
+    setLog((l) => [`${new Date().toLocaleTimeString()}: Switched to ${provider}`, ...l]);
   };
 
   const run = async () => {
@@ -94,11 +77,17 @@ export default function LeftPanel() {
               value={selectedProvider}
               onChange={handleProviderChange}
               style={{ padding: 4, fontSize: 14 }}
+              disabled={providers.length === 0}
             >
-              <option value={AIProvider.GOOGLE}>Google AI</option>
-              <option value={AIProvider.OPENAI}>OpenAI</option>
-              <option value={AIProvider.ANTHROPIC}>Anthropic</option>
-              <option value={AIProvider.XAI}>xAI</option>
+              {providers.length > 0 ? (
+                providers.map((p) => (
+                  <option key={p} value={p}>
+                    {p.charAt(0).toUpperCase() + p.slice(1)}
+                  </option>
+                ))
+              ) : (
+                <option>Loading...</option>
+              )}
             </select>
           </div>
           <div style={{ display: "flex", gap: 6 }}>
